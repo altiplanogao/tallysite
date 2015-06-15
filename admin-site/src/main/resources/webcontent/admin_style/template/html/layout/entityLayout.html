@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="entity/mainframe :: entity_head"></head>
+<body class="off-canvas">
+
+    <div th:replace="entity/mainframe :: entity_header_bar"></div>
+    <div class="container-fluid">
+
+        <div th:replace="entity/mainframe :: entity_side_nav"></div>
+        <div th:replace="entity/mainframe :: entity_content"></div>
+
+    </div>
+
+    <footer th:replace="entity/mainframe :: entity_footer" />
+
+</body>
+</html>

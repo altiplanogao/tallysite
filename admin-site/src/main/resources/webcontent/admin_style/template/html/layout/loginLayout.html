@@ -1,0 +1,38 @@
+<!--/*-->
+<!-- FOLLOWING WILL BE DELETED BY THYMELEAF -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- ABOVE WILL BE DELETED BY THYMELEAF -->
+<!--*/-->
+<!--/*/
+<!DOCTYPE html>
+<html>
+/*/-->
+<head th:include="layout/partials/head" />
+<body class="off-canvas">
+	<div class="container">
+	    <div class="basic-form">
+	        <div class="logo">
+	            <img th:src="@{/img/admin/tallybook-logo-150.png}"  src="../../img/admin/tallybook-logo-150.png" />
+	        </div>
+	
+			<div class="clear"></div>
+
+       	 	<div id="messages" th:include="${templateName}::messages" />
+       	 	<div id="js-warning" th:text="#{admin.login.requiresJs}" onload="" />
+       	 	
+       	 	<div id="js-visible" style="display: none;">
+            	<div th:substituteby="${templateName}::form" />
+            	<div id="options" class="basic-links" th:include="${templateName}::options" />
+        	</div>
+        	
+        	<script type="text/javascript">
+	            // Act on this immediately to prevent the flash of unrendered content.
+	            document.getElementById('js-warning').setAttribute('style', 'display: none;');
+	            document.getElementById('js-visible').setAttribute('style', 'display: block;');
+	        </script>
+        	
+		</div>	
+	</div>
+</body>
+</html>

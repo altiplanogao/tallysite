@@ -1,0 +1,59 @@
+
+section {
+    /* border: 1px solid red;
+    */
+}
+
+a {
+    color: #8eaa28;
+    text-decoration: none;
+}
+
+nav.header-bar{
+    margin-bottom: 10px;
+}
+
+section#sideMenuContainer {
+    margin-left: 0;
+    width: 20%;
+    float: left;
+    padding: 0 5px 0 2px
+}
+
+section#contentContainer {
+    margin-left: 0;
+    width: 80%;
+    background: #fff;
+    float: right;
+    position: relative;
+}
+
+section#contentContainer .entity-content-breadcrumbs{
+    margin-left: 0;
+    background: #fff;
+    width: 100%;
+    border: 2px solid #CCC;
+    float: right;
+    position: relative;
+    border-bottom: 2px solid #8eaa2b;
+}
+
+section#contentContainer .entity-content-main{
+    margin-left: 0;
+    background: #fff;
+    width: 100%;
+    border: 2px solid #CCC;
+    float: right;
+    position: relative;
+    border-top: 0px;
+    padding: 15px 15px 0px 15px;
+}
+
+section#contentContainer > div.content-path {
+    padding: 5px 10px;
+    border-bottom: 2px solid #8eaa2b;
+}
+
+section#contentContainer > div > ol.breadcrumb {
+    margin-bottom: 0px;
+}

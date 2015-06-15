@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
+
+<!-- THIS IS FOR RUNNING IN local OR development MODE ONLY! IT WILL AUTOMATICALLY BE USED IN A
+JETTY ENVIRONMENT. YOU SHOULD SET UP JNDI ACCORDING TO YOUR SERVER'S DOCUMENTATION AND USE THAT.
+IT IS NOT RECOMMENDED TO USE JETTY IN A PRODUCTION ENVIRONMENT.
+-->
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
+
+
+    <!-- Add an EnvEntry only valid for this webapp -->
+    <New id="appName" class="org.eclipse.jetty.plus.jndi.EnvEntry">
+        <Arg>appName</Arg>
+        <Arg type="java.lang.String">tallybook-admin</Arg>
+        <Arg type="boolean">true</Arg>
+    </New>
+
+    <New id="userDS" class="org.eclipse.jetty.plus.jndi.Resource">
+        <Arg>jdbc/tallyuserJndiDb</Arg>
+        <Arg>
+            <New class="org.apache.commons.dbcp.BasicDataSource">
+                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
+                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallyuser?useUnicode=true&amp;characterEncoding=utf8</Set>
+                <Set name="username">devsa</Set>
+                <Set name="password">devsapassword</Set>
+            </New>
+        </Arg>
+    </New>
+
+    <New id="adminDS" class="org.eclipse.jetty.plus.jndi.Resource">
+        <Arg>jdbc/tallyadminJndiDb</Arg>
+        <Arg>
+            <New class="org.apache.commons.dbcp.BasicDataSource">
+                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
+                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallyadmin?useUnicode=true&amp;characterEncoding=utf8</Set>
+                <Set name="username">devsa</Set>
+                <Set name="password">devsapassword</Set>
+            </New>
+        </Arg>
+    </New>
+
+    <New id="businessDS" class="org.eclipse.jetty.plus.jndi.Resource">
+        <Arg>jdbc/tallybusinessJndiDb</Arg>
+        <Arg>
+            <New class="org.apache.commons.dbcp.BasicDataSource">
+                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
+                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallybusiness?useUnicode=true&amp;characterEncoding=utf8</Set>
+                <Set name="username">devsa</Set>
+                <Set name="password">devsapassword</Set>
+            </New>
+        </Arg>
+    </New>
+
+    <New id="managementDS" class="org.eclipse.jetty.plus.jndi.Resource">
+        <Arg>jdbc/tallymanagementJndiDb</Arg>
+        <Arg>
+            <New class="org.apache.commons.dbcp.BasicDataSource">
+                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
+                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallymanagement?useUnicode=true&amp;characterEncoding=utf8</Set>
+                <Set name="username">devsa</Set>
+                <Set name="password">devsapassword</Set>
+            </New>
+        </Arg>
+    </New>
+
+</Configure>

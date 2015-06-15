@@ -1,0 +1,110 @@
+/**
+menu with class: <nav class="nav-menu"></nav>
+*/
+
+/*
+MAIN MENU ENTRY
+*/
+nav > ul.nav-menu {
+    list-style: none;
+    padding: 0px;
+}
+
+/*
+MENU GROUP
+*/
+nav > ul.nav-menu > li.menu-group .menu-group-title{
+    list-style: none;
+    border: 1px solid #CCC;
+    border-bottom: none;
+    background: #f2f2f2;
+    cursor: pointer !important;
+    padding: 15px;
+    position: relative;
+}
+
+nav > ul.nav-menu > li.menu-group.active .menu-group-title,
+nav > ul.nav-menu > li.menu-group:last-child .menu-group-title{
+    border-bottom: 1px solid #CCC;
+}
+
+nav > ul.nav-menu > li.menu-group .menu-group-title > h5{
+    line-height: 1;
+    padding: 2px 6px;
+    font-size: 15px;
+    margin: 0;
+}
+
+nav > ul.nav-menu > li.menu-group .menu-group-title::after{
+    content: "";
+    display: block;
+    width: 0;
+    height: 0;
+    border: solid 6px;
+    border-color: transparent transparent transparent #9d9d9d;
+    position: absolute;
+    right: 15px;
+    top: 21px;
+}
+
+nav > ul.nav-menu > li.menu-group.active > .menu-group-title::after {
+    content: "";
+    display: block;
+    width: 0;
+    height: 0;
+    border: solid 6px;
+    border-color: #9d9d9d transparent transparent transparent;
+}
+
+/*
+MENU ENTRY
+*/
+
+nav > ul.nav-menu > li.menu-group > .menu-group-content {
+    padding: 0px;
+    background: #fff;
+    border: 1px solid #CCC;
+    border-top: none;
+    border-bottom: none;
+    margin: 0 3px;
+    display: none;
+}
+
+nav > ul.nav-menu > li.menu-group.active > .menu-group-content {
+    display: block;
+}
+
+nav > ul.nav-menu > li.menu-group > .menu-group-content  ul {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 0;
+}
+
+nav > ul.nav-menu > li.menu-group > .menu-group-content  li {
+    list-style: none;
+    padding: 2px;
+}
+
+nav > ul.nav-menu > li.menu-group > .menu-group-content  li > a {
+    cursor: pointer !important;
+    font-weight: normal;
+    color: #666 !important;
+    padding: 2px 0 2px 15px;
+    width: 100%;
+    display: inline-block;
+}
+
+nav > ul.nav-menu > li.menu-group > .menu-group-content  li > a:hover,
+nav > ul.nav-menu > li.menu-group > .menu-group-content  li.active > a {
+    color: #8EAA2B !important;
+}
+
+nav > ul.nav-menu > li.menu-group > .menu-group-content  li.active > a {
+    font-weight: bold;
+}
+
+nav > ul.nav-menu > li.menu-group:last-child > .menu-group-content {
+    border-bottom: 1px solid #CCC;
+}
+
+

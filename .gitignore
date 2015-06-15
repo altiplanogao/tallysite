@@ -1,4 +1,11 @@
 target/
+/.settings/
+/.idea/
+.classpath
+.project
+*.iml
+rebel.xml
+
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

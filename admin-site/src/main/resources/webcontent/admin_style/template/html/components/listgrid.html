@@ -1,0 +1,127 @@
+<div class="listgrid-wrapper">
+  <div class="listgrid-header-wrapper" th:inline="text">
+    <table class="table table-condensed table-hover" th:classappend="${entitylist.classEdo.name}">
+      <thead>
+      <tr>
+        <th th:each="gridField : ${entitylist.classEdo.gridFields}"
+            th:if="${gridField.gridVisible}"
+            class="listgrid-column explicit-size width-ignored"
+            scope="col" data-columnwidth="300px">
+          <div href="#" class=" split dropdown">
+            <div class="listgrid-column-title">[[#{${gridField.friendlyName}}]]
+              <div class="listgrid-column-filter-sort-container">
+                <i class="fa fa-sort"></i>
+                <i class="fa fa-filter"></i>
+              </div>
+            </div>
+            <div class="resizer">||</div>
+          </div>
+        </th>
+        <!--/*-->
+        <th scope="col" data-columnwidth="300px" style="padding-right: 20px; width: 343px;"
+            class="listgrid-column explicit-size width-ignored">
+          <div href="" class=" split dropdown">
+            <div class="listgrid-column-title">Name
+              <div class="listgrid-column-filter-sort-container">
+                <i class="fa fa-sort"></i>
+                <i class="fa fa-filter"></i>
+              </div>
+            </div>
+            <div class="resizer">||</div>
+          </div>
+        </th>
+        <th scope="col" data-columnwidth="300px" style="padding-right: 20px; width: 343px;"
+            class="listgrid-column explicit-size width-ignored">
+          <div href="" class=" split dropdown">
+            <div class="listgrid-column-title">Name
+              <div class="listgrid-column-filter-sort-container">
+                <i class="fa fa-sort"></i>
+                <i class="fa fa-filter"></i>
+              </div>
+            </div>
+            <div class="resizer">||</div>
+          </div>
+        </th>
+        <!--*/-->
+      </tr>
+      </thead>
+    </table>
+  </div>
+
+
+  <div class="listgrid-body-wrapper">
+    <table class="listgrid-table table table-condensed table-hover" th:classappend="${entitylist.classEdo.name}">
+      <thead>
+      <tr class="width-control-header">
+        <th>
+        </th>
+        <!--/*-->
+        <th scope="col" data-columnwidth="300px" style="padding-right: 20px; width: 343px;"
+            class="listgrid-column explicit-size width-ignored">
+          <div href="" class=" split dropdown">
+            <div class="listgrid-column-title">Name
+              <div class="listgrid-column-filter-sort-container">
+                <i class="fa fa-sort"></i>
+                <i class="fa fa-filter"></i>
+              </div>
+            </div>
+            <div class="resizer">||</div>
+          </div>
+        </th>
+        <th scope="col" data-columnwidth="300px" style="padding-right: 20px; width: 343px;"
+            class="listgrid-column explicit-size width-ignored">
+          <div href="" class=" split dropdown">
+            <div class="listgrid-column-title">Name
+              <div class="listgrid-column-filter-sort-container">
+                <i class="fa fa-sort"></i>
+                <i class="fa fa-filter"></i>
+              </div>
+            </div>
+            <div class="resizer">||</div>
+          </div>
+        </th>
+        <!--*/-->
+      </tr>
+      </thead>
+      <tbody style="" class="real-data">
+      <tr th:each="entity : ${entitylist.entities}">
+
+        <td th:each="gridField : ${entitylist.classEdo.gridFields}"
+            th:if="${gridField.gridVisible}"
+            th:with="property=${entity.getProperty(gridField.name)}">
+              <span th:if="${gridField.nameField}">
+                <a th:href="@{${entity.path}}" th:text="${property.displayValue}"></a>
+              </span>
+              <span th:unless="${gridField.nameField}"
+                    th:switch="${gridField.fieldType.typeName}">
+                <span th:case="EMAIL">
+                  <a th:href="@{mailto:{email}(email=${property.value})}" th:text="${property.value}"></a>
+                </span>
+                <span th:case="*">
+                  <span th:text="${property.displayValue}"/>
+                </span>
+              </span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="listgrid-footer-wrapper">
+    <div class="listgrid-table-footer">
+          <span class="listgrid-table-footer-message">
+            <span class="low-index">32</span>
+            -
+            <span class="high-index">44</span>
+            <span>of</span>
+            <span class="total-records">60</span>
+            <span>records</span>
+          </span>
+    </div>
+
+  </div>
+  <span class="listgrid-table-spinner-container">
+    <i class="listgrid-table-spinner icon-spin icon-spinner"></i>
+  </span>
+</div>

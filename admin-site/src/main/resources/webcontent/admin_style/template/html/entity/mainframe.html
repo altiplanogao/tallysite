@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!-- This main frame file contains page components as following -->
+<!--
+  entity_head         <head/>
+  entity_header       <header/>
+  entity_header_bar   <nav/>
+  entity_side_nav     <nav/>
+  entity_content      <section/>
+  . entity_content_breadcrumbs
+  . entity_main
+  . . entity_list
+  . . . entity_list_action (include search / add / refresh ...)
+  . . . entity_list_grid
+  . . entity_form
+  entity_footer <footer>
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="entity_head">
+  <meta charset="utf-8"/>
+  <meta http-equiv="Content-Language" content="en-us"/>
+  <meta http-equiv="Content-Author" content="TallyBook"/>
+  <meta name="viewport" content="width=device-width"/>
+
+  <title th:text="#{Admin_Title}">TallyBook Admin</title>
+
+  <link rel="stylesheet" type="text/css" th:href="@{/css/font-awesome-4.3.0/css/font-awesome.min.css}"
+        href="../../css/font-awesome-4.3.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/bootstrap-3.3.4/css/bootstrap.css}"
+        href="../../css/bootstrap-3.3.4/css/bootstrap.css"/>
+
+  <link rel="stylesheet" type="text/css" th:href="@{/css/foundation.css}" href="../../css/foundation.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/admin.css}" href="../../css/admin.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/admin-layout.css}" href="../../css/admin-layout.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/menu/nav-menu.css}" href="../../css/menu/nav-menu.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/grid/listgrid.css}" href="../../css/grid/listgrid.css"/>
+
+</head>
+
+<body>
+
+<nav class="nav navbar-inverse navbar-fixed-top header-bar" th:fragment="entity_header_bar">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Tally Book
+      </a>
+    </div>
+    <div>
+      <tb_admin:value tb_admin:admin_employee="adminUser"/>
+      <ul class="nav navbar-nav navbar-right">
+
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+            <span class="glyphicon glyphicon-user"></span>
+            <span th:text="${person.name}">Andy</span>
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Personal Setting</a></li>
+            <li class="divider"/>
+            <li><a href="#">Change Password</a></li>
+          </ul>
+        </li>
+        <li>
+          <form name="logoutform" method="post" th:action="@{/adminLogout.htm}">
+            <input type="submit" class="hidden"/>
+          </form>
+          <a href="javascript:document.logoutform.submit()">
+            <span class="glyphicon glyphicon-log-out"></span> Log out
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid">
+  <section id="sideMenuContainer" th:fragment="entity_side_nav">
+    <nav class="nav" id="sideMenu">
+      <ul class="nav-menu accordion" data-accordion="" th:if="${menu} != null">
+        <li class="menu-group accordion-navigation" th:each="entryGroup : ${menu.entryGroups}" th:inline="text"
+            th:classappend="${current.isMenuGroupMatch(entryGroup)}? 'active'">
+          <div class="menu-group-title">
+            <h5>
+              <i class="glyphicon" th:classappend="${entryGroup.icon}"></i>
+              [[#{${entryGroup.key}}]]
+            </h5>
+          </div>
+          <div class="menu-group-content content">
+            <ul>
+              <li th:each="entry : ${entryGroup.entries}"
+                  th:classappend="${current.isMenuEntryMatch(entry)}? 'active'">
+                <a th:href="${entry.url}">
+                  [[#{${entry.key}}]]</a>
+              </li>
+            </ul>
+          </div>
+
+        </li>
+
+        <!--/*-->
+        <!-- FOLLOWING WILL BE DELETED BY THYMELEAF -->
+        <li class="menu-group active">
+          <div class="menu-group-title">
+            <h5>
+              <i class="glyphicon glyphicon-user"></i>
+              Security (A)
+            </h5>
+          </div>
+          <div class="menu-group-content">
+            <ul>
+              <li class="active">
+                <a href="#">Permission Entries (A)</a>
+              </li>
+              <li>
+                <a href="#">Permissions</a>
+              </li>
+              <li>
+                <a href="#">Permissions
+                </a>
+              </li>
+            </ul>
+          </div>
+        </li>
+
+        <li class="menu-group">
+          <div class="menu-group-title">
+            <h5>
+              <i class="glyphicon glyphicon-user"></i>
+              Security (D)
+            </h5>
+          </div>
+          <div class="menu-group-content">
+            <ul>
+              <li class="active">
+                <a href="#">Permission Entries</a>
+              </li>
+              <li class="active">
+                <a href="#">Permissions</a>
+              </li>
+              <li class="active">
+                <a href="#">Permissions
+                </a>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <!-- ABOVE WILL BE DELETED BY THYMELEAF -->
+        <!--*/-->
+      </ul>
+
+    </nav>
+  </section>
+
+  <section id="contentContainer" th:fragment="entity_content">
+    <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
+      <ol class="breadcrumb">
+        <li>[[#{${current.menuGroup.key}}]]</li>
+        <li><a href="#" th:href="@{${current.menuEntry.url}}">
+          [[#{${current.menuEntry.key}}]]</a>
+        </li>
+        <li th:if="${entityForm}">[[$entityForm.mainEntityName]]</li>
+      </ol>
+    </div>
+    <div class="entity-content-main" th:fragment="entity_main">
+    <section id="contentEntityListContainer" th:fragment="entity_list">
+      <div class="row" id="entitySearch"  th:inline="text">
+        <div class="col-xs-7">
+          <form class="custom-entity-search" th:action="${current.url}" method="get">
+            <div class="row">
+              <div class="col-xs-6">
+                <input style="" type="search"
+                       class="form-control"
+                       th:placeholder="#{general.Search_Placeholder(#{${entitylist.classEdo.friendlyName}},#{${entitylist.classEdo.primaryGridSearchField.friendlyName}})}"
+                       placeholder="Search Placeholder" />
+              </div>
+              <div class="btn-group col-xs-6">
+                <a href="#" class="btn btn-primary">
+                  <i class="fa fa-search"></i>&nbsp;[[#{general.Search}]]
+                </a>
+                <a href="#" class="btn btn-primary">
+                  <i class="fa fa-times"></i>&nbsp;[[#{general.Clear_Search}]]
+                </a>
+              </div>
+            </div>
+
+          </form>
+
+        </div>
+        <div class="col-xs-5">
+          <div style="float: right;">
+            <a href="#" class="btn btn-primary">XXX Add</a>
+          </div>
+        </div>
+      </div>
+      <div th:replace="components/listgrid"/>
+
+    </section>
+    <section id="contentEntityFormContainer" th:fragment="entity_form">
+
+    </section>
+    </div>
+  </section>
+</div>
+
+<footer th:fragment="entity_footer">
+
+  <!-- <script src="//jquery.com/jquery-wp-content/themes/jquery/js/jquery-1.11.2.min.js"></script> -->
+  <script type="text/javascript" th:src="@{/js/jquery-2.1.4.js}" src="../../js/jquery-2.1.4.js"></script>
+  <!-- <script type="text/javascript" th:src="@{/js/jquery-2.1.4.min.js}" src="../../js/jquery-2.1.4.min.js"></script> -->
+  <script type="text/javascript" th:src="@{/css/bootstrap-3.3.4/js/bootstrap.min.js}"
+          src="../../css/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+  <script type="text/javascript" th:src="@{/lib/foundation/js/foundation/foundation.js}"
+          src="../../lib/foundation/js/foundation/foundation.js"></script>
+  <script type="text/javascript" th:src="@{/lib/foundation/js/foundation/foundation.accordion.js}"
+          src="../../lib/foundation/js/foundation/foundation.accordion.js"></script>
+  <script type="text/javascript" th:src="@{/js/menu/nav-menu.js}"
+          src="../../js/menu/nav-menu.js"></script>
+  <script type="text/javascript" th:src="@{/js/admin/admin-init.js}"
+          src="../../js/admin/admin-init.js"></script>
+
+</footer>
+
+</body>
+</html>

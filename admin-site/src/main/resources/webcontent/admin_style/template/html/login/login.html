@@ -1,0 +1,91 @@
+<!--/*-->
+<!-- FOLLOWING WILL BE DELETED BY THYMELEAF -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="Content-Language" content="en-us" />
+	<meta http-equiv="Content-Author" content="Steward" />
+	<meta name="viewport" content="width=device-width" />
+
+	<title th:text="#{Admin_Title}" >TallyBook Admin</title>
+	<!--
+        <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+     -->
+	<link rel="stylesheet" th:href="@{/css/bootstrap/bootstrap.css}" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+	<link rel="stylesheet" th:href="@{/css/bootstrap/bootstrap.css}" href="../../css/bootstrap/bootstrap.css"/>
+	<link rel="stylesheet" th:href="@{/css/foundation.css}" href="../../css/foundation.css"/>
+	<link rel="stylesheet" th:href="@{/css/admin.css}" href="../../css/admin.css"/>
+</head>
+<body class="off-canvas">
+<div class="container">
+	<div class="basic-form">
+		<div class="logo">
+			<img th:src="@{/img/admin/steward-logo-150.png}"  src="../../img/admin/tallybook-logo-150.png" />
+		</div>
+
+		<div class="clear"></div>
+		<!-- ABOVE WILL BE DELETED BY THYMELEAF -->
+		<!--*/-->
+
+		<div>
+			<div th:fragment="messages">
+				<div class="alert alert-danger"
+					 th:unless="${#strings.isEmpty(param.login_error)}">
+					<div th:unless="${#strings.isEmpty(param.login_error)}"
+						 th:text="#{password.invalidCombination}">Invalid username / password combination</div>
+				</div>
+				<div class="alert alert-danger"
+					 th:unless="${#strings.isEmpty(param.sessionTimeout)}"
+					 th:text="#{password.timeout}">Your session has timed out. Please login again.</div>
+				<div class="alert alert-success"
+					 th:unless="${#strings.isEmpty(param.messageCode)}">
+					<div th:if="${param.messageCode[0] == 'usernameSent'}"
+						 th:text="#{password.usernameSent}">Your username was sent to the email address on file.</div>
+					<div th:if="${param.messageCode[0] == 'passwordReset'}"
+						 th:text="#{password.passwordReset}">Your password has been reset. Please login with your new password.</div>
+				</div>
+			</div>
+
+			<form method="POST" th:fragment="form"
+				  th:action="@{/login_admin_post}" action="#">
+				<div class="form-group">
+					<label for="username" th:text="#{password.username}">User
+						Name</label>
+					<input type="text" id="username" name="j_username"
+						   autofocus="autofocus" class="form-control"
+						   th:placeholder="#{password.username}" placeholder="User Name" />
+				</div>
+				<div class="form-group">
+					<label for="password" th:text="#{password.password}">Password</label>
+					<input type="password" id="password" name="j_password"
+						   class="form-control" th:placeholder="#{password.password}" placeholder="Password" />
+				</div>
+				<div>
+					<input type="submit" class="btn btn-primary pull-right"
+						   th:value="#{password.signIn}" value="Sign In"></input>
+				</div>
+			</form>
+
+			<div th:fragment="options" class="basic-links">
+				<ul class="inline-list">
+					<li><a href="#" th:href="@{forgotUsername}"
+						   th:text="#{password.forgotUsername}">Forgot Username</a></li>
+					<li class="divider">&nbsp;</li>
+					<li><a href="#" th:href="@{forgotPassword}"
+						   th:text="#{password.forgotPassword}">Forgot Password</a></li>
+					<li class="divider">&nbsp;</li>
+					<li><a href="#" th:href="@{changePassword}"
+						   th:text="#{password.changePassword}">Change Password</a></li>
+				</ul>
+			</div>
+		</div>
+
+		<!--/*-->
+		<!-- FOLLOWING WILL BE DELETED BY THYMELEAF -->
+	</div>
+</div>
+</body>
+</html>
+<!-- ABOVE WILL BE DELETED BY THYMELEAF -->
+<!--*/-->
