@@ -82,7 +82,6 @@ public class MvcViewConfigurer {
                     arranger.add(respath);
                 } catch (Exception e) {
                     LOGGER.error("Resource '{}' failed to return path.", res.getURI());
-                    continue;
                 }
             }
             for (String simplefilename : arranger.fileNamesWithoutLocalization()) {
@@ -91,14 +90,13 @@ public class MvcViewConfigurer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        ms.setBasenames(basenameList.toArray(new String[]{}));
+        ms.setBasenames(basenameList.toArray(new String[basenameList.size()]));
         return ms;
     }
 
     @Bean
     public SpringMessageResolver messageResolver() {
-        SpringMessageResolver messageResolver = new SpringMessageResolver();
-        return messageResolver;
+        return new SpringMessageResolver();
     }
 
     private SpringMessageResolver messageResolverByBasenames(String[] basenames) {
@@ -112,16 +110,17 @@ public class MvcViewConfigurer {
     @Bean
     public SpringTemplateEngine thymeleafTemplateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
-//        SpringMessageResolver messageResolver = new SpringMessageResolver();
-//        messageResolver.setMessageSource(messageSource());
-        templateEngine.setMessageResolvers(new SetBuilder<IMessageResolver>()
-                .put(messageResolver())
-                .put(messageResolverByBasenames(TallyBookAdminCoreRoot.getMessageBasenames()))
-                .result());
+
+        Set<IMessageResolver> messageResolvers =  new SetBuilder<IMessageResolver>()
+                .append(messageResolver())
+                .append(messageResolverByBasenames(TallyBookAdminCoreRoot.getMessageBasenames()));
+        templateEngine.setMessageResolvers(messageResolvers);
+
         templateEngine.setTemplateResolvers(templateResolverSet());
-        templateEngine.setAdditionalDialects(new SetBuilder<IDialect>()
-                .put(new TallyBookDialect())
-                .result());
+
+        templateEngine.setAdditionalDialects(
+                new SetBuilder<IDialect>()
+                        .append(new TallyBookDialect()));
         return templateEngine;
     }
 
@@ -130,8 +129,10 @@ public class MvcViewConfigurer {
         TallyBookThymeleafViewResolver viewResolver = new TallyBookThymeleafViewResolver();
         viewResolver.setTemplateEngine(thymeleafTemplateEngine());
         viewResolver.setCharacterEncoding("UTF-8");
-        viewResolver.setDefaultLayout("layout/entityLayout");
-        viewResolver.setLayoutMap(MapBuilder.instance("login/", "layout/loginLayout").result());
+        viewResolver.setDefaultLayout("entity/layout/entityLayout");
+        viewResolver.setLayoutMap(
+                new MapBuilder<String, String>()
+                        .append("login/", "login/layout/loginLayout"));
         return viewResolver;
     }
 }
