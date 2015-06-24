@@ -24,16 +24,23 @@
 
   <title th:text="#{Admin_Title}">TallyBook Admin</title>
 
-  <link rel="stylesheet" type="text/css" th:href="@{/css/font-awesome-4.3.0/css/font-awesome.min.css}"
-        href="../../css/font-awesome-4.3.0/css/font-awesome.min.css"/>
-  <link rel="stylesheet" type="text/css" th:href="@{/css/bootstrap-3.3.4/css/bootstrap.css}"
-        href="../../css/bootstrap-3.3.4/css/bootstrap.css"/>
+  <!-- Libs -->
+  <link rel="stylesheet" type="text/css" th:href="@{/lib/jquery/plugins/jquery.custom-scrollbar.css}"
+        href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/lib/font-awesome-4.3.0/css/font-awesome.min.css}"
+        href="../../lib/font-awesome-4.3.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/lib/bootstrap-3.3.4/css/bootstrap.css}"
+        href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
 
+  <!-- Components -->
+  <link rel="stylesheet" type="text/css" th:href="@{/css/component/menu/nav-menu.css}" href="../../css/component/menu/nav-menu.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/component/grid/listgrid.css}" href="../../css/component/grid/listgrid.css"/>
+
+  <!-- Page -->
   <link rel="stylesheet" type="text/css" th:href="@{/css/foundation.css}" href="../../css/foundation.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin.css}" href="../../css/admin.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin-layout.css}" href="../../css/admin-layout.css"/>
-  <link rel="stylesheet" type="text/css" th:href="@{/css/menu/nav-menu.css}" href="../../css/menu/nav-menu.css"/>
-  <link rel="stylesheet" type="text/css" th:href="@{/css/grid/listgrid.css}" href="../../css/grid/listgrid.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/entity/entity.css}" href="../../css/entity/entity.css"/>
 
 </head>
 
@@ -164,14 +171,15 @@
     </div>
     <div class="entity-content-main" th:fragment="entity_main">
     <section id="contentEntityListContainer" th:fragment="entity_list">
-      <div class="row" id="entitySearch"  th:inline="text">
+      <div class="entity-listgrid-action-row row" id="entitySearch"  th:inline="text"
+          th:with="gridData=${listGridData}">
         <div class="col-xs-7">
           <form class="custom-entity-search" th:action="${current.url}" method="get">
             <div class="row">
               <div class="col-xs-6">
                 <input style="" type="search"
                        class="form-control"
-                       th:placeholder="#{general.Search_Placeholder(#{${entitylist.classEdo.friendlyName}},#{${entitylist.classEdo.primaryGridSearchField.friendlyName}})}"
+                       th:placeholder="#{general.Search_Placeholder(#{${gridData.classEdo.friendlyName}},#{${gridData.classEdo.primaryGridSearchField.friendlyName}})}"
                        placeholder="Search Placeholder" />
               </div>
               <div class="btn-group col-xs-6">
@@ -193,7 +201,7 @@
           </div>
         </div>
       </div>
-      <div th:replace="components/listgrid"/>
+      <div th:include="components/listgrid :: full_listgrid" th:with="entitylist=${listGridData}"/>
 
     </section>
     <section id="contentEntityFormContainer" th:fragment="entity_form">
@@ -206,16 +214,28 @@
 <footer th:fragment="entity_footer">
 
   <!-- <script src="//jquery.com/jquery-wp-content/themes/jquery/js/jquery-1.11.2.min.js"></script> -->
-  <script type="text/javascript" th:src="@{/js/jquery-2.1.4.js}" src="../../js/jquery-2.1.4.js"></script>
-  <!-- <script type="text/javascript" th:src="@{/js/jquery-2.1.4.min.js}" src="../../js/jquery-2.1.4.min.js"></script> -->
-  <script type="text/javascript" th:src="@{/css/bootstrap-3.3.4/js/bootstrap.min.js}"
-          src="../../css/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+  <!-- Libs -->
+  <script type="text/javascript" th:src="@{/lib/jquery/jquery-2.1.4.min.js}"
+          src="../../lib/jquery/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" th:src="@{/lib/jquery/plugins/jquery.custom-scrollbar.min.js}"
+          src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
+  <script type="text/javascript" th:src="@{/lib/bootstrap-3.3.4/js/bootstrap.min.js}"
+          src="../../lib/bootstrap-3.3.4/js/bootstrap.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/foundation/js/foundation/foundation.js}"
           src="../../lib/foundation/js/foundation/foundation.js"></script>
   <script type="text/javascript" th:src="@{/lib/foundation/js/foundation/foundation.accordion.js}"
           src="../../lib/foundation/js/foundation/foundation.accordion.js"></script>
-  <script type="text/javascript" th:src="@{/js/menu/nav-menu.js}"
-          src="../../js/menu/nav-menu.js"></script>
+
+  <!-- Components -->
+  <script type="text/javascript" th:src="@{/js/component/menu/nav-menu.js}"
+          src="../../js/component/menu/nav-menu.js"></script>
+  <script type="text/javascript" th:src="@{/js/component/listgrid/listgrid.js}"
+          src="../../js/component/listgrid/listgrid.js"></script>
+
+  <!-- Page logic -->
+  <script type="text/javascript" th:src="@{/js/tallybook.js}"
+          src="../../js/tallybook.js"></script>
+
   <script type="text/javascript" th:src="@{/js/admin/admin-init.js}"
           src="../../js/admin/admin-init.js"></script>
 

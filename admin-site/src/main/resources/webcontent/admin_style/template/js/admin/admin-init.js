@@ -7,7 +7,8 @@
     var $doc = $(document);
 
     $(document).ready(function() {
-        $.fn.menuAccordion ? $doc.menuAccordion() : null;
+        $.fn.menuAccordionInit ? $doc.menuAccordionInit() : null;
+        $.fn.listGridInit ? $doc.listGridInit() : null;
     });
 
 })(jQuery, this);

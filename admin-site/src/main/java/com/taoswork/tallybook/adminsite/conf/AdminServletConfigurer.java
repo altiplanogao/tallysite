@@ -36,6 +36,10 @@ public class AdminServletConfigurer extends WebMvcConfigurerAdapter {
                 .addResourceLocations(
                         "classpath:/webcontent/admin_style/template/img/",
                         "/webcontent/admin_style/template/img/");
+        registry.addResourceHandler("/lib/**")
+                .addResourceLocations(
+                        "classpath:/webcontent/admin_style/template/lib/",
+                        "/webcontent/admin_style/template/lib/");
         registry.addResourceHandler("/css/**")
                 .addResourceLocations(
                         "classpath:/webcontent/admin_style/template/css/",

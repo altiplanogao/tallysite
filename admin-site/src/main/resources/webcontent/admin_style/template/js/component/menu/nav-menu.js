@@ -3,14 +3,8 @@
  */
 ;(function($, window, undefined) {
     'use strict';
-    $.fn.menuAccordion = function (options){
+    $.fn.menuAccordionInit = function (options){
         var initMenu = function(){
-/*
-            $.each($('nav > ul.nav-menu > li.menu-group > .menu-group-title'), function(key, value){
-                var group = $(value).parent('li.menu-group');
-                group.toggleClass("active");
-            } )
-*/
             ($('nav > ul.nav-menu > li.menu-group > .menu-group-title')).on('click', function(){
                 $(this).parent('li.menu-group').toggleClass("active");
             });
