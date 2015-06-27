@@ -18,12 +18,13 @@
 <body>
 <div th:fragment="full_listgrid">
   <div class="listgrid-container" data-listgrid-align-type="window"
-       data-listgrid-align-offset="50">
+       data-listgrid-align-offset="50"
+       th:with="entityGridInfo=${listGridData.entityInfos['grid']}, entities=${listGridData.entities}">
     <div class="listgrid-header-wrapper" th:inline="text">
-      <table class="table table-condensed table-hover" th:classappend="${entitylist.classEdo.name}">
+      <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
         <tr>
-          <th th:each="gridField : ${entitylist.classEdo.gridFields}"
+          <th th:each="gridField : ${entityGridInfo.fields}"
               th:if="${gridField.gridVisible}"
               class="listgrid-column explicit-size width-ignored"
               scope="col">
@@ -69,7 +70,7 @@
     </div>
 
     <div class="listgrid-body-wrapper default-skin ">
-      <table class="listgrid-table table table-condensed table-hover" th:classappend="${entitylist.classEdo.name}">
+      <table class="listgrid-table table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
         <tr class="width-control-header">
           <th>
@@ -103,9 +104,9 @@
         </tr>
         </thead>
         <tbody style="" class="real-data">
-        <tr th:each="entity : ${entitylist.entities}">
+        <tr th:each="entity : ${entities}">
 
-          <td th:each="gridField : ${entitylist.classEdo.gridFields}"
+          <td th:each="gridField : ${entityGridInfo.fields}"
               th:if="${gridField.gridVisible}"
               th:with="property=${entity.getProperty(gridField.name)}">
               <span th:if="${gridField.nameField}">

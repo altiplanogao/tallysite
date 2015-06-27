@@ -172,14 +172,14 @@
     <div class="entity-content-main" th:fragment="entity_main">
     <section id="contentEntityListContainer" th:fragment="entity_list">
       <div class="entity-listgrid-action-row row" id="entitySearch"  th:inline="text"
-          th:with="gridData=${listGridData}">
+          th:with="entityGridInfo=${entityResponse.entityInfos['grid']}">
         <div class="col-xs-7">
           <form class="custom-entity-search" th:action="${current.url}" method="get">
             <div class="row">
               <div class="col-xs-6">
                 <input style="" type="search"
                        class="form-control"
-                       th:placeholder="#{general.Search_Placeholder(#{${gridData.classEdo.friendlyName}},#{${gridData.classEdo.primaryGridSearchField.friendlyName}})}"
+                       th:placeholder="#{general.Search_Placeholder(#{${entityGridInfo.friendlyName}},#{${entityGridInfo.fetchPrimarySearchFieldFriendlyName()}})}"
                        placeholder="Search Placeholder" />
               </div>
               <div class="btn-group col-xs-6">
@@ -201,7 +201,7 @@
           </div>
         </div>
       </div>
-      <div th:include="components/listgrid :: full_listgrid" th:with="entitylist=${listGridData}"/>
+      <div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse}"/>
 
     </section>
     <section id="contentEntityFormContainer" th:fragment="entity_form">
