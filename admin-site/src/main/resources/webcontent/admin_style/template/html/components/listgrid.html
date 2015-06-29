@@ -16,10 +16,13 @@
 
 </head>
 <body>
-<div th:fragment="full_listgrid">
-  <div class="listgrid-container" data-listgrid-align-type="window"
-       data-listgrid-align-offset="50"
-       th:with="entityGridInfo=${listGridData.entityInfos['grid']}, entities=${listGridData.entities}">
+<div th:fragment="full_listgrid"  data-listgrid-align-type="window"
+     data-listgrid-align-offset="50">
+  <div class="listgrid-container"
+       th:with="entityGridInfo=${listGridData.entityInfos['grid']}, entities=${listGridData.entities}"
+       th:attr="data-recordranges=${listGridData.startIndex + '-' + (listGridData.startIndex + #lists.size(listGridData.entities))},
+                        data-totalrecords=${listGridData.totalCount},
+                        data-pagesize=${listGridData.pageSize}">
     <div class="listgrid-header-wrapper" th:inline="text">
       <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
@@ -72,38 +75,9 @@
     <div class="listgrid-body-wrapper default-skin ">
       <table class="listgrid-table table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
-        <tr class="width-control-header">
-          <th>
-          </th>
-          <!--/*-->
-          <th scope="col" data-columnwidth="300px" style="padding-right: 20px; width: 343px;"
-              class="listgrid-column explicit-size width-ignored">
-            <div href="" class=" split dropdown">
-              <div class="listgrid-column-title">Name
-                <div class="listgrid-column-filter-sort-container">
-                  <i class="fa fa-sort"></i>
-                  <i class="fa fa-filter"></i>
-                </div>
-              </div>
-              <div class="resizer">||</div>
-            </div>
-          </th>
-          <th scope="col" data-columnwidth="300px" style="padding-right: 20px; width: 343px;"
-              class="listgrid-column explicit-size width-ignored">
-            <div href="" class=" split dropdown">
-              <div class="listgrid-column-title">Name
-                <div class="listgrid-column-filter-sort-container">
-                  <i class="fa fa-sort"></i>
-                  <i class="fa fa-filter"></i>
-                </div>
-              </div>
-              <div class="resizer">||</div>
-            </div>
-          </th>
-          <!--*/-->
-        </tr>
+        <tr class="width-control-header"></tr>
         </thead>
-        <tbody style="" class="real-data">
+        <tbody class="real-data">
         <tr th:each="entity : ${entities}">
 
           <td th:each="gridField : ${entityGridInfo.fields}"
@@ -131,12 +105,10 @@
     <div class="listgrid-footer-wrapper">
       <div class="listgrid-table-footer">
           <span class="listgrid-table-footer-message">
-            <span class="low-index">32</span>
-            -
-            <span class="high-index">44</span>
-            <span>of</span>
-            <span class="total-records">60</span>
-            <span>records</span>
+            <span class="screen-range-of-results"
+                th:utext="#{general.ScreenRange_OfResults_Unescaped(${listGridData.startIndex+1},
+                 ${listGridData.startIndex + #lists.size(listGridData.entities)},
+                 ${listGridData.totalCount})}"/>
           </span>
       </div>
 
