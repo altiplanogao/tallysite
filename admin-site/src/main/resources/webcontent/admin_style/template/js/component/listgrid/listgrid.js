@@ -30,11 +30,6 @@
         };
 
         ListGrid.prototype = {
-            updateGridSize : function(){
-                this.updateBodyHeight();
-                this.addScrollableSupport();
-                this.updateHeaderWidth();
-            },
 
             updateHeaderWidth: function () {
                 var bodyTable = this.$container.find(LISTGRID_BODY_TABLE);
@@ -68,18 +63,12 @@
                 }
             },
 
-            addScrollableSupport: function () {
+            resize : function(){
+                this.updateBodyHeight();
                 var bodyWrapper = this.$container.find(LISTGRID_BODY);
                 var $this = this;
-                bodyWrapper.customScrollbar({
-                    onCustomScroll: function(event, scrollData) {
-                        $this.paging.updateTableFooter($this.$container.find(LISTGRID_BODY_TABLE + ' tbody'));
-                    }
-                });
-            },
-
-            resize : function(){
-                this.updateGridSize();
+                bodyWrapper.customScrollbar("resize", true);
+                this.updateHeaderWidth();
             },
 
             initialize: function () {
@@ -87,7 +76,15 @@
                     if (this.$container.hasClass(LISTGRID_CONTAINER_INITIALIZED_FLAG)) {
                         return;
                     }
-                    this.updateGridSize();
+                    this.updateBodyHeight();
+                    var bodyWrapper = this.$container.find(LISTGRID_BODY);
+                    var $this = this;
+                    bodyWrapper.customScrollbar({
+                        onCustomScroll: function(event, scrollData) {
+                            $this.paging.updateTableFooter($this.$container.find(LISTGRID_BODY_TABLE + ' tbody'));
+                        }
+                    });
+                    this.updateHeaderWidth();
 
                     this.paging = new Paging(this);
                     this.paging.initialize();
