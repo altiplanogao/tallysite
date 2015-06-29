@@ -5,11 +5,13 @@
     var LISTGRID_SEL_CONTAINER_CLASS = "div.listgrid-container";
 
     $.fn.initListGrid = function (){
-        var LISTGRID_CONTAINER = "listgrid-container";
+        var LISTGRID_CONTAINER = "div.listgrid-container";
+        var LISTGRID_CONTAINER_CLASS = "listgrid-container";
         var LISTGRID_CONTAINER_INITIALIZED_FLAG = "listgrid-container-initialized";
         var LISTGRID_HEADER_TABLE = "div.listgrid-header-wrapper > table";
         var LISTGRID_BODY = "div.listgrid-body-wrapper";
         var LISTGRID_BODY_TABLE = "div.listgrid-body-wrapper table";
+        var LISTGRID_FOOTER = "div.listgrid-footer-wrapper"
 
         var tableColumnResizing = {
             active : false,
@@ -68,7 +70,12 @@
 
             addScrollableSupport: function () {
                 var bodyWrapper = this.$container.find(LISTGRID_BODY);
-                bodyWrapper.customScrollbar();
+                var $this = this;
+                bodyWrapper.customScrollbar({
+                    onCustomScroll: function(event, scrollData) {
+                        $this.paging.updateTableFooter($this.$container.find(LISTGRID_BODY_TABLE + ' tbody'));
+                    }
+                });
             },
 
             resize : function(){
@@ -76,7 +83,7 @@
             },
 
             initialize: function () {
-                if (this.$container.hasClass(LISTGRID_CONTAINER)) {
+                if (this.$container.hasClass(LISTGRID_CONTAINER_CLASS)) {
                     if (this.$container.hasClass(LISTGRID_CONTAINER_INITIALIZED_FLAG)) {
                         return;
                     }
@@ -104,15 +111,56 @@
         };
 
         Paging.prototype = {
+            // ************************* *
+            // UTILITY *
+            // ************************* *
             getRange : function(rangeDescription) {
                 var range = rangeDescription.split('-');
                 var rangeObj = {lo : parseInt(range[0]), hi : parseInt(range[1])};
                 return rangeObj;
             },
 
+            // ************************* *
+            // entity data method *
+            // ************************* *
+            getTotalRecords : function($tbody){
+                var $container = $tbody.closest(LISTGRID_CONTAINER);
+                return $container.data('totalrecords');
+            },
+
+            getLoadedRecordRange : function($container){
+                var rangeDescriptions = $container.data('recordranges').split(',');
+                var ranges = [];
+
+                for (var i = 0; i < rangeDescriptions.length; i++) {
+                    ranges[i] = this.getRange(rangeDescriptions[i]);
+                }
+
+                return ranges;
+            },
+
+            // ************************* *
+            // UI method *
+            // ************************* *
             getRowHeight : function($tbody){
                 var $row = $tbody.find('tr:not(.blank-padding):first');
                 return $row.height();
+            },
+
+            getTopVisibleIndex : function($tbody){
+                var $overview = $tbody.closest('div.overview');
+                var offset = -$overview.position().top;
+                var rowHeight = this.getRowHeight($tbody);
+                return Math.floor(offset / rowHeight);
+            },
+
+            getBottomVisibleIndex : function($tbody){
+                var $overview = $tbody.closest('div.overview');
+                var $viewport = $overview.closest('div.viewport');
+                var offset = 0 - $overview.position().top; //avoid -0
+                var viewportHeight = $viewport.height()
+                var rowHeight = this.getRowHeight($tbody);
+                return Math.ceil((offset + viewportHeight) / rowHeight);
             },
 
             createPadding : function($tbody, startRange, endRange){
@@ -129,21 +177,6 @@
                 return $pad;
             },
 
-            getTotalRecords : function($container){
-                return $container.data('totalrecords');
-            },
-
-            getLoadedRecordRange : function($container){
-                var rangeDescriptions = $container.data('recordranges').split(',');
-                var ranges = [];
-
-                for (var i = 0; i < rangeDescriptions.length; i++) {
-                    ranges[i] = this.getRange(rangeDescriptions[i]);
-                }
-
-                return ranges;
-            },
-
             scrollToIndex : function($tbody, index){
                 var offset = index * this.getRowHeight($tbody);
                 //console.log('scrolling to ' + offset);
@@ -151,6 +184,22 @@
                 var bodyWrapper = this.$container.find(LISTGRID_BODY);
                 bodyWrapper.customScrollbar("scrollToY", offset);
             },
+
+            updateTableFooter : function($tbody){
+                var topIndex = this.getTopVisibleIndex($tbody);
+                var bottomIndex = this.getBottomVisibleIndex($tbody);
+                var totalCount = this.getTotalRecords($tbody);
+
+                var $footer = $tbody.closest(LISTGRID_CONTAINER).find(LISTGRID_FOOTER);
+                $footer.find('.low-index').text(topIndex + 1);
+                $footer.find('.high-index').text(bottomIndex);
+                $footer.find('.total-records').text(totalCount);
+            },
+
+
+            // ************************* *
+            // Initialize *
+            // ************************* *
 
             initialize : function(){
                 var headerTable = this.$container.find(LISTGRID_HEADER_TABLE);
@@ -173,7 +222,7 @@
 
                 var range = this.getLoadedRecordRange(this.$container)[0];
                 var recordsAbove = range.lo;
-                var recordsBelow = this.getTotalRecords(this.$container) - range.hi;
+                var recordsBelow = this.getTotalRecords($tbody) - range.hi;
                 var rowHeight = this.getRowHeight($tbody);
 
                 if(recordsAbove) {
@@ -183,7 +232,7 @@
                     this.scrollToIndex($tbody, range.lo);
                 }
                 if (recordsBelow) {
-                    var $pad = this.createPadding($tbody, range.hi, this.getTotalRecords(this.$container));
+                    var $pad = this.createPadding($tbody, range.hi, this.getTotalRecords($tbody));
                     $tbody.find('tr:last').after($pad);
                 }
 
@@ -191,6 +240,7 @@
                 bodyWrapper.customScrollbar("resize", true);
 
                 this.scrollToIndex($tbody, range.lo);
+                this.updateTableFooter($tbody);
             }
         };
 
