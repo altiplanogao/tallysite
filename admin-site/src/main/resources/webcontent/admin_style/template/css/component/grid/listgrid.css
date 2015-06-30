@@ -139,3 +139,9 @@ span.listgrid-table-spinner-container {
 div.listgrid-container > div.listgrid-body-wrapper .viewport .overview {
     position: inherit;
 }
+
+
+i.listgrid-table-spinner{
+    position: absolute;
+    font-size: 20px;
+}

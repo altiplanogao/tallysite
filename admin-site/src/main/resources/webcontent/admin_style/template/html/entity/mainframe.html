@@ -207,6 +207,7 @@
         </div>
       </div>
       <div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse}"
+
            data-listgrid-align-type="window"
            data-listgrid-align-offset="50"/>
 
@@ -226,6 +227,8 @@
           src="../../lib/jquery/jquery-2.1.4.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/jquery-ui/jquery-ui.js}"
           src="../../lib/jquery-ui/jquery-ui.js"></script>
+  <script type="text/javascript" th:src="@{/lib/jquery/plugins/jquery.ba-dotimeout.min.js}"
+          src="../../lib/jquery/plugins/jquery.ba-dotimeout.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/jquery/plugins/jquery.custom-scrollbar.min.js}"
           src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/bootstrap-3.3.4/js/bootstrap.min.js}"

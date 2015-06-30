@@ -19,10 +19,7 @@
 <div th:fragment="full_listgrid"  data-listgrid-align-type="window"
      data-listgrid-align-offset="50">
   <div class="listgrid-container"
-       th:with="entityGridInfo=${listGridData.entityInfos['grid']}, entities=${listGridData.entities}"
-       th:attr="data-recordranges=${listGridData.startIndex + '-' + (listGridData.startIndex + #lists.size(listGridData.entities))},
-                        data-totalrecords=${listGridData.totalCount},
-                        data-pagesize=${listGridData.pageSize}">
+       th:with="entityGridInfo=${listGridData.entityInfos['grid']}, entities=${listGridData.entities}">
     <div class="listgrid-header-wrapper" th:inline="text">
       <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
@@ -77,7 +74,12 @@
         <thead>
         <tr class="width-control-header"></tr>
         </thead>
-        <tbody class="real-data">
+        <tbody class="real-data"
+               th:attr="data-recordranges=${listGridData.startIndex + '-' + (listGridData.startIndex + #lists.size(listGridData.entities))},
+                        data-totalrecords=${listGridData.totalCount},
+                        data-pagesize=${listGridData.pageSize},
+                        data-baseurl=${listGridData.baseUrl}"
+            data-recordranges="0-1,2-3">
         <tr th:each="entity : ${entities}">
 
           <td th:each="gridField : ${entityGridInfo.fields}"
@@ -115,7 +117,7 @@
     </div>
 
   <span class="listgrid-table-spinner-container">
-    <i class="listgrid-table-spinner icon-spin icon-spinner"></i>
+    <i class="listgrid-table-spinner fa fa-spin fa-spinner"></i>
   </span>
   </div>
 </div>
