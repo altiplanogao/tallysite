@@ -24,12 +24,13 @@
       <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
         <tr>
-          <th th:each="gridField : ${entityGridInfo.fields}"
-              th:if="${gridField.gridVisible}"
+          <th th:each="field : ${entityGridInfo.fields}"
+              th:if="${field.gridVisible}"
               class="listgrid-column explicit-size width-ignored"
               scope="col">
             <div href="#" class=" split dropdown">
-              <div class="listgrid-column-title">[[#{${gridField.friendlyName}}]]
+              <div class="listgrid-column-title">
+                [[#{${field.friendlyName}}]]
                 <div class="listgrid-column-filter-sort-container">
                   <i class="fa fa-sort"></i>
                   <i class="fa fa-filter"></i>
@@ -80,16 +81,24 @@
                         data-pagesize=${listGridData.pageSize},
                         data-baseurl=${listGridData.baseUrl}"
             data-recordranges="0-1,2-3">
-        <tr th:each="entity : ${entities}">
+        <tr th:if="${#lists.isEmpty(entities)}"  th:inline="text" class="empty-mark">
+          <td th:colspan="${#lists.size(entityGridInfo.fields) + 1}" class="list-grid-no-results">
+            [[#{general.NoRecordsFound}]]
+          </td>
+        </tr>
+        <tr th:each="entity : ${entities}"
+            th:attr="data-entity-id=${entity.id}, data-entity-type=${entity.type}, data-entity-path=${entity.path}, data-entity-name=${entity.name}">
 
-          <td th:each="gridField : ${entityGridInfo.fields}"
-              th:if="${gridField.gridVisible}"
-              th:with="property=${entity.getProperty(gridField.name)}">
-              <span th:if="${gridField.nameField}">
+          <td th:each="field : ${entityGridInfo.fields}"
+              th:if="${field.gridVisible}"
+              th:with="property=${entity.getProperty(field.name)}"
+              th:attr="data-fieldname=${field.name},data-fieldvalue=${property.value}"
+              >
+              <span th:if="${field.nameField}">
                 <a th:href="@{${entity.path}}" th:text="${property.displayValue}"></a>
               </span>
-              <span th:unless="${gridField.nameField}"
-                    th:switch="${gridField.fieldType.typeName}">
+              <span th:unless="${field.nameField}"
+                    th:switch="${field.fieldType.typeName}">
                 <span th:case="EMAIL">
                   <a th:href="@{mailto:{email}(email=${property.value})}" th:text="${property.value}"></a>
                 </span>

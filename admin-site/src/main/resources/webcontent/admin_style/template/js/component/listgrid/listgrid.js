@@ -250,8 +250,12 @@
                         var offset = containerHolder.data("listgrid-align-offset");
                         var bodyWrapper = this.$container.find(LISTGRID_BODY);
                         var wrapperMaxHeight = $window.innerHeight() - (bodyWrapper.offset().top) - offset;
+                        var actualHeight = Math.min(bodyWrapper.find("tbody").height(), wrapperMaxHeight);
                         bodyWrapper.css('max-height', wrapperMaxHeight);
-                        bodyWrapper.css('height', wrapperMaxHeight);
+                        bodyWrapper.find('.viewport').css('max-height', wrapperMaxHeight);
+                        bodyWrapper.css('height', actualHeight);
+                        bodyWrapper.find('.viewport').css('height', actualHeight);
+//                        bodyWrapper.css('height', wrapperMaxHeight);
                         break;
                     }
                 }
@@ -263,6 +267,7 @@
                 var $this = this;
                 bodyWrapper.customScrollbar("resize", true);
                 this.updateHeaderWidth();
+                this.paging.updateTableFooter(bodyWrapper.find("tbody"));
             },
 
             initialize: function () {
@@ -274,10 +279,10 @@
                     var bodyWrapper = this.$container.find(LISTGRID_BODY);
                     var $this = this;
                     bodyWrapper.customScrollbar({
+                        //updateOnWindowResize: true,
                         onCustomScroll: function(event, scrollData) {
                             $this.paging.updateTableFooter($this.$container.find(LISTGRID_BODY_TABLE + ' tbody'));
                             $this.paging.triggerLoad($this.$container);
-
                         }
                     });
                     this.updateHeaderWidth();
@@ -344,11 +349,9 @@
             },
             addLoadedRecordRange : function ($tbody, range) {
                 var ranges = this.getLoadedRecordRanges($tbody);
-                console.trace("range change from: " + ranges);
                 Ranges.addRange(ranges, range);
                 ranges = Ranges.merge(ranges);
                 var rangesString = ranges.join(',');
-                console.trace("range change to: " + rangesString);
                 $tbody.data('recordranges', rangesString);
             },
             getPageSize : function($tbody) {
@@ -359,7 +362,7 @@
             // UI method *
             // ************************* *
             getRowHeight : function($tbody){
-                var $row = $tbody.find('tr:not(.blank-padding):first');
+                var $row = $tbody.find('tr:not(.blank-padding):not(.empty-mark):first');
                 return $row.height();
             },
 
@@ -367,15 +370,22 @@
                 var $overview = $tbody.closest('div.overview');
                 var offset = -$overview.position().top;
                 var rowHeight = this.getRowHeight($tbody);
+                if(rowHeight == null){
+                        return 0;
+                }
                 return Math.floor(offset / rowHeight);
             },
 
             getBottomVisibleIndex : function($tbody){
+                var rowHeight = this.getRowHeight($tbody);
+                if(rowHeight == null){
+                        return 0;
+                }
                 var $overview = $tbody.closest('div.overview');
                 var $viewport = $overview.closest('div.viewport');
                 var offset = 0 - $overview.position().top; //avoid -0
                 var viewportHeight = $viewport.height()
-                var rowHeight = this.getRowHeight($tbody);
+                
                 return Math.ceil((offset + viewportHeight) / rowHeight);
             },
 
@@ -421,9 +431,17 @@
                 var topIndex = this.getTopVisibleIndex($tbody);
                 var bottomIndex = this.getBottomVisibleIndex($tbody);
                 var totalCount = this.getTotalRecords($tbody);
+                var humanTopIndex = topIndex + 1;
+                var rowHeight = this.getRowHeight($tbody);
+                if(rowHeight == null){
+                        humanTopIndex = 0;
+                }
+                if(topIndex > bottomIndex){
+                        bottomIndex = topIndex;
+                }
 
                 var $footer = $tbody.closest(LISTGRID_CONTAINER).find(LISTGRID_FOOTER);
-                $footer.find('.low-index').text(topIndex + 1);
+                $footer.find('.low-index').text(humanTopIndex);
                 $footer.find('.high-index').text(bottomIndex);
                 $footer.find('.total-records').text(totalCount);
             },
@@ -440,7 +458,8 @@
 
                 var $tbody = $container.find(LISTGRID_BODY_TABLE + ' tbody');
                 // If we can't see the list grid at all, don't load anything
-                if (!$tbody.is(':visible')) {
+                var totalRecords = this.getTotalRecords($tbody);
+                if ((!$tbody.is(':visible')) || (totalRecords == 0)) {
                     this.releaseLock();
                     return false;
                 }
@@ -448,14 +467,13 @@
                 var topIndex = this.getTopVisibleIndex($tbody);
                 var botIndex = this.getBottomVisibleIndex($tbody);
                 var dataWindowRange = new Range(topIndex, botIndex);
-                var ranges = this.getLoadedRecordRanges($tbody);
+                var loadedRanges = this.getLoadedRecordRanges($tbody);
                 var pageSize = this.getPageSize($tbody);
-                var totalRecords = this.getTotalRecords($tbody);
 
-                var topIndexLoaded = Ranges.containsIndex(ranges,topIndex);
-                var botIndexLoaded = Ranges.containsIndex(ranges,botIndex);
+                var topIndexLoaded = Ranges.containsIndex(loadedRanges,topIndex);
+                var botIndexLoaded = Ranges.containsIndex(loadedRanges,botIndex);
 
-                var missingRanges = Ranges.findMissingRangesWithin(ranges,topIndex, botIndex);
+                var missingRanges = Ranges.findMissingRangesWithin(loadedRanges,topIndex, botIndex);
                 if(missingRanges.length > 0){
                     var baseUrl = this.getBaseUrl($tbody);
                     baseUrl = window.location.origin + '/' +baseUrl;

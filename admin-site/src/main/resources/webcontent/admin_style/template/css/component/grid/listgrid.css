@@ -36,6 +36,10 @@ div.listgrid-header-wrapper table > thead{
      border-top: 1px solid #DDD;
      */
 }
+div.listgrid-header-wrapper thead tr>th.listgrid-column{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 div.listgrid-header-wrapper thead tr>th.listgrid-column .listgrid-column-title{
     display: inline;
 }
@@ -144,4 +148,13 @@ div.listgrid-container > div.listgrid-body-wrapper .viewport .overview {
 i.listgrid-table-spinner{
     position: absolute;
     font-size: 20px;
+}
+
+td.list-grid-no-results{
+    margin-bottom: 18px;
+    text-align: center;
+}
+
+div.listgrid-container div.listgrid-body-wrapper.scrollable.default-skin {
+    padding-bottom: 0px;
 }
