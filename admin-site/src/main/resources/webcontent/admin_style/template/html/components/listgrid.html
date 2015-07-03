@@ -19,7 +19,7 @@
 <div th:fragment="full_listgrid"  data-listgrid-align-type="window"
      data-listgrid-align-offset="50">
   <div class="listgrid-container"
-       th:with="entityGridInfo=${listGridData.entityInfos['grid']}, entities=${listGridData.entities}">
+       th:with="entityGridInfo=${listGridData.infos['grid']}, entities=${listGridData.entities}">
     <div class="listgrid-header-wrapper" th:inline="text">
       <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>

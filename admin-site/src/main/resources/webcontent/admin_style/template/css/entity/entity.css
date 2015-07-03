@@ -12,6 +12,10 @@ section#contentContainer {
     position: relative;
 }
 
+section#contentContainer > div.raw-data {
+    display: none;
+}
+
 section#contentContainer .entity-content-breadcrumbs{
     margin-left: 0;
     background: #fff;

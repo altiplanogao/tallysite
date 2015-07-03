@@ -165,6 +165,7 @@
   </section>
 
   <section id="contentContainer" th:fragment="entity_content">
+    <div class="raw-data"><p th:attr="data-raw-data=${rawdata}" ></p></div>
     <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
       <ol class="breadcrumb">
         <li>[[#{${current.menuGroup.key}}]]</li>
@@ -177,7 +178,7 @@
     <div class="entity-content-main" th:fragment="entity_main">
     <section id="contentEntityListContainer" th:fragment="entity_list">
       <div class="entity-listgrid-action-row row" id="entitySearch"  th:inline="text"
-          th:with="entityGridInfo=${entityResponse.entityInfos['grid']}">
+          th:with="entityGridInfo=${entityResponse.infos['grid']}">
         <div class="col-xs-7">
           <form class="custom-entity-search" th:action="${current.url}" method="get">
             <div class="row">
@@ -206,8 +207,11 @@
           </div>
         </div>
       </div>
-      <div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse}"
+      <!--<div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse}"-->
 
+           <!--data-listgrid-align-type="window"-->
+           <!--data-listgrid-align-offset="50"/>-->
+      <div th:include="components/listgrid-dynamic :: full_listgrid" data-list-grid-source-name="entities"
            data-listgrid-align-type="window"
            data-listgrid-align-offset="50"/>
 
@@ -239,6 +243,8 @@
           src="../../lib/foundation/js/foundation/foundation.accordion.js"></script>
 
   <!-- Components -->
+  <script type="text/javascript" th:src="@{/js/entity/entity.js}"
+          src="../../js/entity/entity.js"></script>
   <script type="text/javascript" th:src="@{/js/component/menu/nav-menu.js}"
           src="../../js/component/menu/nav-menu.js"></script>
   <script type="text/javascript" th:src="@{/js/component/listgrid/listgrid.js}"

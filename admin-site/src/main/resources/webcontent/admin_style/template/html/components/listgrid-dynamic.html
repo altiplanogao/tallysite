@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css"
+        href="../../lib/font-awesome-4.3.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css"
+        href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
+
+  <link rel="stylesheet" type="text/css" href="../../css/foundation.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/admin.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/admin-layout.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/component/grid/listgrid.css"/>
+  <link rel="stylesheet" type="text/css" href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
+
+
+</head>
+<body>
+<div th:fragment="full_listgrid">
+  <div class="listgrid-container entitygrid-autofill">
+    <div class="listgrid-header-wrapper">
+      <table class="table table-condensed table-hover">
+        <thead class="entitygrid-header">
+        <tr></tr>
+        </thead>
+      </table>
+    </div>
+
+    <div class="listgrid-body-wrapper default-skin ">
+      <table class="listgrid-table table table-condensed table-hover">
+        <thead>
+        <tr class="width-control-header"></tr>
+        </thead>
+        <tbody class="real-data entitygrid-body"
+               data-recordranges="0-0,0-0"
+                        data-totalrecords="0"
+                        data-pagesize="0"
+                        data-baseurl="/">
+        <tr class="empty-mark">
+          <td colspan="${#lists.size(entityGridInfo.fields) + 1}" class="list-grid-no-results" th:inline="text">
+            [[#{general.NoRecordsFound}]]
+          </td>
+        </tr>
+        <tr data-entity-id="0" data-entity-type="xx.xx.xx.Xxx" data-entity-path="/xx/0"
+            data-entity-name="Name">
+        </tr>
+        </tbody>
+      </table>
+
+    </div>
+
+    <div class="listgrid-footer-wrapper">
+      <div class="listgrid-table-footer">
+          <span class="listgrid-table-footer-message">
+            <span class="screen-range-of-results"
+                th:utext="#{general.ScreenRange_OfResults_Unescaped}"/>
+          </span>
+      </div>
+
+    </div>
+
+  <span class="listgrid-table-spinner-container">
+    <i class="listgrid-table-spinner fa fa-spin fa-spinner"></i>
+  </span>
+  </div>
+</div>
+
+<footer>
+  <script type="text/javascript" src="../../lib/jquery/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
+  <script type="text/javascript" src="../../js/component/listgrid/listgrid.js"></script>
+  <script type="text/javascript" src="../../js/admin/admin-init.js"></script>
+
+</footer>
+</body>
+</html>
