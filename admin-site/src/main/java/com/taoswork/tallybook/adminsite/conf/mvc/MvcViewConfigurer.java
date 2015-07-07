@@ -73,13 +73,15 @@ public class MvcViewConfigurer {
             Resource[] resources = resolver.getResources(
                     //ResourceUtils.CLASSPATH_URL_PREFIX +
                     ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-                            "/entitymessages/*.properties");
+                            "/entity-messages/**/*.properties");
             i18nMessageFileArranger arranger = new i18nMessageFileArranger();
             for (Resource res : resources) {
                 try {
-                    String respath = res.getFilename();
-                    respath = "/entitymessages/" + respath;
-                    arranger.add(respath);
+//                    String respath = res.getFilename();
+                    String respath = res.getURI().getPath();
+                    int offset = respath.indexOf("/entity-messages/");
+                    String workoutPath = respath.substring(offset);
+                    arranger.add(workoutPath);
                 } catch (Exception e) {
                     LOGGER.error("Resource '{}' failed to return path.", res.getURI());
                 }

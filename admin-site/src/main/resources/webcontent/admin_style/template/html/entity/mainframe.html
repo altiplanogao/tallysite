@@ -178,7 +178,7 @@
     <div class="entity-content-main" th:fragment="entity_main">
     <section id="contentEntityListContainer" th:fragment="entity_list">
       <div class="entity-listgrid-action-row row" id="entitySearch"  th:inline="text"
-          th:with="entityGridInfo=${entityResponse.infos['grid']}">
+          th:with="entityGridInfo=${entityInfoResponse.details['grid']}">
         <div class="col-xs-7">
           <form class="custom-entity-search" th:action="${current.url}" method="get">
             <div class="row">
@@ -207,11 +207,11 @@
           </div>
         </div>
       </div>
-      <!--<div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse}"-->
+      <!--<div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
 
            <!--data-listgrid-align-type="window"-->
            <!--data-listgrid-align-offset="50"/>-->
-      <div th:include="components/listgrid-dynamic :: full_listgrid" data-list-grid-source-name="entities"
+      <div th:include="components/listgrid-dynamic :: full_listgrid" data-list-grid-source-name="details"
            data-listgrid-align-type="window"
            data-listgrid-align-offset="50"/>
 
