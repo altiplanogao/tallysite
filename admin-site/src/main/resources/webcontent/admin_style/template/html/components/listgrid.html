@@ -19,7 +19,7 @@
 <div th:fragment="full_listgrid"  data-listgrid-align-type="window"
      data-listgrid-align-offset="50">
   <div class="listgrid-container"
-       th:with="entityGridInfo=${listGridInfo.infos['grid']}, entities=${listGridData.entities}">
+       th:with="entityGridInfo=${listGridInfo.details['grid']}, entities=${listGridData.entities}">
     <div class="listgrid-header-wrapper" th:inline="text">
       <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
@@ -86,8 +86,9 @@
             [[#{general.NoRecordsFound}]]
           </td>
         </tr>
-        <tr th:each="entity : ${entities}"
-            th:attr="data-entity-id=${entity.id}, data-entity-type=${entity.type}, data-entity-path=${entity.path}, data-entity-name=${entity.name}">
+        <tr th:each="entity,iterStat : ${entities}"
+            th:class="data-row"
+            th:attr="data-entity-index=${listGridData.startIndex+iterStat.index}, data-entity-id=${entity.id}, data-entity-type=${entity.type}, data-entity-path=${entity.path}, data-entity-name=${entity.name}">
 
           <td th:each="field : ${entityGridInfo.fields}"
               th:if="${field.gridVisible}"

@@ -353,6 +353,7 @@
         Ranges.addRange(ranges, range);
         ranges = Ranges.merge(ranges);
         var rangesString = ranges.join(',');
+        $tbody.attr('data-recordranges', rangesString);
         $tbody.data('recordranges', rangesString);
       },
       getPageSize: function ($tbody) {
@@ -511,7 +512,10 @@
         $.ajax({
           url: url, success: function (data) {
             var $data = $(data);
-            var $newTbody = $data.find('tbody');
+            var $newTbody = null;
+            //test if the page depends on the entity.js
+            var handled = $.entityOperator().grid.tryToFill($data);
+            $newTbody = $data.find('tbody');
             $paging.injectRecords($tbody, $newTbody);
             $paging.releaseLock();
             $paging.hideLoadingSpinner($tbody);
@@ -536,7 +540,10 @@
             var $prepad = null;
             var $pospad = null;
             // Extract the new rows
-            var $newTrs = $newTbody.find('tr');
+            var $newTrs = $newTbody.find('tr.data-row');
+            var rangeHeadOffset = intersect.lo - newRange.lo;
+            $newTrs = $newTrs.slice(rangeHeadOffset, intersect.width() + rangeHeadOffset );
+
             if (preblank) {
               $prepad = _this.createPadding($tbody, preblank.lo, preblank.hi);
               $newTrs.splice(0, 0, $prepad[0]);
