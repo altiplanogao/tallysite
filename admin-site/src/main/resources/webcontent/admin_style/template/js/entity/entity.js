@@ -9,14 +9,21 @@
     var ENTITYGRID_HEADER = 'thead.entitygrid-header';
     var ENTITYGRID_BODY = 'tbody.entitygrid-body';
 
-    function fillCellContent($cell, field, fieldvalue){
+    var Entity = {
+      makeUrl : function(gridInfo, entity, baseUrl){
+        var idField = gridInfo.idField;
+        return baseUrl + entity[idField];
+      }
+    };
+
+    function fillCellContent(gridInfo, $cell, entity, field, fieldvalue, baseUrl){
       var m = {
         makeCellAsGeneral : function(){
-          $cell.html(fieldvalue);
+          return fieldvalue;
         },
         makeCellAsEmail : function () {
             var $content = $('<a>').attr('href', 'mailto:' + fieldvalue).text(fieldvalue);
-            $cell.html($content);
+            return $content;
         },
         makeCellAsPhone : function () {
             var segLen = 4;
@@ -37,28 +44,35 @@
             formatedPhone = segs.join('-');
             }
             var $content = $('<a>').attr('href', 'tel:' + fieldvalue).text(formatedPhone);
-            $cell.html($content);
+            return $content;
         },
         makeCellAsMainEntry : function () {
-
+          var url = Entity.makeUrl(gridInfo, entity, baseUrl);
+          var $content = $('<a>').attr('href', url).text(fieldvalue);
+          return $content;
         }
 
       };
 
+      var content = null;
       switch(field.fieldType){
         case 'ID':
+          content = m.makeCellAsGeneral();
+          break;
         case 'NAME':
-          m.makeCellAsGeneral();
+          content = m.makeCellAsMainEntry();
           break;
         case 'EMAIL':
-          m.makeCellAsEmail();
+          content = m.makeCellAsEmail();
           break;
         case 'PHONE':
-          m.makeCellAsPhone();
+          content = m.makeCellAsPhone();
           break;
         default :
-          m.makeCellAsGeneral();
+          content = m.makeCellAsGeneral();
       }
+
+      $cell.html(content);
     };
 
     var Grid = {
@@ -150,20 +164,21 @@
               return obj;
             }
           },
-          makeCell : function (field, entity) {
+          makeCell : function (gridInfo, field, entity, baseUrl) {
             var fieldname = field.name;
             var fieldvalue = entity[fieldname];
             var $cell = this.cell.template(fieldname, fieldvalue);
-            fillCellContent($cell, field, fieldvalue);
+            fillCellContent(gridInfo, $cell, entity, field, fieldvalue, baseUrl);
             if(!field.gridVisible){
                 $cell.css('display', 'none');
             }
             return $cell;
           },
-          makeCells : function (fields, entity) {
+          makeCells : function (gridInfo, entity, baseUrl) {
+            var fields = gridInfo.fields;
             var _this = this;
             var $cells = fields.map(function (field, index, array) {
-              var $cell = _this.makeCell(field, entity);
+              var $cell = _this.makeCell(gridInfo, field, entity, baseUrl);
               return $cell;
             });
             return $cells;
@@ -177,17 +192,18 @@
             $emptyRow.remove();
           }
         },
-        makeRow: function (gridinfo, entity, entityIndex) {
+        makeRow: function (gridinfo, entity, entityIndex, baseUrl) {
           var $row = this.row.template(gridinfo, entity, entityIndex);
-          var $cells =this.row.makeCells(gridinfo.fields, entity);
+          var $cells =this.row.makeCells(gridinfo, entity, baseUrl);
           $row.html($cells);
           return $row;
         },
         makeRows : function(gridinfo, entities){
           var _this = this;
+          var baseUrl = entities.baseUrl;
           var rows = entities.details.map(function (entity, index, array) {
             var entityIndex = entities.startIndex + index;
-            var row = _this.makeRow(gridinfo, entity, entityIndex);
+            var row = _this.makeRow(gridinfo, entity, entityIndex, baseUrl);
             return row;
           });
           return rows;
@@ -252,7 +268,8 @@
 
     return function () {
       return {
-        grid: Grid
+        grid: Grid,
+        entity: Entity
       };
     };
   }())
