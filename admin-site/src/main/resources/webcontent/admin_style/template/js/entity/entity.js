@@ -3,7 +3,7 @@
  */
 ;
 (function ($, host) {
-  host.entityOperator = (function () {
+  host.entityOperation = (function () {
     'use strict';
 
     var ENTITYGRID_HEADER = 'thead.entitygrid-header';
@@ -266,11 +266,9 @@
       }
     }
 
-    return function () {
-      return {
-        grid: Grid,
-        entity: Entity
-      };
+    return {
+      grid: Grid,
+      entity: Entity
     };
   }())
 })($, $);
@@ -283,7 +281,7 @@
   $(document).ready(function () {
     $(".entitygrid-autofill").each(function () {
       var $container = $(this);
-      $.entityOperator().grid.fillContainer($container);
+      $.entityOperation.grid.fillContainer($container);
     });
   });
 })(jQuery);
