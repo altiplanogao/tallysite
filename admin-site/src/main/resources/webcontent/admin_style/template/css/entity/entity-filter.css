@@ -7,9 +7,79 @@ ul.entity-filter{
     list-style: none;
     padding-left: 0;
     position: absolute;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
 }
 
 ul.entity-filter li{
     padding: 10px;
 }
+ul.entity-filter .text-filter-control{
+    white-space: nowrap;
+}
+ul.entity-filter .filter-fields{
+    position: relative;
+}
 
+ul.entity-filter span.input{
+    position: relative;
+    display: block;
+    overflow: hidden;
+    padding-right: 6px;
+}
+
+ul.entity-filter span.icon{
+    position: absolute;
+    /* margin-top: auto; */
+    /* margin-bottom: auto; */
+    color: #aaaaaa;
+    top: 0;
+    bottom: 0;
+    z-index: 2;
+    text-align: center;
+    padding-bottom: inherit;
+    vertical-align: baseline;
+    padding-top: inherit;
+}
+
+ul.entity-filter span.icon.left{
+    left: 5px;
+    right: inherit;
+}
+
+ul.entity-filter span.icon.delete-text{
+    left: inherit;
+    right: 12px;
+}
+
+ul.entity-filter span.icon.delete-text:active{
+    color: #111111;
+}
+
+ul.entity-filter span.icon i.fa{
+    vertical-align: middle;
+}
+
+ul.entity-filter li .filter-button{
+    float: right;
+    padding-bottom: 1px;
+    padding-top: 1px;
+    background-color: #8EAA2B;
+    border-color: #90AE25;
+}
+
+ul.entity-filter li input[type=text].filter-input{
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid #cccccc;
+    color: #353a3b;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+ul.entity-filter li input[type=text].filter-input:focus {
+    border-color: #a0bf30;
+    outline: 0;
+    -webkit-box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(198, 230, 59, 0.6);
+    box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(185, 221, 56, 0.68);
+}

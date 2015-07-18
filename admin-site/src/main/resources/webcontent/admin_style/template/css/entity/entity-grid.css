@@ -23,6 +23,11 @@ div.entity-grid-container
 }
 
 div.entity-grid-container
+.header thead tr>th.column:last-child {
+    padding-right: 0;
+}
+
+div.entity-grid-container
 .header table > thead{
     /*
      background: #F5F5F5;

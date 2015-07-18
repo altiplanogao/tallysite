@@ -1,0 +1,12 @@
+input.search-text{
+    border: 1px solid #efefef;
+    width: 150px;
+    padding-left: 20px;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    -khtml-border-radius: 15px;
+    border-radius: 15px;
+    padding-left: 30px;
+//    background: url("/assets/images/icons/search-white.png") no-repeat scroll 10px 7px white;
+
+}

@@ -268,9 +268,14 @@
       }
     }
 
+    var Filter = {
+
+    }
+
     return {
       grid: Grid,
-      entity: Entity
+      entity: Entity,
+      filter: Filter
     };
   }())
 })($, $);

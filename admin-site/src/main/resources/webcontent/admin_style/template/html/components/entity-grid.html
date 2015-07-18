@@ -12,8 +12,22 @@
   <link rel="stylesheet" type="text/css" href="../../css/entity/entity.css"/>
   <link rel="stylesheet" type="text/css" href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
   <style>
-    table, thead, tbody, tr, th, td {
+    table.entity-filters-table,
+    .entity-filters-table thead,
+    .entity-filters-table tbody,
+    .entity-filters-table tr,
+    .entity-filters-table th,
+    .entity-filters-table td {
       border: 1px solid black;
+    }
+
+    .entity-filters-table td {
+      background-color: white;
+      padding: 5px;
+    }
+
+    .entity-filters-table td ul.entity-filter {
+      position: relative;
     }
   </style>
 </head>
@@ -55,8 +69,8 @@
     </div>
 
     <div class="footer">
-      <div >
-          <span >
+      <div>
+          <span>
             <span class="screen-range-of-results"
                   th:utext="#{general.ScreenRange_OfResults_Unescaped}"/>
           </span>
@@ -70,42 +84,52 @@
 </div>
 
 <div th:fragmen="filters">
-  <table>
+  <table class="entity-filters-table">
     <thead>
     <tr>
-    <th style="width: 10%;">Entity Type</th><th style="width: 90%;">Entity Filter</th></tr>
+      <th style="width: 10%;">Entity Type</th>
+      <th style="width: 90%;">Entity Filter</th>
+    </tr>
     </thead>
+    <tfoot>
+    <tr>
+      <th>End</th>
+      <th></th>
+    </tr>
+    </tfoot>
     <tbody>
     <tr>
-    <td>Basic</td>
-    <td>
-      <ul class="entity-filter no-hover">
-      <li>
-        <div class="filter-fields" data-action="">
-          <input type="hidden" class="sort-property" data-name="sortProperty" th:value="${fieldName}" />
-          <input type="hidden" class="sort-direction" data-name="sortDirection" />
+      <td>Basic</td>
+      <td>
+        <ul class="entity-filter no-hover">
+          <li>
+            <div class="filter-fields" data-action="">
+              <input type="hidden" class="sort-property" data-name="sortProperty" th:value="${fieldName}"/>
+              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
 
-          <div class="entity-grid-criteria" th:attr="data-field-index=${index}">
-            <div class="entity-grid-criteria-container">
-              <input th:attr="data-name=${fieldName}"
-                     th:placeholder="#{${fieldFriendlyName}}"
-                     class="entity-grid-criteria-input"
-                     type="text" />
+              <div class="text-filter-control">
+                <button class="filter-button btn btn-info" th:inline="text">
+                  <i class="fa fa-filter"></i>
+                </button>
+                <span class="input">
+                  <span class="icon left">
+                    <i class="fa fa-search"></i>
+                  </span>
+                  <input class="filter-input"
+                         th:attr="data-name=${fieldName}"
+                         th:placeholder="#{${fieldFriendlyName}}"
+                         type="text"/>
+                  <span class="icon delete-text">
+                    <i class="fa fa-times-circle"></i>
+                  </span>
+                </span>
+              </div>
+
             </div>
-          </div>
-
-          <div th:style="${#strings.toLowerCase(fieldType) == 'additional_foreign_key'} ? 'display: none;'">
-            <button class="entity-grid-filter tiny radius dark button" th:inline="text">
-              <i class="icon-search"></i>[[#{Filter}]]
-            </button>
-            <button class="entity-grid-clear-filter tiny radius dark button" disabled="disabled" th:inline="text">
-              <i class="icon-remove"></i>[[#{Filter_Clear}]]
-            </button>
-          </div>
-        </div>
-      </li>
-    </ul>
-    </td></tr>
+          </li>
+        </ul>
+      </td>
+    </tr>
     </tbody>
   </table>
 
