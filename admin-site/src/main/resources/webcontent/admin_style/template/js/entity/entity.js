@@ -6,8 +6,8 @@
   host.entityOperation = (function () {
     'use strict';
 
-    var ENTITYGRID_HEADER = 'thead.entitygrid-header';
-    var ENTITYGRID_BODY = 'tbody.entitygrid-body';
+    var ENTITYGRID_HEADER = '.header thead';
+    var ENTITYGRID_BODY = '.body tbody';
 
     var Entity = {
       makeUrl : function(gridInfo, entity, baseUrl){
@@ -108,16 +108,18 @@
         col:{
           template : function(){
             var obj = $(
-              "<th class='listgrid-column explicit-size' scope='col'>" +
+              "<th class='column explicit-size' scope='col'>" +
               " <div href='#' class='split dropdown'>" +
-              "  <div class='listgrid-column-title'>" +
+              "  <div class='title'>" +
               "   <span class='col-name'>Name Placeholder</span>" +
-              "   <div class='listgrid-column-filter-sort-container'>" +
+              "   <div class='filter-sort-container'>" +
               "    <i class='col-sort fa fa-sort'></i>" +
               "    <i class='col-filter fa fa-filter'></i>" +
               "   </div>" +
               "  </div>" +
               "  <div class='resizer'>||</div>" +
+              "  <ul class='entity-filter'>" +
+              "  </ul>"+
               " </div>" +
               "</th>");
             return obj;
@@ -185,7 +187,7 @@
           }
         },
         initEmptyRow: function ($tbody, fields, entities) {
-          var $emptyRow = $tbody.find('td.list-grid-no-results');
+          var $emptyRow = $tbody.find('td.entity-grid-no-results');
           if (entities.totalCount == 0) {
             $emptyRow.attr('colspan', fields.length);
           } else {
@@ -223,7 +225,7 @@
       tryToFill : function ($page) {
         var rawdata = this.getPageData($page);
         if(rawdata){
-          var $container = $page.find(".entitygrid-autofill");
+          var $container = $page.find(".entity-grid-autofill");
           if($container.length){
             this.fillContainer($container, rawdata);
             return true;
@@ -279,7 +281,7 @@
   var $doc = $(document);
 
   $(document).ready(function () {
-    $(".entitygrid-autofill").each(function () {
+    $(".entity-grid-autofill").each(function () {
       var $container = $(this);
       $.entityOperation.grid.fillContainer($container);
     });

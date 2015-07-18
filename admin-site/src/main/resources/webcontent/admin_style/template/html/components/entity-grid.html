@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css"
+        href="../../lib/font-awesome-4.3.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css"
+        href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
+
+  <link rel="stylesheet" type="text/css" href="../../css/foundation.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/admin.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/admin-layout.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/entity/entity.css"/>
+  <link rel="stylesheet" type="text/css" href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
+  <style>
+    table, thead, tbody, tr, th, td {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+<div th:fragment="full_entity_grid">
+  <div class="entity-grid-container entity-grid-autofill">
+    <div class="header">
+      <table class="table table-condensed table-hover">
+        <thead>
+        <tr></tr>
+        </thead>
+      </table>
+    </div>
+
+    <div class="body default-skin ">
+      <table class="table table-condensed table-hover">
+        <thead>
+        <tr class="width-control-header"></tr>
+        </thead>
+        <tbody class="real-data"
+               data-recordranges="0-0,0-0"
+               data-totalrecords="0"
+               data-pagesize="0"
+               data-baseurl="/">
+        <tr class="empty-mark">
+          <td colspan="${#lists.size(entityGridInfo.fields) + 1}" class="entity-grid-no-results" th:inline="text">
+            [[#{general.NoRecordsFound}]]
+          </td>
+        </tr>
+        <!--/*-->
+        <!-- FOLLOWING WILL BE DELETED BY THYMELEAF -->
+        <tr data-entity-id="0" data-entity-type="xx.xx.xx.Xxx" data-entity-path="/xx/0"
+            data-entity-name="Name">
+        </tr>
+        <!--*/-->
+        </tbody>
+      </table>
+
+    </div>
+
+    <div class="footer">
+      <div >
+          <span >
+            <span class="screen-range-of-results"
+                  th:utext="#{general.ScreenRange_OfResults_Unescaped}"/>
+          </span>
+      </div>
+    </div>
+
+    <span class="spinner">
+      <i class="spinner-item fa fa-spin fa-spinner"></i>
+    </span>
+  </div>
+</div>
+
+<div th:fragmen="filters">
+  <table>
+    <thead>
+    <tr>
+    <th style="width: 10%;">Entity Type</th><th style="width: 90%;">Entity Filter</th></tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Basic</td>
+    <td>
+      <ul class="entity-filter no-hover">
+      <li>
+        <div class="filter-fields" data-action="">
+          <input type="hidden" class="sort-property" data-name="sortProperty" th:value="${fieldName}" />
+          <input type="hidden" class="sort-direction" data-name="sortDirection" />
+
+          <div class="entity-grid-criteria" th:attr="data-field-index=${index}">
+            <div class="entity-grid-criteria-container">
+              <input th:attr="data-name=${fieldName}"
+                     th:placeholder="#{${fieldFriendlyName}}"
+                     class="entity-grid-criteria-input"
+                     type="text" />
+            </div>
+          </div>
+
+          <div th:style="${#strings.toLowerCase(fieldType) == 'additional_foreign_key'} ? 'display: none;'">
+            <button class="entity-grid-filter tiny radius dark button" th:inline="text">
+              <i class="icon-search"></i>[[#{Filter}]]
+            </button>
+            <button class="entity-grid-clear-filter tiny radius dark button" disabled="disabled" th:inline="text">
+              <i class="icon-remove"></i>[[#{Filter_Clear}]]
+            </button>
+          </div>
+        </div>
+      </li>
+    </ul>
+    </td></tr>
+    </tbody>
+  </table>
+
+
+</div>
+
+<footer>
+  <script type="text/javascript" src="../../lib/jquery/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
+  <script type="text/javascript" src="../../js/component/entity/entity-grid.js"></script>
+  <script type="text/javascript" src="../../js/admin/admin-init.js"></script>
+</footer>
+</body>
+</html>

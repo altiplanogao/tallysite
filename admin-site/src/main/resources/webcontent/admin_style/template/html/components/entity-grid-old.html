@@ -9,29 +9,29 @@
   <link rel="stylesheet" type="text/css" th:href="@{/css/foundation.css}" href="../../css/foundation.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin.css}" href="../../css/admin.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin-layout.css}" href="../../css/admin-layout.css"/>
-  <link rel="stylesheet" type="text/css" th:href="@{/css/component/grid/listgrid.css}" href="../../css/component/grid/listgrid.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/entity/entity.css}" href="../../css/entity/entity.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/lib/jquery/plugins/jquery.custom-scrollbar.css}"
         href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
 
 
 </head>
 <body>
-<div th:fragment="full_listgrid"  data-listgrid-align-type="window"
+<div th:fragment="full_entity_grid"  data-listgrid-align-type="window"
      data-listgrid-align-offset="50">
-  <div class="listgrid-container"
+  <div class="entity-grid-container"
        th:with="entityGridInfo=${listGridInfo.details['grid']}, entities=${listGridData.entities}">
-    <div class="listgrid-header-wrapper" th:inline="text">
+    <div class="header" th:inline="text">
       <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
         <tr>
           <th th:each="field : ${entityGridInfo.fields}"
               th:if="${field.gridVisible}"
-              class="listgrid-column explicit-size width-ignored"
+              class="column explicit-size width-ignored"
               scope="col">
             <div href="#" class=" split dropdown">
-              <div class="listgrid-column-title">
+              <div class="title">
                 [[#{${field.friendlyName}}]]
-                <div class="listgrid-column-filter-sort-container">
+                <div class="filter-sort-container">
                   <i class="fa fa-sort"></i>
                   <i class="fa fa-filter"></i>
                 </div>
@@ -41,10 +41,10 @@
           </th>
           <!--/*-->
           <th scope="col" style="width: 30%;"
-              class="listgrid-column explicit-size width-ignored">
+              class="column explicit-size width-ignored">
             <div href="" class=" split dropdown">
-              <div class="listgrid-column-title">Name
-                <div class="listgrid-column-filter-sort-container">
+              <div class="title">Name
+                <div class="filter-sort-container">
                   <i class="fa fa-sort"></i>
                   <i class="fa fa-filter"></i>
                 </div>
@@ -53,10 +53,10 @@
             </div>
           </th>
           <th scope="col" style="width: 30%;"
-              class="listgrid-column explicit-size width-ignored">
+              class="column explicit-size width-ignored">
             <div href="" class=" split dropdown">
-              <div class="listgrid-column-title">Name
-                <div class="listgrid-column-filter-sort-container">
+              <div class="title">Name
+                <div class="filter-sort-container">
                   <i class="fa fa-sort"></i>
                   <i class="fa fa-filter"></i>
                 </div>
@@ -70,8 +70,8 @@
       </table>
     </div>
 
-    <div class="listgrid-body-wrapper default-skin ">
-      <table class="listgrid-table table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
+    <div class="body default-skin ">
+      <table class="table table-condensed table-hover" th:classappend="${entityGridInfo.name}">
         <thead>
         <tr class="width-control-header"></tr>
         </thead>
@@ -82,7 +82,7 @@
                         data-baseurl=${listGridData.baseUrl}"
             data-recordranges="0-1,2-3">
         <tr th:if="${#lists.isEmpty(entities)}"  th:inline="text" class="empty-mark">
-          <td th:colspan="${#lists.size(entityGridInfo.fields) + 1}" class="list-grid-no-results">
+          <td th:colspan="${#lists.size(entityGridInfo.fields) + 1}" class="entity-grid-no-results">
             [[#{general.NoRecordsFound}]]
           </td>
         </tr>
@@ -114,9 +114,9 @@
 
     </div>
 
-    <div class="listgrid-footer-wrapper">
-      <div class="listgrid-table-footer">
-          <span class="listgrid-table-footer-message">
+    <div class="footer">
+      <div>
+          <span>
             <span class="screen-range-of-results"
                 th:utext="#{general.ScreenRange_OfResults_Unescaped(${listGridData.startIndex+1},
                  ${listGridData.startIndex + #lists.size(listGridData.entities)},
@@ -126,8 +126,8 @@
 
     </div>
 
-  <span class="listgrid-table-spinner-container">
-    <i class="listgrid-table-spinner fa fa-spin fa-spinner"></i>
+  <span class="spinner">
+    <i class="spinner-item fa fa-spin fa-spinner"></i>
   </span>
   </div>
 </div>

@@ -2,18 +2,18 @@
 (function ($, window, undefined) {
   'use strict';
 
-  var LISTGRID_SEL_CONTAINER_CLASS = "div.listgrid-container";
+  var ENTITY_GRID_SEL_CONTAINER_CLASS = "div.entity-grid-container";
 
-  $.fn.initListGrid = function () {
-    var LISTGRID_CONTAINER = "div.listgrid-container";
-    var LISTGRID_CONTAINER_CLASS = "listgrid-container";
-    var LISTGRID_CONTAINER_INITIALIZED_FLAG = "listgrid-container-initialized";
-    var LISTGRID_HEADER_TABLE = "div.listgrid-header-wrapper > table";
-    var LISTGRID_BODY = "div.listgrid-body-wrapper";
-    var LISTGRID_BODY_TABLE = "div.listgrid-body-wrapper table";
-    var LISTGRID_FOOTER = "div.listgrid-footer-wrapper";
+  $.fn.initAsEntityGrid = function () {
+    var ENTITY_GRID_CONTAINER = "div.entity-grid-container";
+    var ENTITY_GRID_CONTAINER_CLASS = "entity-grid-container";
+    var ENTITY_GRID_CONTAINER_INITIALIZED_FLAG = "entity-grid-container-initialized";
+    var ENTITY_GRID_HEADER_TABLE = ".header > table";
+    var ENTITY_GRID_BODY = ".body";
+    var ENTITY_GRID_BODY_TABLE = ".body table";
+    var ENTITY_GRID_FOOTER = ".footer";
 
-    var LOAD_SPINNER = 'i.listgrid-table-spinner';
+    var LOAD_SPINNER = 'i.spinner-item';
 
     var fetchDebounce = 200;
     var lockDebounce = 200;
@@ -219,21 +219,21 @@
       }
     }
 
-    var ListGrid = function (container) {
+    var EntityGrid = function (container) {
       this.$container = $(container);
       this.initialize();
       this.paging.triggerLoad(this.$container);
     };
 
-    ListGrid.prototype = {
+    EntityGrid.prototype = {
 
       updateHeaderWidth: function () {
-        var bodyTable = this.$container.find(LISTGRID_BODY_TABLE);
-        var headerTable = this.$container.find(LISTGRID_HEADER_TABLE);
+        var bodyTable = this.$container.find(ENTITY_GRID_BODY_TABLE);
+        var headerTable = this.$container.find(ENTITY_GRID_HEADER_TABLE);
         var bodyTabelWidth = bodyTable.parent().width();
         headerTable.css('width', bodyTabelWidth);
         bodyTable.css('width', bodyTabelWidth);
-        headerTable.closest(LISTGRID_CONTAINER).find('th').css('width', '');
+        headerTable.closest(ENTITY_GRID_CONTAINER).find('th').css('width', '');
 
         var headerTableThs = headerTable.find('thead tr th');
         var bodyTableThs = bodyTable.find('thead tr th');
@@ -244,13 +244,13 @@
 
       updateBodyHeight: function () {
         var containerHolder = this.$container.parent();
-        var alignType = containerHolder.data("listgrid-align-type");
+        var alignType = containerHolder.data("entity-grid-align-type");
         switch (alignType) {
           case "window":
           {
             var $window = $(window);
-            var offset = containerHolder.data("listgrid-align-offset");
-            var bodyWrapper = this.$container.find(LISTGRID_BODY);
+            var offset = containerHolder.data("entity-grid-align-offset");
+            var bodyWrapper = this.$container.find(ENTITY_GRID_BODY);
             var wrapperMaxHeight = $window.innerHeight() - (bodyWrapper.offset().top) - offset;
             var actualHeight = Math.min(bodyWrapper.find("tbody").height(), wrapperMaxHeight);
             bodyWrapper.css('max-height', wrapperMaxHeight);
@@ -264,7 +264,7 @@
 
       resize: function () {
         this.updateBodyHeight();
-        var bodyWrapper = this.$container.find(LISTGRID_BODY);
+        var bodyWrapper = this.$container.find(ENTITY_GRID_BODY);
         var $this = this;
         bodyWrapper.customScrollbar("resize", true);
         this.updateHeaderWidth();
@@ -272,17 +272,17 @@
       },
 
       initialize: function () {
-        if (this.$container.hasClass(LISTGRID_CONTAINER_CLASS)) {
-          if (this.$container.hasClass(LISTGRID_CONTAINER_INITIALIZED_FLAG)) {
+        if (this.$container.hasClass(ENTITY_GRID_CONTAINER_CLASS)) {
+          if (this.$container.hasClass(ENTITY_GRID_CONTAINER_INITIALIZED_FLAG)) {
             return;
           }
           this.updateBodyHeight();
-          var bodyWrapper = this.$container.find(LISTGRID_BODY);
+          var bodyWrapper = this.$container.find(ENTITY_GRID_BODY);
           var $this = this;
           bodyWrapper.customScrollbar({
             //updateOnWindowResize: true,
             onCustomScroll: function (event, scrollData) {
-              $this.paging.updateTableFooter($this.$container.find(LISTGRID_BODY_TABLE + ' tbody'));
+              $this.paging.updateTableFooter($this.$container.find(ENTITY_GRID_BODY_TABLE + ' tbody'));
               $this.paging.triggerLoad($this.$container);
             }
           });
@@ -294,18 +294,18 @@
           this.resizer = new ColumnResizer(this);
           this.resizer.initialize();
 
-          this.$container.ListGrid = this;
-          this.$container.addClass(LISTGRID_CONTAINER_INITIALIZED_FLAG);
+          this.$container.EntityGrid = this;
+          this.$container.addClass(ENTITY_GRID_CONTAINER_INITIALIZED_FLAG);
         } else {
-          throw "ListGrid should contains class 'listgrid-container'";
+          throw "EntityGrid should contains class 'entity-grid-container'";
         }
       }
     };
 
-    var Paging = function (listGrid) {
-      this.listGrid = listGrid;
-      this.$container = listGrid.$container;
-      this.LISTGRID_AJAX_LOCK = 0;
+    var Paging = function (entityGrid) {
+      this.entityGrid = entityGrid;
+      this.$container = entityGrid.$container;
+      this.ENTITY_GRID_AJAX_LOCK = 0;
     };
 
     Paging.prototype = {
@@ -314,15 +314,15 @@
       // ********************** *
 
       acquireLock: function () {
-        if (this.LISTGRID_AJAX_LOCK == 0) {
-          this.LISTGRID_AJAX_LOCK = 1;
+        if (this.ENTITY_GRID_AJAX_LOCK == 0) {
+          this.ENTITY_GRID_AJAX_LOCK = 1;
           return true;
         }
         return false;
       },
 
       releaseLock: function () {
-        this.LISTGRID_AJAX_LOCK = 0;
+        this.ENTITY_GRID_AJAX_LOCK = 0;
       },
 
       // ************************* *
@@ -409,12 +409,12 @@
         var offset = index * this.getRowHeight($tbody);
         //console.log('scrolling to ' + offset);
 
-        var bodyWrapper = this.$container.find(LISTGRID_BODY);
+        var bodyWrapper = this.$container.find(ENTITY_GRID_BODY);
         bodyWrapper.customScrollbar("scrollToY", offset);
       },
 
       showLoadingSpinner: function ($tbody, spinnerOffset) {
-        var $spinner = $tbody.closest(LISTGRID_CONTAINER).find(LOAD_SPINNER);
+        var $spinner = $tbody.closest(ENTITY_GRID_CONTAINER).find(LOAD_SPINNER);
 
         if (spinnerOffset) {
           $spinner.css('position', 'absolute').css('top', spinnerOffset + 'px');
@@ -424,7 +424,7 @@
       },
 
       hideLoadingSpinner: function ($tbody) {
-        var $spinner = $tbody.closest(LISTGRID_CONTAINER).find(LOAD_SPINNER);
+        var $spinner = $tbody.closest(ENTITY_GRID_CONTAINER).find(LOAD_SPINNER);
         $spinner.parent().css('display', 'none');
       },
 
@@ -441,7 +441,7 @@
           bottomIndex = topIndex;
         }
 
-        var $footer = $tbody.closest(LISTGRID_CONTAINER).find(LISTGRID_FOOTER);
+        var $footer = $tbody.closest(ENTITY_GRID_CONTAINER).find(ENTITY_GRID_FOOTER);
         $footer.find('.low-index').text(humanTopIndex);
         $footer.find('.high-index').text(bottomIndex);
         $footer.find('.total-records').text(totalCount);
@@ -457,7 +457,7 @@
           return false;
         }
 
-        var $tbody = $container.find(LISTGRID_BODY_TABLE + ' tbody');
+        var $tbody = $container.find(ENTITY_GRID_BODY_TABLE + ' tbody');
         // If we can't see the list grid at all, don't load anything
         var totalRecords = this.getTotalRecords($tbody);
         if ((!$tbody.is(':visible')) || (totalRecords == 0)) {
@@ -563,14 +563,14 @@
       // ************************* *
 
       initialize: function () {
-        var headerTable = this.$container.find(LISTGRID_HEADER_TABLE);
+        var headerTable = this.$container.find(ENTITY_GRID_HEADER_TABLE);
         headerTable.find('th').css('width', '');
         headerTable.find('th').each(function (index, thElement) {
           var $th = $(thElement);
           var width = $th.width();
           $th.css('width', width);
         });
-        var bodyTable = this.$container.find(LISTGRID_BODY_TABLE);
+        var bodyTable = this.$container.find(ENTITY_GRID_BODY_TABLE);
 
         var headerTableThead = headerTable.find("thead").clone();
         headerTableThead.addClass("width-control-header").find('th').empty();
@@ -596,7 +596,7 @@
           $tbody.find('tr:last').after($pad);
         }
 
-        var bodyWrapper = this.$container.find(LISTGRID_BODY);
+        var bodyWrapper = this.$container.find(ENTITY_GRID_BODY);
         bodyWrapper.customScrollbar("resize", true);
 
         this.scrollToIndex($tbody, range.lo);
@@ -604,16 +604,16 @@
       }
     };
 
-    var ColumnResizer = function (listGrid) {
-      this.listGrid = listGrid;
-      this.$container = listGrid.$container;
+    var ColumnResizer = function (entityGrid) {
+      this.entityGrid = entityGrid;
+      this.$container = entityGrid.$container;
     };
 
     ColumnResizer.prototype = {
       initialize: function () {
         var container = this.$container;
-        var $headerTableThead = this.$container.find(LISTGRID_HEADER_TABLE).find('thead');
-        var $bodyTableThead = this.$container.find(LISTGRID_BODY_TABLE).find('thead');
+        var $headerTableThead = this.$container.find(ENTITY_GRID_HEADER_TABLE).find('thead');
+        var $bodyTableThead = this.$container.find(ENTITY_GRID_BODY_TABLE).find('thead');
         $headerTableThead.find('th div.resizer').mousedown(function (e) {
           var $this = $(this).closest('th');
           tableColumnResizing.active = true;
@@ -684,21 +684,21 @@
     }
 
     return this.each(function () {
-      var listGrid = new ListGrid($(this));
+      var entityGrid = new EntityGrid($(this));
       $(document).ready(function () {
         $(window).resize(function () {
           $.doTimeout('resize', 250, function () {
-            listGrid.resize();
+            entityGrid.resize();
           });
         });
       });
     });
   }
 
-  $.fn.listGridInit = function (options) {
-    ($(LISTGRID_SEL_CONTAINER_CLASS)).each(function () {
+  $.fn.entityGridInit = function (options) {
+    ($(ENTITY_GRID_SEL_CONTAINER_CLASS)).each(function () {
       var $container = $(this);
-      $container.initListGrid();
+      $container.initAsEntityGrid();
     });
   };
 

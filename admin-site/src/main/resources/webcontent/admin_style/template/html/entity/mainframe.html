@@ -34,7 +34,7 @@
 
   <!-- Components -->
   <link rel="stylesheet" type="text/css" th:href="@{/css/component/menu/nav-menu.css}" href="../../css/component/menu/nav-menu.css"/>
-  <link rel="stylesheet" type="text/css" th:href="@{/css/component/grid/listgrid.css}" href="../../css/component/grid/listgrid.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/entity/entity.css}" href="../../css/entity/entity.css"/>
 
   <!-- Page -->
   <link rel="stylesheet" type="text/css" th:href="@{/css/foundation.css}" href="../../css/foundation.css"/>
@@ -188,14 +188,6 @@
                        th:placeholder="#{general.Search_Placeholder(#{${entityGridInfo.friendlyName}},#{${entityGridInfo.fetchPrimarySearchFieldFriendlyName()}})}"
                        placeholder="Search Placeholder" />
               </div>
-              <div class="btn-group col-xs-6">
-                <a href="#" class="btn btn-primary">
-                  <i class="fa fa-search"></i>&nbsp;[[#{general.Search}]]
-                </a>
-                <a href="#" class="btn btn-primary">
-                  <i class="fa fa-times"></i>&nbsp;[[#{general.Clear_Search}]]
-                </a>
-              </div>
             </div>
 
           </form>
@@ -207,13 +199,14 @@
           </div>
         </div>
       </div>
-      <!--<div th:include="components/listgrid :: full_listgrid" th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
-
-           <!--data-listgrid-align-type="window"-->
-           <!--data-listgrid-align-offset="50"/>-->
-      <div th:include="components/listgrid-dynamic :: full_listgrid" data-list-grid-source-name="details"
-           data-listgrid-align-type="window"
-           data-listgrid-align-offset="50"/>
+      <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
+           <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
+           <!--data-entity-grid-align-type="window"-->
+           <!--data-entity-grid-align-offset="50"/>-->
+       <div th:include="components/entity-grid :: full_entity_grid"
+           data-entity-grid-source-name="details"
+           data-entity-grid-align-type="window"
+           data-entity-grid-align-offset="50"/>
 
     </section>
     <section id="contentEntityFormContainer" th:fragment="entity_form">
@@ -247,8 +240,8 @@
           src="../../js/entity/entity.js"></script>
   <script type="text/javascript" th:src="@{/js/component/menu/nav-menu.js}"
           src="../../js/component/menu/nav-menu.js"></script>
-  <script type="text/javascript" th:src="@{/js/component/listgrid/listgrid.js}"
-          src="../../js/component/listgrid/listgrid.js"></script>
+  <script type="text/javascript" th:src="@{/js/entity/entity-grid.js}"
+          src="../../js/entity/entity-grid.js"></script>
 
   <!-- Page logic -->
   <script type="text/javascript" th:src="@{/js/tallybook.js}"

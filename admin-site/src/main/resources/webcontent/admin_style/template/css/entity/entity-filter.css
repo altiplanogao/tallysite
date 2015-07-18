@@ -1,0 +1,15 @@
+
+
+/* Entity Filter */
+ul.entity-filter{
+    display: block !important;
+    background: #E9E9E9;
+    list-style: none;
+    padding-left: 0;
+    position: absolute;
+}
+
+ul.entity-filter li{
+    padding: 10px;
+}
+
