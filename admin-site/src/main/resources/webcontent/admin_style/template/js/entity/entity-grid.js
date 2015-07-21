@@ -7,7 +7,7 @@
   $.fn.initAsEntityGrid = function () {
     var ENTITY_GRID_CONTAINER = "div.entity-grid-container";
     var ENTITY_GRID_CONTAINER_CLASS = "entity-grid-container";
-    var ENTITY_GRID_CONTAINER_INITIALIZED_FLAG = "entity-grid-container-initialized";
+    var ENTITY_GRID_CONTAINER_INITIALIZED_FLAG = "initialized";
     var ENTITY_GRID_HEADER_TABLE = ".header > table";
     var ENTITY_GRID_BODY = ".body";
     var ENTITY_GRID_BODY_TABLE = ".body table";
