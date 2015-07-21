@@ -2,14 +2,46 @@
  * Created by Gao Yuan on 2015/7/1.
  */
 ;
+var tallybook;
+if(!tallybook)
+  tallybook={};
+
 (function ($, host) {
-  host.entityOperation = (function () {
     'use strict';
 
-    var ENTITYGRID_HEADER = '.header thead';
-    var ENTITYGRID_BODY = '.body tbody';
+    var Data = {
+      getPageData : function (/* optional */ $page) {
+        if(!$page){
+          $page = $(document);
+        }
+        var rawdata = $page.find('.raw-data p').data("raw-data");
+        return rawdata;
+      },
+      processGridData : function(data){
+        var entities = data.entities;
+        var range = {lo: entities.startIndex, hi: entities.startIndex + entities.details.length};
+        entities.range = range;
 
-    var Entity = {
+        var entityInfos = data.entityInfos;
+        var gridinfo = this.processGridInfo(entityInfos);
+
+        return data;
+      },
+      processGridInfo: function (entityInfos) {
+        var gridInfo = entityInfos.details['grid'];
+        gridInfo.fields.map(function (field, index, array) {
+          switch (field.fieldType) {
+            case 'ID':
+              gridInfo.idField = field.name;
+              break;
+            case 'NAME':
+              gridInfo.nameField = field.name;
+              break;
+            default:
+          }
+        });
+        return gridInfo;
+      },
       makeUrl : function(gridInfo, entity, baseUrl){
         var idField = gridInfo.idField;
         return baseUrl + entity[idField];
@@ -47,7 +79,7 @@
             return $content;
         },
         makeCellAsMainEntry : function () {
-          var url = Entity.makeUrl(gridInfo, entity, baseUrl);
+          var url = Data.makeUrl(gridInfo, entity, baseUrl);
           var $content = $('<a>').attr('href', url).text(fieldvalue);
           return $content;
         }
@@ -76,33 +108,6 @@
     };
 
     var Grid = {
-      dataAccess : {
-        process : function(data){
-          var entities = data.entities;
-          var range = {lo: entities.startIndex, hi: entities.startIndex + entities.details.length};
-          entities.range = range;
-
-          var entityInfos = data.entityInfos;
-          var gridinfo = this.processInfo(entityInfos);
-
-          return data;
-        },
-        processInfo: function (entityInfos) {
-          var gridInfo = entityInfos.details['grid'];
-          gridInfo.fields.map(function (field, index, array) {
-            switch (field.fieldType) {
-              case 'ID':
-                gridInfo.idField = field.name;
-                break;
-              case 'NAME':
-                gridInfo.nameField = field.name;
-                break;
-              default:
-            }
-          });
-          return gridInfo;
-        }
-      },
 
       header : {
         col:{
@@ -214,16 +219,8 @@
           $tbody.append($rows);
         }
       },
-
-      getPageData : function (/* optional */ $page) {
-        if(!$page){
-          $page = $(document);
-        }
-        var rawdata = $page.find('.raw-data p').data("raw-data");
-        return rawdata;
-      },
       tryToFill : function ($page) {
-        var rawdata = this.getPageData($page);
+        var rawdata = Data.getPageData($page);
         if(rawdata){
           var $container = $page.find(".entity-grid-autofill");
           if($container.length){
@@ -234,16 +231,19 @@
         return false;
       },
       fillContainer: function ($container, $data) {
+        var ENTITYGRID_HEADER = '.header thead';
+        var ENTITYGRID_BODY = '.body tbody';
+
         var $thead = $container.find(ENTITYGRID_HEADER);
         var $tbody = $container.find(ENTITYGRID_BODY);
         this.header.setCols($thead);
         if(!$data){
-          $data = this.getPageData();
+          $data = Data.getPageData();
         }
         this.fillTable($thead, $tbody, $data);
       },
       fillTable : function($thead, $tbody, data){
-        this.dataAccess.process(data);
+        Data.processGridData(data);
         var entityInfos = data.entityInfos;
         var gridinfo = entityInfos.details['grid'];
 
@@ -265,6 +265,12 @@
           var $rows = this.body.makeRows(gridinfo, entities);
           this.body.addRows($tbody, $rows);
         }
+      },
+      initOnDocReady : function($doc){
+        $(".entity-grid-autofill").each(function () {
+          var $container = $(this);
+          Grid.fillContainer($container);
+        });
       }
     }
 
@@ -272,23 +278,9 @@
 
     }
 
-    return {
+    host.entity = {
+      data: Data,
       grid: Grid,
-      entity: Entity,
       filter: Filter
     };
-  }())
-})($, $);
-
-;
-(function ($) {
-  'use strict';
-  var $doc = $(document);
-
-  $(document).ready(function () {
-    $(".entity-grid-autofill").each(function () {
-      var $container = $(this);
-      $.entityOperation.grid.fillContainer($container);
-    });
-  });
-})(jQuery);
+})($, tallybook);

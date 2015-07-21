@@ -7,8 +7,9 @@
     var $doc = $(document);
 
     $(document).ready(function() {
-        $.fn.menuAccordionInit ? $doc.menuAccordionInit() : null;
-        $.fn.entityGridInit ? $doc.entityGridInit() : null;
+        tallybook.menu.initOnDocReady($doc);
+        tallybook.entity.grid.initOnDocReady($doc);
+        tallybook.entityGrid.initOnDocReady(window, $doc);
     });
 
 })(jQuery, this);

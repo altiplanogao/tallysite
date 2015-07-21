@@ -1,8 +1,12 @@
 /**
  * Created by Gao Yuan on 2015/6/19.
  */
-;
-var tallybook = (function($){
+  ;
+var tallybook;
+if(!tallybook)
+    tallybook={};
+
+(function($, host){
     var requestParameterStartIndex="startIndex";
     var requestParameterMaxResultCount="maxCount";
     var requestParameterSortPrefix="sort_";
@@ -73,8 +77,6 @@ var tallybook = (function($){
         }
     };
 
-    return {
-        history : history
-    }
+    host.history = history;
 
-})($);
+})($,tallybook);
