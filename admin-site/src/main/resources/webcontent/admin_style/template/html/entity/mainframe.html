@@ -33,14 +33,14 @@
         href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
 
   <!-- Components -->
-  <link rel="stylesheet" type="text/css" th:href="@{/css/component/menu/nav-menu.css}" href="../../css/component/menu/nav-menu.css"/>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/component/menu/nav-menu.css}"
+        href="../../css/component/menu/nav-menu.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/entity/entity.css}" href="../../css/entity/entity.css"/>
 
   <!-- Page -->
   <link rel="stylesheet" type="text/css" th:href="@{/css/foundation.css}" href="../../css/foundation.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin.css}" href="../../css/admin.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin-layout.css}" href="../../css/admin-layout.css"/>
-  <link rel="stylesheet" type="text/css" th:href="@{/css/entity/entity.css}" href="../../css/entity/entity.css"/>
 
 </head>
 
@@ -57,7 +57,7 @@
       <a class="navbar-brand" href="#">Tally Book
       </a>
     </div>
-    <div  class="collapse navbar-collapse" id="tbaNavbar">
+    <div class="collapse navbar-collapse" id="tbaNavbar">
       <tb_admin:value tb_admin:admin_employee="adminUser"/>
       <ul class="nav navbar-nav navbar-right">
 
@@ -165,7 +165,7 @@
   </section>
 
   <section id="contentContainer" th:fragment="entity_content">
-    <div class="raw-data"><p th:attr="data-raw-data=${rawdata}" ></p></div>
+    <div class="raw-data"><p th:attr="data-raw-data=${rawdata}"></p></div>
     <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
       <ol class="breadcrumb">
         <li>[[#{${current.menuGroup.key}}]]</li>
@@ -176,42 +176,44 @@
       </ol>
     </div>
     <div class="entity-content-main" th:fragment="entity_main">
-    <section id="contentEntityListContainer" th:fragment="entity_list">
-      <div class="entity-listgrid-action-row row" id="entitySearch"  th:inline="text"
-          th:with="entityGridInfo=${entityInfoResponse.details['grid']}">
-        <div class="col-xs-7">
-          <form class="custom-entity-search" th:action="${current.url}" method="get">
-            <div class="row">
-              <div class="col-xs-6">
-                <input style="" type="search"
-                       class="form-control"
-                       th:placeholder="#{general.Search_Placeholder(#{${entityGridInfo.friendlyName}},#{${entityGridInfo.fetchPrimarySearchFieldFriendlyName()}})}"
-                       placeholder="Search Placeholder" />
+      <section id="contentEntityListContainer" th:fragment="entity_list">
+        <div class="entity-listgrid-action-row row" id="entitySearch" th:inline="text"
+             th:with="entityGridInfo=${entityInfoResponse.details['grid']}">
+          <div class="col-xs-7">
+            <form class="custom-entity-search" th:action="${current.url}" method="get">
+              <div class="row">
+                <div class="col-xs-6">
+                  <input style="" type="search"
+                         class="form-control"
+                         th:placeholder="#{general.Search_Placeholder(#{${entityGridInfo.friendlyName}},#{${entityGridInfo.fetchPrimarySearchFieldFriendlyName()}})}"
+                         placeholder="Search Placeholder"/>
+                </div>
               </div>
+
+            </form>
+
+          </div>
+          <div class="col-xs-5">
+            <div style="float: right;">
+              <a href="#" class="btn btn-primary">XXX Add</a>
             </div>
-
-          </form>
-
-        </div>
-        <div class="col-xs-5">
-          <div style="float: right;">
-            <a href="#" class="btn btn-primary">XXX Add</a>
           </div>
         </div>
-      </div>
-      <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
-           <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
-           <!--data-entity-grid-align-type="window"-->
-           <!--data-entity-grid-align-offset="50"/>-->
-       <div th:include="components/entity-grid :: full_entity_grid"
-           data-entity-grid-source-name="details"
-           data-entity-grid-align-type="window"
-           data-entity-grid-align-offset="50"/>
+        <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
+        <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
+        <!--data-entity-grid-align-type="window"-->
+        <!--data-entity-grid-align-offset="50"/>-->
+        <div th:include="components/entity-grid :: filters-template"
+             class="template entity-filter-template"/>
+        <div th:include="components/entity-grid :: full_entity_grid"
+             data-entity-grid-source-name="details"
+             data-entity-grid-align-type="window"
+             data-entity-grid-align-offset="50"/>
 
-    </section>
-    <section id="contentEntityFormContainer" th:fragment="entity_form">
+      </section>
+      <section id="contentEntityFormContainer" th:fragment="entity_form">
 
-    </section>
+      </section>
     </div>
   </section>
 </div>
@@ -238,10 +240,10 @@
   <!-- Components -->
   <script type="text/javascript" th:src="@{/js/tallybook/range.js}"
           src="../../js/tallybook/range.js"></script>
-  <script type="text/javascript" th:src="@{/js/tallybook/entity.js}"
-          src="../../js/tallybook/entity.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/menu.js}"
           src="../../js/tallybook/menu.js"></script>
+  <script type="text/javascript" th:src="@{/js/tallybook/entity.js}"
+          src="../../js/tallybook/entity.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/entity-grid.js}"
           src="../../js/tallybook/entity-grid.js"></script>
 

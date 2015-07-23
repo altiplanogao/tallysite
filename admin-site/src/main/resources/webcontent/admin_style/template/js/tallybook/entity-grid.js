@@ -326,7 +326,7 @@ if (!tallybook)
           var $newTbody = null;
           //test if the page depends on the entity.js
           var handled = host.entity.grid.tryToFill($data);
-          $newTbody = $data.find('tbody');
+          $newTbody = $data.find('tbody.real-data');
           $paging.injectRecords($tbody, $newTbody);
           $paging.releaseLock();
           $paging.hideLoadingSpinner($tbody);

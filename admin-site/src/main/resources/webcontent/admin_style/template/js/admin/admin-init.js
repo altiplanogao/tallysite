@@ -7,9 +7,10 @@
     var $doc = $(document);
 
     $(document).ready(function() {
-        tallybook.menu.initOnDocReady($doc);
+        tallybook.menu ? tallybook.menu.initOnDocReady($doc) : null;
         tallybook.entity.grid.initOnDocReady($doc);
         tallybook.entityGrid.initOnDocReady(window, $doc);
+        tallybook.entity.filter.initOnDocReady($doc);
     });
 
 })(jQuery, this);

@@ -1,18 +1,27 @@
 
+.entity-grid-container ul.entity-filter{
+    position: absolute;
+}
 
 /* Entity Filter */
 ul.entity-filter{
-    display: block !important;
+    display: none;
     background: #E9E9E9;
     list-style: none;
     padding-left: 0;
-    position: absolute;
     border: 1px solid #cccccc;
     border-radius: 3px;
+    padding: 10px;
+    right: 0;
+    z-index: 2;
+    min-width: 222px;
+}
+
+.show-filter ul.entity-filter{
+    display: block !important;
 }
 
 ul.entity-filter li{
-    padding: 10px;
 }
 ul.entity-filter .text-filter-control{
     white-space: nowrap;
@@ -21,43 +30,42 @@ ul.entity-filter .filter-fields{
     position: relative;
 }
 
-ul.entity-filter span.input{
+ul.entity-filter .input-line{
     position: relative;
     display: block;
     overflow: hidden;
-    padding-right: 6px;
 }
 
-ul.entity-filter span.icon{
+ul.entity-filter .input-element{
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    /*overflow: hidden;*/
+}
+
+ul.entity-filter .input-element.half{
+    width: 50%;
+    /*overflow: hidden;*/
+}
+
+ul.entity-filter .input-element > i.fa{
     position: absolute;
-    /* margin-top: auto; */
-    /* margin-bottom: auto; */
     color: #aaaaaa;
-    top: 0;
-    bottom: 0;
+    top: 5px;
     z-index: 2;
-    text-align: center;
-    padding-bottom: inherit;
-    vertical-align: baseline;
-    padding-top: inherit;
-}
-
-ul.entity-filter span.icon.left{
-    left: 5px;
-    right: inherit;
-}
-
-ul.entity-filter span.icon.delete-text{
-    left: inherit;
-    right: 12px;
-}
-
-ul.entity-filter span.icon.delete-text:active{
-    color: #111111;
-}
-
-ul.entity-filter span.icon i.fa{
     vertical-align: middle;
+}
+ul.entity-filter .input-element > i.fa.embed-search{
+    left: 5px;
+}
+
+ul.entity-filter .input-element > i.fa.embed-delete{
+    left: inherit;
+    right: 8px;
+}
+
+ul.entity-filter .input-element > i.fa.embed-delete:active{
+    color: #111111;
 }
 
 ul.entity-filter li .filter-button{
@@ -66,6 +74,7 @@ ul.entity-filter li .filter-button{
     padding-top: 1px;
     background-color: #8EAA2B;
     border-color: #90AE25;
+    margin-left: 8px;
 }
 
 ul.entity-filter li input[type=text].filter-input{
@@ -82,4 +91,38 @@ ul.entity-filter li input[type=text].filter-input:focus {
     outline: 0;
     -webkit-box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(198, 230, 59, 0.6);
     box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(185, 221, 56, 0.68);
+}
+
+ul.entity-filter table.divide-by-row{
+    width: 100%;
+}
+
+ul.entity-filter table.divide-by-row td.half{
+    width: 50%;
+}
+
+ul.entity-filter table.divide-by-row td.space{
+    padding: 0 5px 0 5px;
+}
+
+ul.entity-filter table.divide-by-row td .cell{
+    width: 100%;
+}
+
+ul.entity-filter.boolean-filter span.input-line{
+    padding-top: 3px;
+}
+
+ul.entity-filter.option-filter input[type=radio]{
+    margin: 0 3px 0 10px;
+}
+ul.entity-filter.option-filter input[type=checkbox]{
+    margin: 0 3px 0 10px;
+}
+ul.entity-filter.option-filter a.reset{
+    float: right;
+}
+
+ul.entity-filter.option-filter span.option{
+    display: inline-block;;
 }

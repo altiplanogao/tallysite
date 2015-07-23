@@ -26,3 +26,6 @@ section#contentContainer .entity-content-breadcrumbs{
     border-bottom: 2px solid #8eaa2b;
 }
 
+div.template{
+    /* display: none; */
+}

@@ -13,20 +13,18 @@
   <link rel="stylesheet" type="text/css" href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
   <style>
     table.entity-filters-table,
-    .entity-filters-table thead,
-    .entity-filters-table tbody,
-    .entity-filters-table tr,
-    .entity-filters-table th,
-    .entity-filters-table td {
+    .entity-filters-table > thead,
+    .entity-filters-table > tbody,
+    .entity-filters-table > tfoot,
+    .entity-filters-table tr.filters-table-row,
+    .entity-filters-table tr.filters-table-row > th,
+    .entity-filters-table tr.filters-table-row > td {
       border: 1px solid black;
-    }
-
-    .entity-filters-table td {
       background-color: white;
       padding: 5px;
     }
 
-    .entity-filters-table td ul.entity-filter {
+    .entity-filters-table tr.filters-table-row > td > ul.entity-filter {
       position: relative;
     }
   </style>
@@ -83,12 +81,18 @@
   </div>
 </div>
 
-<div th:fragmen="filters">
-  <table class="entity-filters-table">
+<div th:fragment="filters-template">
+  <script>
+    function toggleTbody(item){
+      var $item = $(item);
+      $item.closest('table').find('tbody').toggle();
+    }
+  </script>
+  <table class="entity-filters-table show-filter">
     <thead>
-    <tr>
+    <tr class="filters-table-row">
       <th style="width: 10%;">Entity Type</th>
-      <th style="width: 90%;">Entity Filter</th>
+      <th class="toggle" style="width: 90%;">Entity Filter <input type="button"  onclick="toggleTbody(this)"/></th>
     </tr>
     </thead>
     <tfoot>
@@ -98,30 +102,75 @@
     </tr>
     </tfoot>
     <tbody>
-    <tr>
+    <tr class="filters-table-row">
       <td>Basic</td>
       <td>
-        <ul class="entity-filter no-hover">
+        <ul class="entity-filter string-filter no-hover" data-entity-filter-type="basic,string,default">
           <li>
             <div class="filter-fields" data-action="">
-              <input type="hidden" class="sort-property" data-name="sortProperty" th:value="${fieldName}"/>
+              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
+              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
+
+              <div class="text-filter-control">
+                <button class="filter-button btn btn-info" th:inline="text">
+                  <i class="fa fa-filter"></i>
+                </button><span class="input-line">
+                <span class="input-element">
+                  <i class="fa fa-search embed-search"></i>
+                  <input class="filter-input"
+                         data-name="fieldNamePlaceholder"
+                         placeholder="placeHolder"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span></span>
+              </div>
+
+            </div>
+          </li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="filters-table-row">
+      <td>Number</td>
+      <td>
+        <ul class="entity-filter number-filter no-hover" data-entity-filter-type="number-range">
+          <li>
+            <div class="filter-fields" data-action="">
+              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
               <input type="hidden" class="sort-direction" data-name="sortDirection"/>
 
               <div class="text-filter-control">
                 <button class="filter-button btn btn-info" th:inline="text">
                   <i class="fa fa-filter"></i>
                 </button>
-                <span class="input">
-                  <span class="icon left">
-                    <i class="fa fa-search"></i>
-                  </span>
+                <span class="input-line">
+                  <table class="divide-by-row">
+                    <tbody>
+                    <tr>
+                      <td class="half">
+                <span class="input-element cell">
+                  <i class="fa fa-calculator embed-search"></i>
                   <input class="filter-input"
-                         th:attr="data-name=${fieldName}"
-                         th:placeholder="#{${fieldFriendlyName}}"
+                         data-name="fieldNamePlaceholder"
+                         placeholder="placeholder"
                          type="text"/>
-                  <span class="icon delete-text">
-                    <i class="fa fa-times-circle"></i>
-                  </span>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span>
+                      </td>
+                      <td class="space"><span>-</span></td>
+                      <td class="half">
+                <span class="input-element cell">
+                  <i class="fa fa-calculator embed-search"></i>
+                  <input class="filter-input"
+                         data-name="fieldNamePlaceholder"
+                         placeholder="placeholder"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
                 </span>
               </div>
 
@@ -130,14 +179,62 @@
         </ul>
       </td>
     </tr>
+    <tr class="filters-table-row">
+      <td>Boolean</td>
+      <td>
+        <ul class="entity-filter option-filter boolean-filter no-hover" data-entity-filter-type="boolean">
+          <li>
+            <div class="filter-fields" data-action="">
+              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
+              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
+
+              <div class="option-filter-control">
+                <button class="filter-button btn btn-info" th:inline="text">
+                  <i class="fa fa-filter"></i>
+                </button>
+                <a class="reset" href="#">Reset</a>
+                <span class="option"><input type="radio" name="radio-name-placeholder"/>Yes</span>
+                <span class="option"><input type="radio" name="radio-name-placeholder"/>No</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </td>
+    </tr>
+    <tr class="filters-table-row">
+      <td>Enum</td>
+      <td>
+        <ul class="entity-filter option-filter enum-filter no-hover" data-entity-filter-type="enum">
+          <li>
+            <div class="filter-fields" data-action="">
+              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
+              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
+
+              <div class="option-filter-control">
+                <button class="filter-button btn btn-info" th:inline="text">
+                  <i class="fa fa-filter"></i>
+                </button>
+                <a class="reset" href="#">Reset</a>
+                <span class="option"><input type="checkbox"/>AAA</span>
+                <span class="option"><input type="checkbox"/>BBB</span>
+                <span class="option"><input type="checkbox"/>CCC</span>
+                <span class="option"><input type="checkbox"/>DDD</span>
+                <span class="option"><input type="checkbox"/>EEE</span>
+                <span class="option"><input type="checkbox"/>FFF</span>
+                <span class="option"><input type="checkbox"/>DDD</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </td>
+    </tr>
     </tbody>
   </table>
-
-
 </div>
 
 <footer>
-  <script type="text/javascript" src="../../lib/jquery/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="../../lib/jquery/jquery-2.1.4.js"></script>
+  <script type="text/javascript" src="../../lib/jquery/plugins/jquery.ba-dotimeout.min.js"></script>
   <script type="text/javascript" src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
   <script type="text/javascript" src="../../js/tallybook/range.js"></script>
   <script type="text/javascript" src="../../js/tallybook/entity.js"></script>
