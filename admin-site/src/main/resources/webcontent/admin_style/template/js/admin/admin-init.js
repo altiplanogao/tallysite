@@ -11,6 +11,7 @@
         tallybook.entity.grid.initOnDocReady($doc);
         tallybook.entityGrid.initOnDocReady(window, $doc);
         tallybook.entity.filter.initOnDocReady($doc);
+        tallybook.entity.sorter.initOnDocReady($doc);
     });
 
 })(jQuery, this);

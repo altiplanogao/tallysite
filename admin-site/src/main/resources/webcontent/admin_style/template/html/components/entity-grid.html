@@ -1,33 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css"
-        href="../../lib/font-awesome-4.3.0/css/font-awesome.min.css"/>
-  <link rel="stylesheet" type="text/css"
-        href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
+  <link rel="stylesheet" type="text/css" href="../../lib/font-awesome-4.3.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
 
   <link rel="stylesheet" type="text/css" href="../../css/foundation.css"/>
   <link rel="stylesheet" type="text/css" href="../../css/admin.css"/>
   <link rel="stylesheet" type="text/css" href="../../css/admin-layout.css"/>
-  <link rel="stylesheet" type="text/css" href="../../css/entity/entity.css"/>
   <link rel="stylesheet" type="text/css" href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
-  <style>
-    table.entity-filters-table,
-    .entity-filters-table > thead,
-    .entity-filters-table > tbody,
-    .entity-filters-table > tfoot,
-    .entity-filters-table tr.filters-table-row,
-    .entity-filters-table tr.filters-table-row > th,
-    .entity-filters-table tr.filters-table-row > td {
-      border: 1px solid black;
-      background-color: white;
-      padding: 5px;
-    }
 
-    .entity-filters-table tr.filters-table-row > td > ul.entity-filter {
-      position: relative;
-    }
-  </style>
+  <link rel="stylesheet" type="text/css" href="../../css/component/hover-slide-show.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/entity/entity.css"/>
+
 </head>
 <body>
 <div th:fragment="full_entity_grid">
@@ -79,157 +63,6 @@
       <i class="spinner-item fa fa-spin fa-spinner"></i>
     </span>
   </div>
-</div>
-
-<div th:fragment="filters-template">
-  <script>
-    function toggleTbody(item){
-      var $item = $(item);
-      $item.closest('table').find('tbody').toggle();
-    }
-  </script>
-  <table class="entity-filters-table show-filter">
-    <thead>
-    <tr class="filters-table-row">
-      <th style="width: 10%;">Entity Type</th>
-      <th class="toggle" style="width: 90%;">Entity Filter <input type="button"  onclick="toggleTbody(this)"/></th>
-    </tr>
-    </thead>
-    <tfoot>
-    <tr>
-      <th>End</th>
-      <th></th>
-    </tr>
-    </tfoot>
-    <tbody>
-    <tr class="filters-table-row">
-      <td>Basic</td>
-      <td>
-        <ul class="entity-filter string-filter no-hover" data-entity-filter-type="basic,string,default">
-          <li>
-            <div class="filter-fields" data-action="">
-              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
-              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
-
-              <div class="text-filter-control">
-                <button class="filter-button btn btn-info" th:inline="text">
-                  <i class="fa fa-filter"></i>
-                </button><span class="input-line">
-                <span class="input-element">
-                  <i class="fa fa-search embed-search"></i>
-                  <input class="filter-input"
-                         data-name="fieldNamePlaceholder"
-                         placeholder="placeHolder"
-                         type="text"/>
-                  <i class="fa fa-times-circle  embed-delete"></i>
-                </span></span>
-              </div>
-
-            </div>
-          </li>
-        </ul>
-      </td>
-    </tr>
-    <tr class="filters-table-row">
-      <td>Number</td>
-      <td>
-        <ul class="entity-filter number-filter no-hover" data-entity-filter-type="number-range">
-          <li>
-            <div class="filter-fields" data-action="">
-              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
-              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
-
-              <div class="text-filter-control">
-                <button class="filter-button btn btn-info" th:inline="text">
-                  <i class="fa fa-filter"></i>
-                </button>
-                <span class="input-line">
-                  <table class="divide-by-row">
-                    <tbody>
-                    <tr>
-                      <td class="half">
-                <span class="input-element cell">
-                  <i class="fa fa-calculator embed-search"></i>
-                  <input class="filter-input"
-                         data-name="fieldNamePlaceholder"
-                         placeholder="placeholder"
-                         type="text"/>
-                  <i class="fa fa-times-circle  embed-delete"></i>
-                </span>
-                      </td>
-                      <td class="space"><span>-</span></td>
-                      <td class="half">
-                <span class="input-element cell">
-                  <i class="fa fa-calculator embed-search"></i>
-                  <input class="filter-input"
-                         data-name="fieldNamePlaceholder"
-                         placeholder="placeholder"
-                         type="text"/>
-                  <i class="fa fa-times-circle  embed-delete"></i>
-                </span>
-                      </td>
-                    </tr>
-                    </tbody>
-                  </table>
-                </span>
-              </div>
-
-            </div>
-          </li>
-        </ul>
-      </td>
-    </tr>
-    <tr class="filters-table-row">
-      <td>Boolean</td>
-      <td>
-        <ul class="entity-filter option-filter boolean-filter no-hover" data-entity-filter-type="boolean">
-          <li>
-            <div class="filter-fields" data-action="">
-              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
-              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
-
-              <div class="option-filter-control">
-                <button class="filter-button btn btn-info" th:inline="text">
-                  <i class="fa fa-filter"></i>
-                </button>
-                <a class="reset" href="#">Reset</a>
-                <span class="option"><input type="radio" name="radio-name-placeholder"/>Yes</span>
-                <span class="option"><input type="radio" name="radio-name-placeholder"/>No</span>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </td>
-    </tr>
-    <tr class="filters-table-row">
-      <td>Enum</td>
-      <td>
-        <ul class="entity-filter option-filter enum-filter no-hover" data-entity-filter-type="enum">
-          <li>
-            <div class="filter-fields" data-action="">
-              <input type="hidden" class="sort-property" data-name="sortProperty" value="fieldNamePlaceholder"/>
-              <input type="hidden" class="sort-direction" data-name="sortDirection"/>
-
-              <div class="option-filter-control">
-                <button class="filter-button btn btn-info" th:inline="text">
-                  <i class="fa fa-filter"></i>
-                </button>
-                <a class="reset" href="#">Reset</a>
-                <span class="option"><input type="checkbox"/>AAA</span>
-                <span class="option"><input type="checkbox"/>BBB</span>
-                <span class="option"><input type="checkbox"/>CCC</span>
-                <span class="option"><input type="checkbox"/>DDD</span>
-                <span class="option"><input type="checkbox"/>EEE</span>
-                <span class="option"><input type="checkbox"/>FFF</span>
-                <span class="option"><input type="checkbox"/>DDD</span>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </td>
-    </tr>
-    </tbody>
-  </table>
 </div>
 
 <footer>

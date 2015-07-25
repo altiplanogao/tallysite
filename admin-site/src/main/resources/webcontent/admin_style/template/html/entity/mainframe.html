@@ -33,6 +33,7 @@
         href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
 
   <!-- Components -->
+  <link rel="stylesheet" type="text/css" th:href="@{/css/component/hover-slide-show.css}" href="../../css/component/hover-slide-show.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/component/menu/nav-menu.css}"
         href="../../css/component/menu/nav-menu.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/entity/entity.css}" href="../../css/entity/entity.css"/>
@@ -42,9 +43,21 @@
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin.css}" href="../../css/admin.css"/>
   <link rel="stylesheet" type="text/css" th:href="@{/css/admin-layout.css}" href="../../css/admin-layout.css"/>
 
-</head>
+  <!--/*-->
+  <style>
+    .release-hide{ }
+  </style>
+  <!--*/-->
+  <!--/*/
+    <style th:if="${production}">
+      .production-hide{
+        display: none;
+      }
+    </style>
+  </head>
+  /*/-->
 
-<body>
+  <body>
 
 <nav class="nav navbar-inverse navbar-fixed-top header-bar" th:fragment="entity_header_bar">
   <div class="container-fluid">
@@ -107,62 +120,10 @@
               </li>
             </ul>
           </div>
-
         </li>
-
-        <!--/*-->
-        <!-- FOLLOWING WILL BE DELETED BY THYMELEAF -->
-        <li class="menu-group active">
-          <div class="menu-group-title">
-            <h5>
-              <i class="glyphicon glyphicon-user"></i>
-              Security (A)
-            </h5>
-          </div>
-          <div class="menu-group-content">
-            <ul>
-              <li class="active">
-                <a href="#">Permission Entries (A)</a>
-              </li>
-              <li>
-                <a href="#">Permissions</a>
-              </li>
-              <li>
-                <a href="#">Permissions
-                </a>
-              </li>
-            </ul>
-          </div>
-        </li>
-
-        <li class="menu-group">
-          <div class="menu-group-title">
-            <h5>
-              <i class="glyphicon glyphicon-user"></i>
-              Security (D)
-            </h5>
-          </div>
-          <div class="menu-group-content">
-            <ul>
-              <li class="active">
-                <a href="#">Permission Entries</a>
-              </li>
-              <li class="active">
-                <a href="#">Permissions</a>
-              </li>
-              <li class="active">
-                <a href="#">Permissions
-                </a>
-              </li>
-            </ul>
-          </div>
-        </li>
-        <!-- ABOVE WILL BE DELETED BY THYMELEAF -->
-        <!--*/-->
-      </ul>
-
-    </nav>
-  </section>
+    </ul>
+  </nav>
+</section>
 
   <section id="contentContainer" th:fragment="entity_content">
     <div class="raw-data"><p th:attr="data-raw-data=${rawdata}"></p></div>
@@ -189,9 +150,7 @@
                          placeholder="Search Placeholder"/>
                 </div>
               </div>
-
             </form>
-
           </div>
           <div class="col-xs-5">
             <div style="float: right;">
@@ -203,8 +162,16 @@
         <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
         <!--data-entity-grid-align-type="window"-->
         <!--data-entity-grid-align-offset="50"/>-->
-        <div th:include="components/entity-grid :: filters-template"
-             class="template entity-filter-template"/>
+        <div class="slide-show production-hide" style="top:100px; width: 90%; left: 100%;">
+          <div class="indexer">
+            <span>Grid Template</span>
+          </div>
+          <div class="content">
+            <div th:include="components/grid-template :: full-template"
+                 class="template grid-template"/>
+          </div>
+        </div>
+
         <div th:include="components/entity-grid :: full_entity_grid"
              data-entity-grid-source-name="details"
              data-entity-grid-align-type="window"

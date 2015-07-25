@@ -1,14 +1,31 @@
+/* Filter Sort Container */
+.filter-sort-container{
+    position: absolute;
+    right: 0px;
+    display: inline-block;
+    padding: 0 5px 0 0;
+}
 
-.entity-grid-container ul.entity-filter{
+.filter-sort-container > i {
+    color: #B9B9B9;
+    margin: 0px 0px 0px 4px;
+    cursor: pointer;
+}
+.filter-sort-container.sort-active > i.sort-icon,
+.filter-sort-container.filter-active > i.filter-icon{
+    color: #8EAA2B;
+}
+
+/* Filter dropdown */
+.filter-sort-container
+.entity-filter{
     position: absolute;
 }
 
-/* Entity Filter */
-ul.entity-filter{
+.entity-filter{
     display: none;
     background: #E9E9E9;
     list-style: none;
-    padding-left: 0;
     border: 1px solid #cccccc;
     border-radius: 3px;
     padding: 10px;
@@ -17,58 +34,45 @@ ul.entity-filter{
     min-width: 222px;
 }
 
-.show-filter ul.entity-filter{
+.show-filter
+.entity-filter{
     display: block !important;
 }
 
-ul.entity-filter li{
+/*Dropdown layout*/
+.entity-filter table.divide-by-row{
+    width: 100%;
 }
-ul.entity-filter .text-filter-control{
+
+.entity-filter table.divide-by-row td.half{
+    width: 50%;
+}
+
+.entity-filter table.divide-by-row td.space{
+    padding: 0 5px 0 5px;
+}
+
+.entity-filter table.divide-by-row td .cell{
+    width: 100%;
+}
+
+/* Entity Filter Control: contains elements */
+.entity-filter .text-filter-control{
     white-space: nowrap;
 }
-ul.entity-filter .filter-fields{
+
+.entity-filter .filter-fields{
     position: relative;
 }
 
-ul.entity-filter .input-line{
+.entity-filter .input-line{
     position: relative;
     display: block;
     overflow: hidden;
 }
 
-ul.entity-filter .input-element{
-    position: relative;
-    display: inline-block;
-    width: 100%;
-    /*overflow: hidden;*/
-}
-
-ul.entity-filter .input-element.half{
-    width: 50%;
-    /*overflow: hidden;*/
-}
-
-ul.entity-filter .input-element > i.fa{
-    position: absolute;
-    color: #aaaaaa;
-    top: 5px;
-    z-index: 2;
-    vertical-align: middle;
-}
-ul.entity-filter .input-element > i.fa.embed-search{
-    left: 5px;
-}
-
-ul.entity-filter .input-element > i.fa.embed-delete{
-    left: inherit;
-    right: 8px;
-}
-
-ul.entity-filter .input-element > i.fa.embed-delete:active{
-    color: #111111;
-}
-
-ul.entity-filter li .filter-button{
+/* Entity Filter Button */
+.entity-filter .filter-button{
     float: right;
     padding-bottom: 1px;
     padding-top: 1px;
@@ -77,52 +81,70 @@ ul.entity-filter li .filter-button{
     margin-left: 8px;
 }
 
-ul.entity-filter li input[type=text].filter-input{
+/* Entity Input Element: text element */
+.entity-filter .input-element{
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.entity-filter .input-element.half{
+    width: 50%;
+}
+
+/*InputElement.TextElement*/
+.entity-filter .input-element{}
+
+.entity-filter .input-element > i.fa{
+    position: absolute;
+    color: #aaaaaa;
+    top: 5px;
+    z-index: 2;
+    vertical-align: middle;
+}
+.entity-filter .input-element > i.fa.embed-hint{
+    left: 5px;
+}
+.entity-filter .input-element > i.fa.embed-delete{
+    right: 8px;
+}
+.entity-filter .input-element > i.fa.embed-delete:active{
+    color: #111111;
+}
+
+.entity-filter .input-element > input[type=text].filter-input{
     width: 100%;
     border-radius: 5px;
     border: 1px solid #cccccc;
     color: #353a3b;
     padding-left: 20px;
     padding-right: 20px;
+    font-weight: normal;
 }
 
-ul.entity-filter li input[type=text].filter-input:focus {
+.entity-filter .input-element > input[type=text].filter-input:focus {
     border-color: #a0bf30;
     outline: 0;
     -webkit-box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(198, 230, 59, 0.6);
     box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(185, 221, 56, 0.68);
 }
 
-ul.entity-filter table.divide-by-row{
-    width: 100%;
-}
-
-ul.entity-filter table.divide-by-row td.half{
-    width: 50%;
-}
-
-ul.entity-filter table.divide-by-row td.space{
-    padding: 0 5px 0 5px;
-}
-
-ul.entity-filter table.divide-by-row td .cell{
-    width: 100%;
-}
-
-ul.entity-filter.boolean-filter span.input-line{
+/* Entity Input Element: boolean element */
+.entity-filter.boolean-filter span.input-line{
     padding-top: 3px;
 }
 
-ul.entity-filter.option-filter input[type=radio]{
+/* Entity Input Element: option element */
+.entity-filter.option-filter input[type=radio]{
     margin: 0 3px 0 10px;
 }
-ul.entity-filter.option-filter input[type=checkbox]{
+.entity-filter.option-filter input[type=checkbox]{
     margin: 0 3px 0 10px;
 }
-ul.entity-filter.option-filter a.reset{
+.entity-filter.option-filter a.reset{
     float: right;
 }
 
-ul.entity-filter.option-filter span.option{
+.entity-filter.option-filter span.option{
     display: inline-block;;
 }

@@ -1,0 +1,55 @@
+.slide-show{
+    position: fixed;
+    min-width: 100px;
+    z-index: 100;
+/*    overflow: hidden; this will hide indexer*/
+    -webkit-transition-duration: .5s;
+    -moz-transition-duration: .5s;
+    -o-transition-duration: .5s;
+}
+
+
+.slide-show > div{
+    background-color:rgba(165, 162, 162, 0.45);
+}
+
+.slide-show > .indexer{
+    position: absolute;
+    display: inline-block;
+    right: 100%;
+}
+
+.slide-show > .indexer,
+.slide-show > .content{
+    -webkit-transition-duration: .5s;
+    -moz-transition-duration: .5s;
+    -o-transition-duration: .5s;
+}
+
+.slide-show > .content{
+    position: relative;
+    width: 100%;
+    min-height: 100px;
+}
+
+.slide-show.active > .indexer,
+.slide-show:hover > .indexer {
+    right: 200%;
+}
+
+.slide-show.active > .content,
+.slide-show:hover > .content {
+    margin-left: -100%;
+}
+
+/*
+Example:
+<div class="slide-show" style="top:100px; width: 200px; left: 100%;">
+  <div class="indexer">
+    <span>Indexer</span>
+  </div>
+  <div class="content">
+    <div></div>
+  </div>
+</div>
+*/

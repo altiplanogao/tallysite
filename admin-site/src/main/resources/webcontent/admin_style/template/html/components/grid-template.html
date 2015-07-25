@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+
+  <link rel="stylesheet" type="text/css" href="../../lib/font-awesome-4.3.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../lib/bootstrap-3.3.4/css/bootstrap.css"/>
+
+  <link rel="stylesheet" type="text/css" href="../../css/foundation.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/admin.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/admin-layout.css"/>
+  <link rel="stylesheet" type="text/css" href="../../lib/jquery/plugins/jquery.custom-scrollbar.css"/>
+
+  <link rel="stylesheet" type="text/css" href="../../css/component/hover-slide-show.css"/>
+  <link rel="stylesheet" type="text/css" href="../../css/entity/entity.css"/>
+
+  <style>
+    table.entity-filters-table,
+    .entity-filters-table > thead,
+    .entity-filters-table > tbody,
+    .entity-filters-table > tfoot,
+    .entity-filters-table tr.filters-table-row,
+    .entity-filters-table tr.filters-table-row > th,
+    .entity-filters-table tr.filters-table-row > td {
+      border: 1px solid black;
+      background-color: white;
+      padding: 5px;
+    }
+
+    .entity-filters-table tr.filters-table-row > td > ul.entity-filter {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+<div th:fragment="full-template">
+  <style>
+    .template-group {
+      margin-left: 5px;
+      font-weight: bold;
+    }
+
+    .template-group + div {
+      margin-left: 30px;
+    }
+  </style>
+  <p class="template-group">
+    Column Header Template
+  </p>
+
+  <div>
+    <table><tr>
+
+    <th class='column-header-template column explicit-size' scope='col'>
+      <div href='#' class='column-header dropdown'>
+        <input type="hidden" class="filter-value" data-key="filterName" value=""/>
+        <input type="hidden" class="sort-value" data-key="sort_filterName" value=""/>
+        <div class='title'>
+          <span class='col-name'>Name Placeholder</span>
+
+          <div class='filter-sort-container'>
+            <i class='sort-icon fa fa-sort'></i>
+            <i class='filter-icon fa fa-filter'></i>
+            <ul class='entity-filter'>
+            </ul>
+          </div>
+        </div>
+        <div class='resizer'>||</div>
+      </div>
+    </th></tr></table>
+  </div>
+
+  <p class="template-group">
+    Filter Template
+  </p>
+
+  <div th:fragment="filters-template">
+    <table class="entity-filters-table show-filter">
+      <thead>
+      <tr class="filters-table-row">
+        <th style="width: 20%;">Entity Type</th>
+        <th class="toggle" style="width: 80%;">Entity Filter</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr class="filters-table-row">
+        <td>Basic</td>
+        <td>
+          <ul class="entity-filter string-filter no-hover" data-entity-filter-type="basic,string,default">
+            <li>
+              <div class="filter-fields" data-action="">
+
+                <div class="text-filter-control">
+                  <button class="filter-button btn btn-info" th:inline="text">
+                    <i class="fa fa-filter"></i>
+                  </button><span class="input-line">
+                <span class="input-element">
+                  <i class="fa fa-search embed-hint"></i>
+                  <input class="filter-input"
+                         data-name="fieldNamePlaceholder"
+                         placeholder="placeHolder"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span></span>
+                </div>
+
+              </div>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr class="filters-table-row">
+        <td>Number</td>
+        <td>
+          <ul class="entity-filter number-filter no-hover" data-entity-filter-type="number-range">
+            <li>
+              <div class="filter-fields" data-action="">
+                <div class="text-filter-control">
+                  <button class="filter-button btn btn-info" th:inline="text">
+                    <i class="fa fa-filter"></i>
+                  </button>
+                <span class="input-line">
+                  <table class="divide-by-row">
+                    <tbody>
+                    <tr>
+                      <td class="half">
+                <span class="input-element cell">
+                  <i class="fa fa-calculator embed-hint"></i>
+                  <input class="filter-input"
+                         data-name="fieldNamePlaceholder"
+                         placeholder="placeholder"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span>
+                      </td>
+                      <td class="space"><span>-</span></td>
+                      <td class="half">
+                <span class="input-element cell">
+                  <i class="fa fa-calculator embed-hint"></i>
+                  <input class="filter-input"
+                         data-name="fieldNamePlaceholder"
+                         placeholder="placeholder"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </span>
+                </div>
+
+              </div>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr class="filters-table-row">
+        <td>Boolean</td>
+        <td>
+          <ul class="entity-filter option-filter boolean-filter no-hover" data-entity-filter-type="boolean">
+            <li>
+              <div class="filter-fields" data-action="">
+                <div class="option-filter-control">
+                  <button class="filter-button btn btn-info" th:inline="text">
+                    <i class="fa fa-filter"></i>
+                  </button>
+                  <a class="reset" href="#">Reset</a>
+                  <span class="option"><input type="radio" name="radio-name-placeholder"/>Yes</span>
+                  <span class="option"><input type="radio" name="radio-name-placeholder"/>No</span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr class="filters-table-row">
+        <td>Enum</td>
+        <td>
+          <ul class="entity-filter option-filter enum-filter no-hover" data-entity-filter-type="enum">
+            <li>
+              <div class="filter-fields" data-action="">
+                <div class="option-filter-control">
+                  <button class="filter-button btn btn-info" th:inline="text">
+                    <i class="fa fa-filter"></i>
+                  </button>
+                  <a class="reset" href="#">Reset</a>
+                  <span class="option"><input type="checkbox"/>AAA</span>
+                  <span class="option"><input type="checkbox"/>BBB</span>
+                  <span class="option"><input type="checkbox"/>CCC</span>
+                  <span class="option"><input type="checkbox"/>DDD</span>
+                  <span class="option"><input type="checkbox"/>EEE</span>
+                  <span class="option"><input type="checkbox"/>FFF</span>
+                  <span class="option"><input type="checkbox"/>DDD</span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  <script type="text/javascript" src="../../lib/jquery/jquery-2.1.4.js"></script>
+  <script type="text/javascript" src="../../lib/jquery/plugins/jquery.ba-dotimeout.min.js"></script>
+  <script type="text/javascript" src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
+  <script type="text/javascript" src="../../js/tallybook/range.js"></script>
+  <script type="text/javascript" src="../../js/tallybook/entity.js"></script>
+  <script type="text/javascript" src="../../js/tallybook/entity-grid.js"></script>
+  <script type="text/javascript" src="../../js/admin/admin-init.js"></script>
+</footer>
+
+</body>
+</html>

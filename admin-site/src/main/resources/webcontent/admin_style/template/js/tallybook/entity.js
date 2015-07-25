@@ -48,10 +48,50 @@ if (!tallybook)
     }
   };
 
-  function makeColumnFilter(fieldInfo, templateMap){
+  var Template = {
+    filterTemplateMapByType : (function(){
+      var $templates = $('.template.grid-template table.entity-filters-table > tbody ul.entity-filter');
+      var templateMap = {};
+      $templates.each(function(index, template){
+        var $template = $(template);
+        var types = $template.attr('data-entity-filter-type').split(',');
+        types.forEach(function (type) {
+          templateMap[type] = $template;
+        })
+      });
+      return function(){return templateMap;}
+    })(),
+    columnHeader : (function(){
+      var template = $('.template.grid-template .column-header-template');
+      template.removeClass('column-header-template');
+      return function(){
+        return template.clone();};
+    })(),
+    cell : function(fieldname, fieldvalue) {
+      var obj = $("<td>");
+      obj.attr("data-fieldname", fieldname);
+      obj.attr("data-fieldvalue", fieldvalue);
+      return obj;
+    },
+    row: function (gridinfo, entity, entityIndex) {
+      var $row = $('<tr class="data-row">');
+      $row.attr('data-id', entity[gridinfo.idField]);
+      $row.attr('data-name', entity[gridinfo.nameField]);
+      $row.attr('data-entity-index', entityIndex);
+      return $row;
+    }
+  };
+
+  function makeColumnFilter(fieldInfo){
+    var templateMap = Template.filterTemplateMapByType();
     var f = {
       makeCellAsGeneral : function(){
         var template = templateMap['default'].clone();
+        $('input.filter-property', template).val(fieldInfo.name);
+        $('input.sort-property', template).val('sort_' + fieldInfo.name);
+        var $input = $('input.filter-input', template);
+        $input.attr('data-name', fieldInfo.name);
+        $input.attr('placeholder', fieldInfo.friendlyName);
         return template;
       }
     };
@@ -66,7 +106,6 @@ if (!tallybook)
     }
     
     return content;
-
   };
   function fillCellContent(gridInfo, $cell, entity, field, fieldvalue, baseUrl) {
     var m = {
@@ -127,56 +166,29 @@ if (!tallybook)
     $cell.html(content);
   };
 
-  var Grid = {
 
+  var Grid = {
     header: {
-      filter:{
-        templateMapByType:function(){
-          var $templates = $('.template.entity-filter-template table > tbody ul.entity-filter');
-          var templateMap = {};
-          $templates.each(function(index, template){
-            var $template = $(template);
-            var types = $template.attr('data-entity-filter-type').split(',');
-            types.forEach(function (type) {
-              templateMap[type] = $template;
-            })
-          });
-          return templateMap;
-        }
-      },
-      col: {
-        template: function () {
-          var obj = $(
-            "<th class='column explicit-size' scope='col'>" +
-            " <div href='#' class='column-header dropdown'>" +
-            "  <div class='title'>" +
-            "   <span class='col-name'>Name Placeholder</span>" +
-            "   <div class='filter-sort-container'>" +
-            "    <i class='icon-sort fa fa-sort'></i>" +
-            "    <i class='icon-filter fa fa-filter'></i>" +
-            "   </div>" +
-            "  </div>" +
-            "  <div class='resizer'>||</div>" +
-            "  <ul class='entity-filter'>" +
-            "  </ul>" +
-            " </div>" +
-            "</th>");
-          return obj;
-        }
-      },
-      makeCol: function (fieldInfo, templateMap) {
-        var $col = this.col.template();
+      makeCol: function (fieldInfo) {
+        var $col = Template.columnHeader();
         $col.find('.col-name').text(fieldInfo.friendlyName);
         if (!fieldInfo.gridVisible) {
           $col.css('display', 'none');
         }
-        var iconSort = $col.find('.icon-sort');
-        var iconFilter=$col.find('.icon-filter');
-        if(!fieldInfo.supportSort){
+        $col.find('.column-header').attr('data-column-key', fieldInfo.name);
+        var iconSort = $col.find('.sort-icon');
+        var iconFilter=$col.find('.filter-icon');
+        if(fieldInfo.supportSort){
+          var sortValEle = $col.find('.sort-value');
+          sortValEle.attr('data-key', 'sort_'+fieldInfo.name);
+        }else{
           iconSort.hide();
         }
         if(fieldInfo.supportFilter){
-          var filter = makeColumnFilter(fieldInfo, templateMap);
+          var filterValEle = $col.find('.filter-value');
+          filterValEle.attr('data-key', fieldInfo.name);
+
+          var filter = makeColumnFilter(fieldInfo);
           $col.find('.entity-filter').replaceWith(filter);
         }else{
           iconFilter.hide();
@@ -185,10 +197,9 @@ if (!tallybook)
       },
       makeCols: function (gridinfo) {
         var _head = this;
-        var templateMap = this.filter.templateMapByType();
 
         var $cols = gridinfo.fields.map(function (fieldInfo, index, array) {
-          var $col = _head.makeCol(fieldInfo, templateMap);
+          var $col = _head.makeCol(fieldInfo);
           return $col;
         });
         return $cols;
@@ -203,25 +214,10 @@ if (!tallybook)
 
     body: {
       row: {
-        template: function (gridinfo, entity, entityIndex) {
-          var $row = $('<tr class="data-row">');
-          $row.attr('data-id', entity[gridinfo.idField]);
-          $row.attr('data-name', entity[gridinfo.nameField]);
-          $row.attr('data-entity-index', entityIndex);
-          return $row;
-        },
-        cell: {
-          template: function (fieldname, fieldvalue) {
-            var obj = $("<td>");
-            obj.attr("data-fieldname", fieldname);
-            obj.attr("data-fieldvalue", fieldvalue);
-            return obj;
-          }
-        },
         makeCell: function (gridInfo, field, entity, baseUrl) {
           var fieldname = field.name;
           var fieldvalue = entity[fieldname];
-          var $cell = this.cell.template(fieldname, fieldvalue);
+          var $cell = Template.cell(fieldname, fieldvalue);
           fillCellContent(gridInfo, $cell, entity, field, fieldvalue, baseUrl);
           if (!field.gridVisible) {
             $cell.css('display', 'none');
@@ -247,7 +243,7 @@ if (!tallybook)
         }
       },
       makeRow: function (gridinfo, entity, entityIndex, baseUrl) {
-        var $row = this.row.template(gridinfo, entity, entityIndex);
+        var $row = Template.row(gridinfo, entity, entityIndex);
         var $cells = this.row.makeCells(gridinfo, entity, baseUrl);
         $row.html($cells);
         return $row;
@@ -327,9 +323,13 @@ if (!tallybook)
     closeDropdowns: function(header){
       $('.column-header.dropdown').not(header).removeClass('show-filter');
     },
+    setValue : function(header, value){
+      $('input.filter-value', header).val(value);
+      $('.filter-sort-container', header).toggleClass('filter-active', !!value);
+    },
     initOnDocReady: function($doc){
       //Init filter dropdown
-      $doc.on('click','.column-header.dropdown .icon-filter', function(e){
+      $doc.on('click','.column-header.dropdown .filter-icon', function(e){
         var $el = $(this),
         header = $el.closest('.column-header.dropdown'),
         dropdown = $('> ul', header);
@@ -337,7 +337,6 @@ if (!tallybook)
         setTimeout(function () {
             header.toggleClass('show-filter');
             Filter.closeDropdowns(header);
-//            BLCAdmin.listGrid.filter.closeDropdowns(dropdown);
         }, 0);
       });
 
@@ -367,11 +366,61 @@ if (!tallybook)
         $input.change(invalidDelIcon);
       })
     }
-  }
+  };
+
+  var Sorter ={
+    getOrderInInt : function($el){
+        if($el.is('.fa-sort-amount-asc'))
+          return 1;
+        if($el.is('.fa-sort-amount-desc'))
+          return -1;
+        return 0;
+    },
+    getNextOrder : function(intOrder){
+      intOrder = -(-intOrder);
+      return ((intOrder+1 +1) % 3) - 1;
+    },
+    setOrderClass: function($el, intOrder){
+      $el.removeClass('fa-sort-amount-desc');
+      $el.removeClass('fa-sort-amount-asc');
+      var $container = $el.parent('.filter-sort-container');
+      switch(intOrder){
+        case -1:
+          $el.addClass('fa-sort-amount-desc');
+          $container.addClass('sort-active');
+          break;
+        case 1:
+          $el.addClass('fa-sort-amount-asc');
+          $container.addClass('sort-active');
+          break;
+        case 0:
+          $container.removeClass('sort-active');
+          break;
+      }
+    },
+    initOnDocReady: function($doc){
+      var params = host.history.getUrlParameters();
+      
+      var sorter = this;
+      //Init sorter
+      $doc.on('click','.column-header.dropdown .sort-icon', function(e){
+        var $el = $(this),
+          header = $el.closest('.column-header.dropdown'),
+          dropdown = $('> ul', header);
+
+        var currentOrder = sorter.getOrderInInt($el);
+        var nextOrder = sorter.getNextOrder(currentOrder);
+        sorter.setOrderClass($el, nextOrder);
+
+
+      });
+    }
+  };
 
   host.entity = {
     data: Data,
     grid: Grid,
-    filter: Filter
+    filter: Filter,
+    sorter : Sorter
   };
 })($, tallybook);

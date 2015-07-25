@@ -49,21 +49,11 @@ div.entity-grid-container
     text-overflow: ellipsis;
 }
 
-div.entity-grid-container
-.header thead tr>th.column .title{
+.column-header .title{
     display: inline;
 }
 
-div.entity-grid-container
-.header thead tr>th.column .title > .filter-sort-container{
-    position: absolute;
-    right: 0px;
-    display: inline-block;
-    padding: 0 5px 0 0;
-}
-
-div.entity-grid-container
-.header thead tr>th.column div.resizer {
+.column-header div.resizer {
     color: #DDD;
     right: -8px;
     cursor: col-resize;
@@ -76,12 +66,6 @@ div.entity-grid-container
     display: none;
 }
 
-div.entity-grid-container
-.header thead tr>th.column div.filter-sort-container>i {
-    color: #B9B9B9;
-    margin: 0px 0px 0px 4px;
-    cursor: pointer;
-}
 
 /*  Body Wrapper  */
 
