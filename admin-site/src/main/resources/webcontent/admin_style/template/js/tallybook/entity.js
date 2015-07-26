@@ -369,7 +369,8 @@ if (!tallybook)
   };
 
   var Sorter ={
-    getOrderInInt : function($el){
+    getOrderInInt : function(header){
+      var $el = header.find('i.sort-icon');
         if($el.is('.fa-sort-amount-asc'))
           return 1;
         if($el.is('.fa-sort-amount-desc'))
@@ -380,22 +381,46 @@ if (!tallybook)
       intOrder = -(-intOrder);
       return ((intOrder+1 +1) % 3) - 1;
     },
-    setOrderClass: function($el, intOrder){
+    setOrderClass: function(header, intOrder){
+      var $el = header.find('i.sort-icon');
       $el.removeClass('fa-sort-amount-desc');
       $el.removeClass('fa-sort-amount-asc');
       var $container = $el.parent('.filter-sort-container');
+      var $valEle = header.find('.sort-value');
+      var sortKey = $valEle.attr('data-key');
+      var sortVal = null;
       switch(intOrder){
         case -1:
           $el.addClass('fa-sort-amount-desc');
           $container.addClass('sort-active');
+          sortVal = 'desc';
           break;
         case 1:
           $el.addClass('fa-sort-amount-asc');
           $container.addClass('sort-active');
+          sortVal = 'asc';
           break;
         case 0:
           $container.removeClass('sort-active');
+          sortVal = null;
           break;
+      }
+      $valEle.val(sortVal);
+      var url = '';
+    },
+    clearActiveOrder : function ($thead) {
+      var $headers = $thead.find('.column-header.dropdown');
+      $headers.find('.sort-value').val('');
+      $headers.find('.filter-sort-container').removeClass('sort-active')
+        .find('i.sort-icon')
+        .removeClass('fa-sort-amount-desc fa-sort-amount-asc');
+      var params = host.history.getUrlParameters();
+      if(params){
+        for(var key in params){
+          if(key.startWith('sort_')){
+            host.history.replaceUrlParameter(key, null);
+          }
+        }
       }
     },
     initOnDocReady: function($doc){
@@ -408,10 +433,13 @@ if (!tallybook)
           header = $el.closest('.column-header.dropdown'),
           dropdown = $('> ul', header);
 
-        var currentOrder = sorter.getOrderInInt($el);
+        var currentOrder = sorter.getOrderInInt(header);
         var nextOrder = sorter.getNextOrder(currentOrder);
-        sorter.setOrderClass($el, nextOrder);
 
+        var $thead = $el.closest('.thead');
+        sorter.clearActiveOrder($thead);
+
+        sorter.setOrderClass(header, nextOrder);
 
       });
     }
