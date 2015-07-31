@@ -4,19 +4,20 @@ import com.taoswork.tallybook.admincore.TallyBookAdminCoreRoot;
 import com.taoswork.tallybook.general.extension.collections.MapBuilder;
 import com.taoswork.tallybook.general.extension.collections.SetBuilder;
 import com.taoswork.tallybook.general.solution.i18n.i18nMessageFileArranger;
-import com.taoswork.tallybook.general.solution.web.view.thymeleaf.TallyBookDialect;
-import com.taoswork.tallybook.general.solution.web.view.thymeleaf.TallyBookThymeleafViewResolver;
+import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookDataViewResolver;
+import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookDialect;
+import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookThymeleafViewResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.util.ResourceUtils;
+import org.springframework.web.servlet.ViewResolver;
 import org.thymeleaf.dialect.IDialect;
 import org.thymeleaf.messageresolver.IMessageResolver;
 import org.thymeleaf.spring4.SpringTemplateEngine;
@@ -121,20 +122,30 @@ public class MvcViewConfigurer {
         templateEngine.setTemplateResolvers(templateResolverSet());
 
         templateEngine.setAdditionalDialects(
-                new SetBuilder<IDialect>()
-                        .append(new TallyBookDialect()));
+            new SetBuilder<IDialect>()
+                .append(new TallyBookDialect()));
         return templateEngine;
     }
 
     @Bean
     public TallyBookThymeleafViewResolver thymeleafViewResolver() {
         TallyBookThymeleafViewResolver viewResolver = new TallyBookThymeleafViewResolver();
+        viewResolver.setOrder(1);
         viewResolver.setTemplateEngine(thymeleafTemplateEngine());
         viewResolver.setCharacterEncoding("UTF-8");
         viewResolver.setDefaultLayout("entity/layout/entityLayout");
         viewResolver.setLayoutMap(
-                new MapBuilder<String, String>()
-                        .append("login/", "login/layout/loginLayout"));
+            new MapBuilder<String, String>()
+                .append("login/", "login/layout/loginLayout"));
         return viewResolver;
     }
+
+    @Bean
+    public ViewResolver dataViewResolver(){
+        TallyBookDataViewResolver view = new TallyBookDataViewResolver();
+        view.setOrder(0);
+        return view;
+    }
+
+
 }

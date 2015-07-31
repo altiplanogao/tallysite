@@ -6,7 +6,7 @@ import com.taoswork.tallybook.business.dataservice.tallyadmin.TallyAdminDataServ
 import com.taoswork.tallybook.general.solution.menu.Menu;
 import com.taoswork.tallybook.general.solution.menu.MenuEntry;
 import com.taoswork.tallybook.general.solution.menu.MenuEntryGroup;
-import com.taoswork.tallybook.general.solution.web.control.BaseController;
+import com.taoswork.tallybook.general.web.control.BaseController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;

@@ -97,7 +97,7 @@ if(!tallybook)
       }
       return result;
     },
-    chipOffOnePiece: function (pieceWidth, fromTail) {
+    subRange: function (pieceWidth, fromTail) {
       if (fromTail == undefined) {
         fromTail = false;
       }

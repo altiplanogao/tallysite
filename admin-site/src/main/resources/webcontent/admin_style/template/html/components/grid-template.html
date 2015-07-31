@@ -52,8 +52,8 @@
 
     <th class='column-header-template column explicit-size' scope='col'>
       <div href='#' class='column-header dropdown'>
-        <input type="hidden" class="filter-value" data-key="filterName" value=""/>
-        <input type="hidden" class="sort-value" data-key="sort_filterName" value=""/>
+        <input type="hidden" class="filter-value" name="filterName" value=""/>
+        <input type="hidden" class="sort-value" name="sort_filterName" value=""/>
         <div class='title'>
           <span class='col-name'>Name Placeholder</span>
 
@@ -85,7 +85,7 @@
       <tr class="filters-table-row">
         <td>Basic</td>
         <td>
-          <ul class="entity-filter string-filter no-hover" data-entity-filter-type="basic,string,default">
+          <ul class="entity-filter string-filter no-hover" data-entity-filter-type="basic,string,default" data-filter-value-handler="string">
             <li>
               <div class="filter-fields" data-action="">
 

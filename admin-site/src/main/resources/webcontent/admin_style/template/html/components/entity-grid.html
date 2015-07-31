@@ -15,7 +15,12 @@
 </head>
 <body>
 <div th:fragment="full_entity_grid">
-  <div class="entity-grid-container entity-grid-autofill">
+  <div class="entity-grid-container entity-grid-autofill"
+       data-recordranges=""
+       data-totalrecords="0"
+       data-pagesize="0"
+       data-baseurl="/">
+    <div class="raw-data"><p th:attr="data-raw-data=${data}"></p></div>
     <div class="header">
       <table class="table table-condensed table-hover">
         <thead>
@@ -29,13 +34,9 @@
         <thead>
         <tr class="width-control-header"></tr>
         </thead>
-        <tbody class="real-data"
-               data-recordranges="0-0,0-0"
-               data-totalrecords="0"
-               data-pagesize="0"
-               data-baseurl="/">
+        <tbody class="real-data">
         <tr class="empty-mark">
-          <td colspan="${#lists.size(entityGridInfo.fields) + 1}" class="entity-grid-no-results" th:inline="text">
+          <td class="entity-grid-no-results" th:inline="text">
             [[#{general.NoRecordsFound}]]
           </td>
         </tr>
@@ -49,6 +50,9 @@
       </table>
 
     </div>
+    <span class="spinner">
+      <i class="spinner-item fa fa-spin fa-spinner"></i>
+    </span>
 
     <div class="footer">
       <div>
@@ -59,9 +63,6 @@
       </div>
     </div>
 
-    <span class="spinner">
-      <i class="spinner-item fa fa-spin fa-spinner"></i>
-    </span>
   </div>
 </div>
 

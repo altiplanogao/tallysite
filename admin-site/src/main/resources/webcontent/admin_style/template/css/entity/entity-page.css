@@ -12,7 +12,7 @@ section#contentContainer {
     position: relative;
 }
 
-section#contentContainer > div.raw-data {
+.entity-grid-container > div.raw-data {
     display: none;
 }
 

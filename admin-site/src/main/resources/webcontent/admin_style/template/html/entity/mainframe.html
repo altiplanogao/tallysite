@@ -126,7 +126,6 @@
 </section>
 
   <section id="contentContainer" th:fragment="entity_content">
-    <div class="raw-data"><p th:attr="data-raw-data=${rawdata}"></p></div>
     <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
       <ol class="breadcrumb">
         <li>[[#{${current.menuGroup.key}}]]</li>
@@ -158,10 +157,7 @@
             </div>
           </div>
         </div>
-        <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
-        <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
-        <!--data-entity-grid-align-type="window"-->
-        <!--data-entity-grid-align-offset="50"/>-->
+
         <div class="slide-show right production-hide" style="width: 90%;">
           <div class="indexer">
             <span>Grid Template</span>
@@ -171,9 +167,13 @@
                  class="template grid-template"/>
           </div>
         </div>
-
+        <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
+        <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
+        <!--data-entity-grid-align-type="window"-->
+        <!--data-entity-grid-align-offset="50"/>-->
         <div th:include="components/entity-grid :: full_entity_grid"
-             data-entity-grid-source-name="details"
+             th:with="data=${entityQueryResult}"
+             data-grid-scope="main"
              data-entity-grid-align-type="window"
              data-entity-grid-align-offset="50"/>
 
@@ -189,7 +189,7 @@
 
   <!-- <script src="//jquery.com/jquery-wp-content/themes/jquery/js/jquery-1.11.2.min.js"></script> -->
   <!-- Libs -->
-  <script type="text/javascript" th:src="@{/lib/jquery/jquery-2.1.4.min.js}"
+  <script type="text/javascript" th:src="@{/lib/jquery/jquery-2.1.4.js}"
           src="../../lib/jquery/jquery-2.1.4.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/jquery-ui/jquery-ui.js}"
           src="../../lib/jquery-ui/jquery-ui.js"></script>
@@ -205,6 +205,10 @@
           src="../../lib/foundation/js/foundation/foundation.accordion.js"></script>
 
   <!-- Components -->
+  <script type="text/javascript" th:src="@{/js/tallybook/debug.js}"
+          src="../../js/tallybook/debug.js"></script>
+  <script type="text/javascript" th:src="@{/js/tallybook/ajax.js}"
+          src="../../js/tallybook/ajax.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/range.js}"
           src="../../js/tallybook/range.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/menu.js}"
