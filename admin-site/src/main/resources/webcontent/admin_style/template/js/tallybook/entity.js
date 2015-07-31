@@ -383,9 +383,16 @@ var tallybook = tallybook || {};
         var $item = $(item);
         var keyname = $item.data('column-key');
         var sortkeyname = 'sort_' + keyname;
+        var filterVal = paramObj[keyname];
 
         SortHandler.setOrder($item, paramObj[sortkeyname]);
-        FilterHandler.setValue($item, paramObj[keyname]);
+        FilterHandler.setValue($item, filterVal);
+
+        //update filter
+        var  filterValHandlerName = $item.data('filter-value-handler');
+        var filterValHandler = FilterValueHandlers[filterValHandlerName];
+        filterValHandler = filterValHandler || FilterValueHandlers.string;
+        var value = filterValHandler($item).set(filterVal);
       });
     },
 
@@ -399,9 +406,9 @@ var tallybook = tallybook || {};
         var cparams = this.data.gatherCriteriaParameter();
         this.data.criteriaParameter(cparams?cparams:'');
       }else if(loadEvent.triggerFrom(LoadEventData.source.URL)){
-        this.fillParameterByUrl();
-        var cparams = this.data.criteriaParameter();
-        this.updateSortFilterUi(cparams);
+        //this.fillParameterByUrl();
+        //var cparams = this.data.criteriaParameter();
+        //this.updateSortFilterUi(cparams);
       }else if(loadEvent.triggerFrom(LoadEventData.source.PARAMETER)){
         var cparams = this.data.criteriaParameter();
         this.updateSortFilterUi(cparams);
@@ -411,7 +418,7 @@ var tallybook = tallybook || {};
       var baseUrl = host.url.connectUrl(window.location.origin, this.data.baseUrl());
       var urldata = host.url.param.connect(params, cparams);
 
-      this.doLoadUrl(baseUrl, urldata, true, false);
+      this.doLoadUrl(baseUrl, urldata, loadEvent, true, false);
     },
 
     // ********************** *
@@ -520,7 +527,7 @@ var tallybook = tallybook || {};
       var inUrl = host.url.getBaseUrl(url);
       parameter = host.url.param.connect( host.url.getParameter(url),parameter);
 
-      this.data.baseUrl(url ? url : '');
+      this.data.baseUrl(inUrl ? inUrl : '');
       this.data.parameter(parameter ? parameter : '');
 
       this.data.criteriaParameter('')
@@ -542,13 +549,21 @@ var tallybook = tallybook || {};
     // ********************** *
     // AJAX FUNCTIONS         *
     // ********************** *
-    doLoadUrl : function(url, urldata, fillrows, fillcols){
+    doLoadUrl : function(url, urldata, loadEvent,  fillrows, fillcols){
       var _this = this;
       this.ajaxLoadData({
         url:url,
         data: urldata,
         ondata: function (response) {
           _this.fill(response.data, fillrows, fillcols);
+
+          if(loadEvent){
+            if(loadEvent.triggerFrom(LoadEventData.source.URL)){
+              _this.fillParameterByUrl();
+              var cparams = _this.data.criteriaParameter();
+              _this.updateSortFilterUi(cparams);
+            }
+          }
         }
       });
     },
@@ -606,6 +621,7 @@ var tallybook = tallybook || {};
 
           grid.releaseLock();
           grid.getSpinner().show(false);
+
           if(options.ondataloaded) {
             options.ondataloaded();
           }
@@ -890,7 +906,8 @@ var tallybook = tallybook || {};
   var FilterValueHandlers ={
     string: function (entityFilter) {
       return {
-        get: function(){return entityFilter.find('.filter-input').val();}
+        get: function(){return entityFilter.find('.filter-input').val();},
+        set: function(val){return entityFilter.find('.filter-input').val(val);}
       }
     }
   };
@@ -903,7 +920,8 @@ var tallybook = tallybook || {};
 
       colsRow.on('click', '.filter-icon',FilterHandler.clickHandler);
       colsRow.on('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.inputDelClickHandler);
-      colsRow.on('keyup change', '.entity-filter span.input-element input.filter-input', FilterHandler.inputChangeHandler);
+      colsRow.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.inputChangeHandler);
+      colsRow.on('keypress', '.entity-filter *', FilterHandler.invokeKeyTriggerDoFilterHandler);
       colsRow.on('click', '.entity-filter .filter-button', FilterHandler.invokeDoFilterHandler);
       FilterHandler._installation++;
       console.log('FilterHandler.install. [' + FilterHandler._installation + ']');
@@ -913,7 +931,8 @@ var tallybook = tallybook || {};
 
       colsRow.off('click', '.filter-icon',FilterHandler.clickHandler);
       colsRow.off('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.inputDelClickHandler);
-      colsRow.off('keyup change', '.entity-filter span.input-element input.filter-input', FilterHandler.inputChangeHandler);
+      colsRow.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.inputChangeHandler);
+      colsRow.off('keypress', '.entity-filter *', FilterHandler.invokeKeyTriggerDoFilterHandler);
       colsRow.off('click', '.entity-filter .filter-button', FilterHandler.invokeDoFilterHandler);
       FilterHandler._installation--;
       console.log('FilterHandler.uninstall. [' + FilterHandler._installation + ']');
@@ -972,14 +991,22 @@ var tallybook = tallybook || {};
       $delIcon.hide();
     }
   };
+  FilterHandler.invokeKeyTriggerDoFilterHandler = function(event) {
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if(keycode == '13'){
+      FilterHandler.invokeDoFilterHandler(event);
+      event.stopPropagation();
+    }
+  },
   FilterHandler.invokeDoFilterHandler = function(e) {
-    var $el = $(this),
-      header = $el.closest('.column-header.dropdown'),
-      filterValHandlerName = header.data('filter-value-handler');
+    var $el = $(e.currentTarget);
+    var  header = $el.closest('.column-header.dropdown');
+
+    var  filterValHandlerName = header.data('filter-value-handler');
     var filterValHandler = FilterValueHandlers[filterValHandlerName];
     filterValHandler = filterValHandler || FilterValueHandlers.string;
     var value = filterValHandler(header).get();
-    FilterHandler.setValue(header, value);
+    FilterHandler.setValue(header, value?value:'');
     FilterHandler.closeDropdowns();
 
     GridControl.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));

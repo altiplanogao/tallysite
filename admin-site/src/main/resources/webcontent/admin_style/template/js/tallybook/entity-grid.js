@@ -92,16 +92,17 @@ if (!tallybook)
       var rowHeight = this.getRowHeight();
       if (!rowHeight) {return 0;}
 
-      var offset = (normalpercent === undefined)?
+      var offset = (!normalpercent)?
         (-this.scrolloverview.position().top):
         (normalpercent * (this.scrolloverview.height() - this.scrollviewport.height()));
-      return Math.floor(offset / rowHeight);
+      var index = Math.floor(offset / rowHeight);
+      return index < 0 ? 0 : index;
     }},
     getBottomVisibleIndex:{value: function (normalpercent) {
       var rowHeight = this.getRowHeight();
       if (!rowHeight) {return 0;}
 
-      var offset = (normalpercent === undefined)?
+      var offset = (!normalpercent)?
         (0 - this.scrolloverview.position().top):
         (normalpercent * (this.scrolloverview.height() - this.scrollviewport.height()));
       return Math.ceil((offset + this.scrollviewport.height()) / rowHeight);

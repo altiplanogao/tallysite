@@ -7,7 +7,7 @@ div.entity-grid-container{
 div.entity-grid-container
 .header{
     position: relative;
-    z-index: 3;
+    z-index: 4; /*higer than footer, avoid dropdown hidden*/
     background: #F5F5F5;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
