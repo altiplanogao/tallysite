@@ -133,11 +133,7 @@ if (!tallybook)
       if(this.isMain()) {
         $.doTimeout('updateurl', updateUrlDebounce, function(){
           host.debug.log(ENABLE_SCROLL_DEBUG, 'updateRangeInfo: url actual ' + topIndex);
-          if (topIndex > 0) {
-            host.history.replaceUrlParameter('startIndex', topIndex);
-          } else {
-            host.history.replaceUrlParameter('startIndex');
-          }
+          host.history.replaceUrlParameter(GridControl.ReservedParameter.StartIndex, ((topIndex > 0) ? topIndex : null));
         })
       }
     }},
@@ -157,8 +153,8 @@ if (!tallybook)
   ScrollGrid.buildAjaxLoadUrl = function(baseUrl, parameter, range){
     var start = range.lo; start = (start < 0)? null:start;
     var url = tallybook.url.getUrlWithParameterString(parameter,null,baseUrl);
-    url = tallybook.url.getUrlWithParameter('startIndex', range.lo, null, url);
-    url = tallybook.url.getUrlWithParameter('pageSize', range.width(), null, url);
+    url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.StartIndex, start, null, url);
+    url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.PageSize, range.width(), null, url);
     return url;
   };
   ScrollGrid.findFirstOnPage = function () {
@@ -207,8 +203,8 @@ if (!tallybook)
               }
 
               var parameter = grid.data.parameter();
-              var sfParameter = grid.data.filterParameter();
-              var allParam = host.url.param.connect(parameter, sfParameter);
+              var cParameter = grid.data.criteriaParameter();
+              var allParam = host.url.param.connect(parameter, cParameter);
 
               var url = ScrollGrid.buildAjaxLoadUrl(baseUrl, allParam, firstMissingRange);
               return url

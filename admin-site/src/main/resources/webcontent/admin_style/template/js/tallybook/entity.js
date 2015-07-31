@@ -15,8 +15,11 @@ var tallybook = tallybook || {};
   //const
   var lockDebounce = 200;
   var ENABLE_URL_DEBUG = true;
-  var ENTITY_RELOAD_EVENT = 'entity-reload';
 
+  var ReservedParameter={
+    StartIndex :'startIndex',
+    PageSize : 'pageSize'
+  };
   //page symbols
   var PageSymbols = {
     GRID_CONTAINER: "div.entity-grid-container",
@@ -27,7 +30,7 @@ var tallybook = tallybook || {};
     GRID_BODY: ".body",
     GRID_SPINNER: "span.spinner",
 
-    GRID_FOOTER__ROW: "table thead tr",
+    GRID_HEADER__ROW: "table thead tr",
     GRID_BODY__TABLE: ".body table",
     GRID_BODY__THEAD_ROW: "table thead tr",
     GRID_SPINNER__ITEM: 'i.spinner-item'
@@ -271,12 +274,12 @@ var tallybook = tallybook || {};
     baseUrl: GridDataAccess.specifyValueAccess('baseurl','/'),
     parameter : GridDataAccess.specifyValueAccess('parameter',''),
 
-    filterParameter : GridDataAccess.specifyValueAccess('filter-parameter',''),
+    criteriaParameter : GridDataAccess.specifyValueAccess('criteria-parameter',''),
 
     pageSize : GridDataAccess.specifyValueAccess('pagesize',''),
     totalRecords : GridDataAccess.specifyValueAccess('totalrecords', 0),
 
-    sortFilterParameters : function(includeAll){
+    gatherCriteriaParameter : function(includeAll){
       var inputsWithVal = [];
 
       var filterSortInputs = this.grid.header.$row.find('input[type=hidden][name].filter-value, input[type=hidden][name].sort-value');
@@ -289,10 +292,31 @@ var tallybook = tallybook || {};
       });
       return $(inputsWithVal).serialize();
     },
-    sortFilterParametersAsObject : function(){
-      var string = this.sortFilterParameters(true);
+    gatherCriteriaParameterAsObject : function(){
+      var string = this.gatherCriteriaParameter(true);
       return host.url.param.string2Object(string);
     }
+  };
+
+  var ENTITY_RELOAD_EVENT = 'entity-reload';
+  function LoadEventData (val){
+    this._trigger = LoadEventData.source.NONE;
+    this.trigger(val);
+  };
+  LoadEventData.prototype={
+    trigger : function(val){
+      if(val === undefined){return this._trigger;}
+      this._trigger = val;
+    },
+    triggerFrom : function(source){
+      return this._trigger == source;
+    }
+  }
+  LoadEventData.source={
+    UI : 'ui',
+    URL: 'url',
+    PARAMETER : 'parameter',
+    NONE : 'none'
   };
 
   function GridControl($container) {
@@ -311,9 +335,10 @@ var tallybook = tallybook || {};
     this.entityData = this.$container.find('.raw-data p').data("raw-data");
 
     var _this = this;
-    this.reloadTriggerPoint = function(ele){
-      return function(){ _this.onReloadEvent(arguments);}
-    }();
+    this.reloadTriggerPoint = function(){
+      var _onloadevent = GridControl.prototype.onReloadEvent;
+      _onloadevent.apply(_this, arguments);
+    };
     this._loadEventInstallation = 0;
   };
   GridControl.prototype = {
@@ -367,17 +392,24 @@ var tallybook = tallybook || {};
     // ********************** *
     // RELOAD TRIGGERING      *
     // ********************** *
-    onReloadEvent : function(e){
+    onReloadEvent : function(e, loadEvent){
       //build parameters
-      var parameter = this.data.parameter();
-      var sfParams = this.data.sortFilterParameters();
-      console.log('data-reload triggered. at grid control: ' + sfParams);
-
-      this.updateSortFilterUi(sfParams);
-      this.data.filterParameter(sfParams);
+      var params = this.data.parameter();
+      if(loadEvent.triggerFrom(LoadEventData.source.UI)){
+        var cparams = this.data.gatherCriteriaParameter();
+        this.data.criteriaParameter(cparams?cparams:'');
+      }else if(loadEvent.triggerFrom(LoadEventData.source.URL)){
+        this.fillParameterByUrl();
+        var cparams = this.data.criteriaParameter();
+        this.updateSortFilterUi(cparams);
+      }else if(loadEvent.triggerFrom(LoadEventData.source.PARAMETER)){
+        var cparams = this.data.criteriaParameter();
+        this.updateSortFilterUi(cparams);
+      }
+      var cparams = this.data.criteriaParameter();
 
       var baseUrl = host.url.connectUrl(window.location.origin, this.data.baseUrl());
-      var urldata = host.url.param.connect(parameter, sfParams);
+      var urldata = host.url.param.connect(params, cparams);
 
       this.doLoadUrl(baseUrl, urldata, true, false);
     },
@@ -406,20 +438,9 @@ var tallybook = tallybook || {};
         this.body.makeHeaderMirror();
 
         if(this.isMain()){
-          var fsParamObj = this.data.sortFilterParametersAsObject();
-          var urlParamObj = host.url.getParametersObject();
-          for(var k in fsParamObj){
-            var pv = urlParamObj[k];
-            fsParamObj[k] = pv;
-            if(pv !== undefined){
-              delete urlParamObj[k];
-            }
-          }
-
-          var fsParam = host.url.param.object2String(fsParamObj);
-          var param = host.url.param.object2String(urlParamObj);
-          this.data.filterParameter(fsParam?fsParam:'');
-          this.data.parameter(param?param:'');
+          this.fillParameterByUrl(window.location.href)
+          var cparams = this.data.criteriaParameter();
+          this.updateSortFilterUi(cparams);
         }
       }
 
@@ -434,6 +455,35 @@ var tallybook = tallybook || {};
         .totalRecords(entities.totalCount)
         .pageSize(entities.pageSize)
         .baseUrl(entities.baseUrl);
+    },
+    fillParameterByUrl:function(url){
+      //Make sure column ui already built
+      var fsParamObj4Key = this.data.gatherCriteriaParameterAsObject();
+      var urlParamObj = host.url.getParametersObject(url);
+      var cParamObj = {};
+      for(var k in fsParamObj4Key){
+        var pv = urlParamObj[k];
+        cParamObj[k] = pv;
+        if(pv !== undefined){
+          delete urlParamObj[k];
+        }
+      }
+      var resvParamObj={};
+      for(var k in ReservedParameter){
+        var paramName = ReservedParameter[k];
+        var pv = urlParamObj[paramName];
+        resvParamObj[paramName] = pv;
+        if(pv !== undefined){
+          delete urlParamObj[paramName];
+        }
+      }
+
+      var parameter = host.url.param.object2String(urlParamObj);
+      var cparameter = host.url.param.object2String(cParamObj);
+
+      this.data.baseUrl(host.url.getPath(url));
+      this.data.parameter(parameter?parameter:'');
+      this.data.criteriaParameter(cparameter?cparameter:'');
     },
     fillTbody: function (data, $tbody) {
       if($tbody === undefined){
@@ -467,24 +517,26 @@ var tallybook = tallybook || {};
     // LOAD FUNCTIONS         *
     // ********************** *
     loadByUrl : function(url, parameter){
+      var inUrl = host.url.getBaseUrl(url);
+      parameter = host.url.param.connect( host.url.getParameter(url),parameter);
+
       this.data.baseUrl(url ? url : '');
       this.data.parameter(parameter ? parameter : '');
 
-      this.data.filterParameter('');
-      this.data.pageSize('');
-      this.totalRecords('');
+      this.data.criteriaParameter('')
+      .pageSize('')
+      .totalRecords('');
 
-      header.trigger(ENTITY_RELOAD_EVENT);
+      GridControl.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.URL));
     },
-    loadBySortFilterParam : function (filterParameter) {
+    loadBySortFilterParam : function (criteriaParameter) {
       var url = this.data.baseUrl();
       var param = this.data.parameter();
 
-      this.data.filterParameter('');
-      this.data.pageSize('');
-      this.totalRecords('');
+      this.data.criteriaParameter(criteriaParameter)
+      .pageSize('').totalRecords('');
 
-      header.trigger(ENTITY_RELOAD_EVENT);
+      GridControl.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER));
     },
 
     // ********************** *
@@ -504,7 +556,7 @@ var tallybook = tallybook || {};
       //url(value or function), canskipcheck, ondata, ondataloaded
       var grid = this;
       var optionsclone = $.extend({}, options);
-      var paramsObj = this.data.sortFilterParametersAsObject();
+      var paramsObj = host.url.param.string2Object(options.data);
       optionsclone.dataObject = paramsObj;
       var _args = arguments;
 
@@ -546,6 +598,9 @@ var tallybook = tallybook || {};
              var dataObject = optionsclone.dataObject;
              var paramsStr = host.url.param.object2String(dataObject);
              var newurl = host.url.getUrlWithParameterString(paramsStr, null, url);
+             //var skipParam = [ReservedParameter.PageSize];
+             newurl = host.url.getUrlWithParameter(ReservedParameter.PageSize, null, null, newurl);
+
              host.history.replaceUrl(newurl);
            }
 
@@ -582,6 +637,7 @@ var tallybook = tallybook || {};
     }
 
   };
+  GridControl.ReservedParameter = ReservedParameter;
   GridControl._loadEventInstallation = 0;
   GridControl.bindReloadEvent = function (grid) {
     grid.header.$row.on(ENTITY_RELOAD_EVENT, grid.reloadTriggerPoint);
@@ -596,6 +652,11 @@ var tallybook = tallybook || {};
   GridControl.rebindReloadEvent = function (grid) {
     GridControl.unbindReloadEvent(grid);
     GridControl.bindReloadEvent(grid);
+  };
+  GridControl.fireReloadEvent = function ($ele, reloadVent){
+    var $container = ($ele.is(PageSymbols.GRID_CONTAINER_CLASS) ? $ele : $ele.closest(PageSymbols.GRID_CONTAINER));
+    var header = $container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_HEADER__ROW);
+    header.trigger(ENTITY_RELOAD_EVENT, reloadVent);
   };
 
   GridControl.PageSymbols = PageSymbols;
@@ -694,7 +755,7 @@ var tallybook = tallybook || {};
   function HeaderControl(grid, $header) {
     this.grid = grid;
     this.$header = $header;
-    this.$row = $header.find(PageSymbols.GRID_FOOTER__ROW);
+    this.$row = $header.find(PageSymbols.GRID_HEADER__ROW);
   };
   HeaderControl.prototype = {
     element: function () {
@@ -921,8 +982,7 @@ var tallybook = tallybook || {};
     FilterHandler.setValue(header, value);
     FilterHandler.closeDropdowns();
 
-    header.trigger(ENTITY_RELOAD_EVENT);
-
+    GridControl.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));
   };
 
   var SortHandler = function(){};
@@ -1007,7 +1067,7 @@ var tallybook = tallybook || {};
     HeaderControl.getAllCols(colsRow).not(header).map(function(i,item){
       SortHandler.setOrder($(item), SortHandler.ORDER_DEFAULT);
     });
-    header.trigger(ENTITY_RELOAD_EVENT);
+    GridControl.fireReloadEvent(header,new LoadEventData(LoadEventData.source.UI));
   };
 
   var ColumnResizer = function () {};
@@ -1046,7 +1106,7 @@ var tallybook = tallybook || {};
   ColumnResizer._mousedown = function (e) {
     var $resizeEle = $(this).closest('th');
     var container = $resizeEle.closest(PageSymbols.GRID_CONTAINER);
-    var $headerColumnRow = container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_FOOTER__ROW);
+    var $headerColumnRow = container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_HEADER__ROW);
     var $bodyColumnRow = container.find(PageSymbols.GRID_BODY + ' ' + PageSymbols.GRID_BODY__THEAD_ROW);
 
     var resizing = ColumnResizer.resizing;
