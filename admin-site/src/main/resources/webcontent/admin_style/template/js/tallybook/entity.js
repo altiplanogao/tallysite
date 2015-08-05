@@ -76,10 +76,11 @@ var tallybook = tallybook || {};
   var EntityData = {
     processGridData: function (data) {
       var entities = data.entities;
-      var range = {lo: entities.startIndex, hi: entities.startIndex + entities.details.length};
+      var range = {lo: entities.startIndex, hi: entities.startIndex + entities.records.length};
       entities.range = range;
+      entities.baseUrl = data.baseUrl;
 
-      var entityInfos = data.entityInfos;
+      var entityInfos = data.info;
       var gridinfo = this.processGridInfo(entityInfos);
 
       return data;
@@ -101,7 +102,7 @@ var tallybook = tallybook || {};
     },
     makeUrl: function (gridInfo, entity, baseUrl) {
       var idField = gridInfo.idField;
-      return baseUrl + entity[idField];
+      return baseUrl + '/' + entity[idField];
     }
   };
 
@@ -332,7 +333,7 @@ var tallybook = tallybook || {};
     this.body = new BodyControl(this, this.$container.find(PageSymbols.GRID_BODY));
     this.spinner = new SpinnerControl(this, this.$container.find(PageSymbols.GRID_SPINNER));
     this.data = new GridDataAccess(this);
-    this.entityData = this.$container.find('.raw-data p').data("raw-data");
+    this.entityData = this.$container.find('.data-content p').data("content");
 
     var _this = this;
     this.reloadTriggerPoint = function(){
@@ -435,7 +436,7 @@ var tallybook = tallybook || {};
         fillrows = true;
       }
       EntityData.processGridData(data);
-      var entityInfos = data.entityInfos;
+      var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
       var gridinfo = entityInfos.details['grid'];
@@ -497,7 +498,7 @@ var tallybook = tallybook || {};
         $tbody = $('<tbody>');
       }
       EntityData.processGridData(data);
-      var entityInfos = data.entityInfos;
+      var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
       var gridinfo = entityInfos.details['grid'];
@@ -894,7 +895,7 @@ var tallybook = tallybook || {};
   };
   BodyControl.makeRowsAndAppend = function (gridinfo, entities, $tbody) {
     var baseUrl = entities.baseUrl;
-    var $rows = entities.details.map(function (entity, index, array) {
+    var $rows = entities.records.map(function (entity, index, array) {
       var entityIndex = entities.startIndex + index;
       var row = new RowControl();
       row.set(gridinfo, entity, entityIndex, baseUrl);

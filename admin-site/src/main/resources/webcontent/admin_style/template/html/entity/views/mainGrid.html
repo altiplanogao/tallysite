@@ -1,0 +1,42 @@
+<section id="contentEntityListContainer" th:fragment="entity_list">
+  <div class="entity-listgrid-action-row row" id="entitySearch" th:inline="text"
+       th:with="entityGridInfo=${gridInfo}">
+    <div class="col-xs-7">
+      <form class="custom-entity-search" th:action="${current.url}" method="get">
+        <div class="row">
+          <div class="col-xs-6">
+            <input style="" type="search"
+                   class="form-control"
+                   th:placeholder="#{general.Search_Placeholder(${entityGridInfo.friendlyName},${entityGridInfo.fetchPrimarySearchFieldFriendlyName()})}"
+                   placeholder="Search Placeholder"/>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="col-xs-5">
+      <div style="float: right;">
+        <a href="#" class="btn btn-primary">XXX Add</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-show right production-hide" style="width: 90%;">
+    <div class="indexer">
+      <span>Grid Template</span>
+    </div>
+    <div class="content">
+      <div th:include="components/grid-template :: full-template"
+           class="template grid-template"/>
+    </div>
+  </div>
+  <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
+  <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
+  <!--data-entity-grid-align-type="window"-->
+  <!--data-entity-grid-align-offset="50"/>-->
+  <div th:include="components/entity-grid :: full_entity_grid"
+       th:with="data=${queryResult}"
+       data-grid-scope="main"
+       data-entity-grid-align-type="window"
+       data-entity-grid-align-offset="50"/>
+
+</section>
