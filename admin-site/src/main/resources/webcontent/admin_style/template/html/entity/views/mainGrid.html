@@ -1,4 +1,15 @@
-<section id="contentEntityListContainer" th:fragment="entity_list">
+<section id="contentEntityListContainer" th:fragment="content">
+
+  <div class="slide-show right production-hide" style="width: 90%;">
+    <div class="indexer">
+      <span>Grid Template</span>
+    </div>
+    <div class="content">
+      <div th:include="components/templates/grid-template :: full-template"
+           class="template grid-template"/>
+    </div>
+  </div>
+
   <div class="entity-listgrid-action-row row" id="entitySearch" th:inline="text"
        th:with="entityGridInfo=${gridInfo}">
     <div class="col-xs-7">
@@ -20,19 +31,6 @@
     </div>
   </div>
 
-  <div class="slide-show right production-hide" style="width: 90%;">
-    <div class="indexer">
-      <span>Grid Template</span>
-    </div>
-    <div class="content">
-      <div th:include="components/grid-template :: full-template"
-           class="template grid-template"/>
-    </div>
-  </div>
-  <!--<div th:include="components/entity-grid-old :: full_entity_grid"-->
-  <!--th:with="listGridData=${entityResponse},listGridInfo=${entityInfoResponse}"-->
-  <!--data-entity-grid-align-type="window"-->
-  <!--data-entity-grid-align-offset="50"/>-->
   <div th:include="components/entity-grid :: full_entity_grid"
        th:with="data=${queryResult}"
        data-grid-scope="main"
@@ -40,3 +38,7 @@
        data-entity-grid-align-offset="50"/>
 
 </section>
+<div th:fragment="scripts">
+  <script type="text/javascript" th:src="@{/js/tallybook/entity-grid.js}"
+          src="../../js/tallybook/entity-grid.js"></script>
+</div>

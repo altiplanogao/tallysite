@@ -9,7 +9,8 @@
     $(document).ready(function() {
         tallybook.menu ? tallybook.menu.initOnDocReady($doc) : null;
         tallybook.entity.initOnDocReady($doc);
-        tallybook.entity.scrollGrid.initOnDocReady( $doc);
+        tallybook.entity.scrollGrid ? tallybook.entity.scrollGrid.initOnDocReady( $doc) : null;
+        tallybook.entity.form ? tallybook.entity.form.initOnDocReady( $doc) : null;
     });
 
 })(jQuery, this);

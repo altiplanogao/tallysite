@@ -1,7 +1,5 @@
 ;
-var tallybook;
-if (!tallybook)
-  tallybook = {};
+var tallybook = tallybook || {};
 
 (function ($, window, host) {
   'use strict';

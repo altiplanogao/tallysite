@@ -136,16 +136,14 @@
       </ol>
     </div>
     <div class="entity-content-main" th:fragment="entity_main">
-      <div th:substituteby="${'entity/views/' + viewType}" />
-
+      <div th:replace="${'entity/views/' + viewType}:: content" />
     </div>
   </section>
 </div>
 
 <footer th:fragment="entity_footer">
-
+  <!-- jQuery -->
   <!-- <script src="//jquery.com/jquery-wp-content/themes/jquery/js/jquery-1.11.2.min.js"></script> -->
-  <!-- Libs -->
   <script type="text/javascript" th:src="@{/lib/jquery/jquery-2.1.4.js}"
           src="../../lib/jquery/jquery-2.1.4.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/jquery-ui/jquery-ui.js}"
@@ -154,6 +152,8 @@
           src="../../lib/jquery/plugins/jquery.ba-dotimeout.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/jquery/plugins/jquery.custom-scrollbar.min.js}"
           src="../../lib/jquery/plugins/jquery.custom-scrollbar.min.js"></script>
+
+  <!-- Libs -->
   <script type="text/javascript" th:src="@{/lib/bootstrap-3.3.4/js/bootstrap.min.js}"
           src="../../lib/bootstrap-3.3.4/js/bootstrap.min.js"></script>
   <script type="text/javascript" th:src="@{/lib/foundation/js/foundation/foundation.js}"
@@ -172,13 +172,15 @@
           src="../../js/tallybook/menu.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/entity.js}"
           src="../../js/tallybook/entity.js"></script>
-  <script type="text/javascript" th:src="@{/js/tallybook/entity-grid.js}"
-          src="../../js/tallybook/entity-grid.js"></script>
-
-  <!-- Page logic -->
   <script type="text/javascript" th:src="@{/js/tallybook/history.js}"
           src="../../js/tallybook/history.js"></script>
+  <script type="text/javascript" th:src="@{/js/tallybook/tabholder.js}"
+          src="../../js/tallybook/tabholder.js"></script>
 
+  <!-- content script -->
+  <div th:replace="${'entity/views/' + viewType}:: scripts" />
+
+  <!-- Page logic -->
   <script type="text/javascript" th:src="@{/js/admin/admin-init.js}"
           src="../../js/admin/admin-init.js"></script>
 
