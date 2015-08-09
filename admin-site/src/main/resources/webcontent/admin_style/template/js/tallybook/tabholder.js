@@ -83,10 +83,11 @@ var tallybook = tallybook || {};
     },
     activeByIndexOrName:function(tag){
       var index = parseInt(tag);
+      var $tabs = this.$nav.find('a[data-toggle=tab]');
       if(index != index){/*NaN*/
-        var $tabs = this.$nav.find('a[data-toggle=tab]');
         $tabs.some()
       }
+      var head = $($tabs[index]).trigger('click');
 
     }
 
