@@ -86,7 +86,7 @@ var tallybook = tallybook || {};
       return data;
     },
     processGridInfo: function (entityInfos) {
-      var gridInfo = entityInfos.details['grid'];
+      var gridInfo = entityInfos.details['pageGrid'];
       gridInfo.fields.map(function (field, index, array) {
         switch (field.fieldType) {
           case 'ID':
@@ -439,7 +439,7 @@ var tallybook = tallybook || {};
       var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
-      var gridinfo = entityInfos.details['grid'];
+      var gridinfo = entityInfos.details['pageGrid'];
 
       if (fillcols) {
         this.header.makeColumnsAndSet(gridinfo);
@@ -501,7 +501,7 @@ var tallybook = tallybook || {};
       var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
-      var gridinfo = entityInfos.details['grid'];
+      var gridinfo = entityInfos.details['pageGrid'];
       BodyControl.makeRowsAndAppend(gridinfo, entities, $tbody);
       return $tbody;
     },
