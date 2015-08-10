@@ -77,15 +77,17 @@
     <table class="entity-filters-table show-filter">
       <thead>
       <tr class="filters-table-row">
-        <th style="width: 20%;">Entity Type</th>
+        <th style="width: 20%;">Filter Type</th>
         <th class="toggle" style="width: 80%;">Entity Filter</th>
       </tr>
       </thead>
       <tbody>
       <tr class="filters-table-row">
-        <td>Basic</td>
+        <td>string</td>
         <td>
-          <ul class="entity-filter string-filter no-hover" data-entity-filter-type="basic,string,default" data-filter-value-handler="string">
+          <ul class="entity-filter string-filter no-hover"
+              data-filter-type="string"
+              data-support-field-types="basic,string,name,email,mobile,phone,default">
             <li>
               <div class="filter-fields" data-action="">
 
@@ -109,9 +111,11 @@
         </td>
       </tr>
       <tr class="filters-table-row">
-        <td>Number</td>
+        <td>decimalRange</td>
         <td>
-          <ul class="entity-filter number-filter no-hover" data-entity-filter-type="number-range">
+          <ul class="entity-filter number-filter no-hover"
+              data-filter-type="decimalRange"
+              data-support-field-types="decimal">
             <li>
               <div class="filter-fields" data-action="">
                 <div class="text-filter-control">
@@ -155,9 +159,11 @@
         </td>
       </tr>
       <tr class="filters-table-row">
-        <td>Boolean</td>
+        <td>boolean</td>
         <td>
-          <ul class="entity-filter option-filter boolean-filter no-hover" data-entity-filter-type="boolean">
+          <ul class="entity-filter option-filter boolean-filter no-hover"
+              data-filter-type="boolean"
+              data-support-field-types="boolean">
             <li>
               <div class="filter-fields" data-action="">
                 <div class="option-filter-control">
@@ -174,9 +180,11 @@
         </td>
       </tr>
       <tr class="filters-table-row">
-        <td>Enum</td>
+        <td>enum</td>
         <td>
-          <ul class="entity-filter option-filter enum-filter no-hover" data-entity-filter-type="enum">
+          <ul class="entity-filter option-filter enum-filter no-hover"
+              data-filter-type="enum"
+              data-support-field-types="enum">
             <li>
               <div class="filter-fields" data-action="">
                 <div class="option-filter-control">

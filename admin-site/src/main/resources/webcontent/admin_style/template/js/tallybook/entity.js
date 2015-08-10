@@ -37,43 +37,149 @@ var tallybook = tallybook || {};
   };
 
   var Template = {
-    filterTemplateMapByType: (function () {
-      var $templates = $('.template.grid-template table.entity-filters-table > tbody ul.entity-filter');
-      var templateMap = {};
-      $templates.each(function (index, template) {
-        var $template = $(template);
-        var types = $template.attr('data-entity-filter-type').split(',');
-        types.forEach(function (type) {
-          templateMap[type] = $template;
-        })
-      });
-      return function () {
-        return templateMap;
-      }
-    })(),
     columnHeader: (function () {
       var template = $('.template.grid-template .column-header-template');
       template.removeClass('column-header-template');
       return function () {
         return template.clone();
       };
-    })(),
-    cell: function (fieldname, fieldvalue) {
-      var obj = $("<td>");
-      obj.attr("data-fieldname", fieldname);
-      obj.attr("data-fieldvalue", fieldvalue);
-      return obj;
+    })()
+  };
+
+//var filterExample={
+  //  data-filter-type : string, integer-range, decimal range, foreign-key
+  //  data-support-field-types : string, email, phone, boolean
+  //}
+  var FilterHandler = function(initializer, valuehandler){
+    this.initializer = initializer;
+    this.valuehandler = valuehandler;
+  }
+  var FilterTemplates = {
+    handlers : {
+      string: new FilterHandler(
+        function (filter, fieldInfo) {
+          var $input = $('input.filter-input', filter);
+          $input.attr('data-name', fieldInfo.name);
+          $input.attr('placeholder', fieldInfo.friendlyName);
+        },
+        {//get: ui value -> string; set: string -> ui value
+          get: function (entityFilter) {return entityFilter.find('.filter-input').val();},
+          set: function (entityFilter, val) {return entityFilter.find('.filter-input').val(val);}
+        }
+      )
     },
-    row: function (gridinfo, entity, entityIndex) {
-      var $row = $('<tr class="data-row">');
-      $row.attr('data-id', entity[gridinfo.idField]);
-      $row.attr('data-name', entity[gridinfo.nameField]);
-      $row.attr('data-entity-index', entityIndex);
-      return $row;
+    _filterTemplateByFieldType: (function () {
+      var $filters = $('.template.grid-template table.entity-filters-table > tbody ul.entity-filter');
+      var filterMap = {};
+      $filters.each(function (index, fltr) {
+        var $filter = $(fltr);
+        var fldtypes = $filter.attr('data-support-field-types').split(',');
+        fldtypes.forEach(function (fldtp) {
+          filterMap[fldtp] = $filter;
+        })
+      });
+      return function (fieldType) {
+        var filterTmplt = filterMap[fieldType];
+        filterTmplt = filterTmplt? filterTmplt : filterMap['default'];
+        return filterTmplt.clone();
+      }
+    })(),
+    createFilterByFieldInfo : function(fieldInfo){
+      var fieldType = fieldInfo.fieldType.toLowerCase();
+      var filter = FilterTemplates._filterTemplateByFieldType(fieldType);
+      var filterType = filter.data('filter-type');
+      $('input.filter-property', filter).val(fieldInfo.name);
+      $('input.sort-property', filter).val('sort_' + fieldInfo.name);
+      var initializer = this.handlers[filterType].initializer;
+      if(initializer){
+        initializer(filter, fieldInfo);
+      }
+      return filter;
     }
   };
 
-  var EntityData = {
+//var cellExample={
+  //  data-cell-type : string, integer, decimal, foreign-key
+  //  data-support-field-types : string, email, phone, boolean
+  //}
+  var CellCreationContext = function(idField, baseUrl){
+    this.idField = idField;
+    this.baseUrl = baseUrl;
+  }
+  var CellTemplateEntry = function(celltype, supportedFieldTypes, cellmaker){
+    this.celltype = celltype;
+    this.supportedFieldTypes = supportedFieldTypes.split(',');
+    this.cellmaker = cellmaker;
+  }
+  var CellTemplates = {
+    _cellTemplateByFieldType : (function(){
+      var cellentries = [
+        new CellTemplateEntry('default', 'default', function (entity, fieldInfo, cellCreationContext) {
+          var fieldname = fieldInfo.name;
+          var fieldvalue = entity[fieldname];
+          return fieldvalue;
+        }),
+        new CellTemplateEntry('name', 'name', function(entity, fieldInfo, cellCreationContext) {
+          var fieldname = fieldInfo.name;
+          var fieldvalue = entity[fieldname];
+          var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
+          var $content = $('<a>').attr('href', url).text(fieldvalue);
+          return $content;
+        }),
+        new CellTemplateEntry('email', 'email', function(entity, fieldInfo, cellCreationContext){
+          var fieldname = fieldInfo.name;
+          var fieldvalue = entity[fieldname];
+          var $content = $('<a>').attr('href', 'mailto:' + fieldvalue).text(fieldvalue);
+          return $content;
+        }),
+        new CellTemplateEntry('phone', 'phone', function (entity, fieldInfo, cellCreationContext) {
+          var fieldname = fieldInfo.name;
+          var fieldvalue = entity[fieldname];
+          var segLen = 4;
+          var formatedPhone = '';
+          if (fieldvalue.length <= segLen) {
+            formatedPhone = fieldvalue;
+          } else {
+            var segCount = Math.ceil(fieldvalue.length / segLen);
+            var start = 0; var end = fieldvalue.length % segLen;
+            end = (end == 0) ? segLen : end;
+            var segs = [];
+            for (var i = 0; i < segCount; ++i) {
+              segs[i] = fieldvalue.substring(start, end);
+              start = end; end = start + segLen;
+            }
+            formatedPhone = segs.join('-');
+          }
+          var $content = $('<a>').attr('href', 'tel:' + fieldvalue).text(formatedPhone);
+          return $content;
+        })
+      ];
+      var fieldType2CellType = {};
+      var cellType2CellMaker = {};
+      cellentries.forEach(function(ce){
+        if(ce.supportedFieldTypes){
+          ce.supportedFieldTypes.forEach(function(fieldType){
+            fieldType2CellType[fieldType] = ce.celltype;
+          });
+        }
+        cellType2CellMaker[ce.celltype] = ce.cellmaker;
+      });
+      return function(aFieldType){
+        var aCellType = fieldType2CellType[aFieldType];
+        aCellType = (aCellType ? aCellType : 'default');
+        return cellType2CellMaker[aCellType];
+      }
+    })(),
+    createCellByFieldInfo : function(entity, fieldInfo, cellCreationContext){
+      var fieldType = fieldInfo.fieldType.toLowerCase();
+      var cellmaker = this._cellTemplateByFieldType(fieldType);
+      var cellcontent = cellmaker(entity, fieldInfo, cellCreationContext);
+      return cellcontent;
+    }
+
+  }
+
+  var EntityDataHandler = {
     processGridData: function (data) {
       var entities = data.entities;
       var range = {lo: entities.startIndex, hi: entities.startIndex + entities.records.length};
@@ -100,93 +206,9 @@ var tallybook = tallybook || {};
       });
       return gridInfo;
     },
-    makeUrl: function (gridInfo, entity, baseUrl) {
-      var idField = gridInfo.idField;
+    makeUrl: function (idField, entity, baseUrl) {
       return baseUrl + '/' + entity[idField];
     }
-  };
-
-  function makeColumnFilter(fieldInfo) {
-    var templateMap = Template.filterTemplateMapByType();
-    var f = {
-      makeCellAsGeneral: function () {
-        var template = templateMap['default'].clone();
-        $('input.filter-property', template).val(fieldInfo.name);
-        $('input.sort-property', template).val('sort_' + fieldInfo.name);
-        var $input = $('input.filter-input', template);
-        $input.attr('data-name', fieldInfo.name);
-        $input.attr('placeholder', fieldInfo.friendlyName);
-        return template;
-      }
-    };
-
-    var content = null;
-    switch (fieldInfo.fieldType) {
-      case 'ID':
-        content = f.makeCellAsGeneral();
-        break;
-      default :
-        content = f.makeCellAsGeneral();
-    }
-
-    return content;
-  };
-  function fillCellContent(gridInfo, $cell, entity, field, fieldvalue, baseUrl) {
-    var m = {
-      makeCellAsGeneral: function () {
-        return fieldvalue;
-      },
-      makeCellAsEmail: function () {
-        var $content = $('<a>').attr('href', 'mailto:' + fieldvalue).text(fieldvalue);
-        return $content;
-      },
-      makeCellAsPhone: function () {
-        var segLen = 4;
-        var formatedPhone = '';
-        if (fieldvalue.length <= segLen) {
-          formatedPhone = fieldvalue;
-        } else {
-          var segCount = Math.ceil(fieldvalue.length / segLen);
-          var start = 0;
-          var end = fieldvalue.length % segLen;
-          end = (end == 0) ? segLen : end;
-          var segs = [];
-          for (var i = 0; i < segCount; ++i) {
-            segs[i] = fieldvalue.substring(start, end);
-            start = end;
-            end = start + segLen;
-          }
-          formatedPhone = segs.join('-');
-        }
-        var $content = $('<a>').attr('href', 'tel:' + fieldvalue).text(formatedPhone);
-        return $content;
-      },
-      makeCellAsMainEntry: function () {
-        var url = EntityData.makeUrl(gridInfo, entity, baseUrl);
-        var $content = $('<a>').attr('href', url).text(fieldvalue);
-        return $content;
-      }
-    };
-
-    var content = null;
-    switch (field.fieldType) {
-      case 'ID':
-        content = m.makeCellAsGeneral();
-        break;
-      case 'NAME':
-        content = m.makeCellAsMainEntry();
-        break;
-      case 'EMAIL':
-        content = m.makeCellAsEmail();
-        break;
-      case 'PHONE':
-        content = m.makeCellAsPhone();
-        break;
-      default :
-        content = m.makeCellAsGeneral();
-    }
-
-    $cell.html(content);
   };
 
   function GridDataAccess(grid) {
@@ -390,10 +412,13 @@ var tallybook = tallybook || {};
         FilterHandler.setValue($item, filterVal);
 
         //update filter
-        var  filterValHandlerName = $item.data('filter-value-handler');
-        var filterValHandler = FilterValueHandlers[filterValHandlerName];
-        filterValHandler = filterValHandler || FilterValueHandlers.string;
-        var value = filterValHandler($item).set(filterVal);
+        var $filter = $item.find('.entity-filter');
+        var  filterType = $filter.data('filter-type');
+
+        if(filterType){
+          var filterValHandler = FilterTemplates.handlers[filterType].valuehandler;
+          var value = filterValHandler.set($filter, filterVal);
+        }
       });
     },
 
@@ -435,7 +460,7 @@ var tallybook = tallybook || {};
       if (fillrows === undefined) {
         fillrows = true;
       }
-      EntityData.processGridData(data);
+      EntityDataHandler.processGridData(data);
       var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
@@ -497,7 +522,7 @@ var tallybook = tallybook || {};
       if($tbody === undefined){
         $tbody = $('<tbody>');
       }
-      EntityData.processGridData(data);
+      EntityDataHandler.processGridData(data);
       var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
@@ -692,7 +717,6 @@ var tallybook = tallybook || {};
       return new GridControl($($ctrls[0]));
     }
   };
-
   GridControl.autoLoad = function ($page) {
     var gcs = GridControl.findFromPage($page);
     gcs.map(function (index, gc, array) {
@@ -719,11 +743,11 @@ var tallybook = tallybook || {};
       } else {
         iconSort.hide();
       }
-      if (fieldInfo.supportFilter) {
+      if (fieldInfo.gridVisible && fieldInfo.supportFilter) {
         var filterValEle = $col.find('.filter-value');
         filterValEle.attr('name', fieldInfo.name);
 
-        var filter = makeColumnFilter(fieldInfo);
+        var filter = FilterTemplates.createFilterByFieldInfo(fieldInfo);
         $col.find('.entity-filter').replaceWith(filter);
       } else {
         iconFilter.hide();
@@ -743,26 +767,40 @@ var tallybook = tallybook || {};
     element: function () {
       return this.$tr;
     },
-    _makeCell: function (gridInfo, field, entity, baseUrl) {
+    _makeCellContainer: function (fieldname, fieldvalue) {
+      var obj = $("<td>");
+      obj.attr("data-fieldname", fieldname);
+      obj.attr("data-fieldvalue", fieldvalue);
+      return obj;
+    },
+    _makeCell: function ( field, entity, cellCreationContext) {
       var fieldname = field.name;
       var fieldvalue = entity[fieldname];
-      var $cell = Template.cell(fieldname, fieldvalue);
-      fillCellContent(gridInfo, $cell, entity, field, fieldvalue, baseUrl);
+      var $cell = this._makeCellContainer(fieldname, fieldvalue);
+      var content = CellTemplates.createCellByFieldInfo(entity, field, cellCreationContext);
+      $cell.html(content);
       $cell.toggle(field.gridVisible);
+
       return $cell;
     },
-    _makeCells: function (gridInfo, entity, baseUrl) {
-      var fields = gridInfo.fields;
+    _makeCells: function (fields, entity, cellCreationContext) {
       var _this = this;
       var $cells = fields.map(function (field, index, array) {
-        var $cell = _this._makeCell(gridInfo, field, entity, baseUrl);
+        var $cell = _this._makeCell(field, entity, cellCreationContext);
         return $cell;
       });
       return $cells;
     },
-    set: function (gridinfo, entity, entityIndex, baseUrl) {
-      var $row = Template.row(gridinfo, entity, entityIndex);
-      var $cells = this._makeCells(gridinfo, entity, baseUrl);
+    _makeRowContainer: function (gridinfo, entity, entityIndex) {
+      var $row = $('<tr class="data-row">');
+      $row.attr('data-id', entity[gridinfo.idField]);
+      $row.attr('data-name', entity[gridinfo.nameField]);
+      $row.attr('data-entity-index', entityIndex);
+      return $row;
+    },
+    fillByEntity: function (gridinfo, entity, entityIndex, cellCreationContext) {
+      var $row = this._makeRowContainer(gridinfo, entity, entityIndex);
+      var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
       $row.html($cells);
       this.$tr = $row;
       return this;
@@ -895,22 +933,14 @@ var tallybook = tallybook || {};
   };
   BodyControl.makeRowsAndAppend = function (gridinfo, entities, $tbody) {
     var baseUrl = entities.baseUrl;
+    var cellCreationContext = new CellCreationContext(gridinfo.idField, baseUrl);
     var $rows = entities.records.map(function (entity, index, array) {
       var entityIndex = entities.startIndex + index;
       var row = new RowControl();
-      row.set(gridinfo, entity, entityIndex, baseUrl);
+      row.fillByEntity(gridinfo, entity, entityIndex, cellCreationContext);
       return row.element();
     });
     $tbody.append($rows);
-  };
-
-  var FilterValueHandlers ={
-    string: function (entityFilter) {
-      return {
-        get: function(){return entityFilter.find('.filter-input').val();},
-        set: function(val){return entityFilter.find('.filter-input').val(val);}
-      }
-    }
   };
 
   var FilterHandler = function(){};
@@ -1001,12 +1031,11 @@ var tallybook = tallybook || {};
   },
   FilterHandler.invokeDoFilterHandler = function(e) {
     var $el = $(e.currentTarget);
-    var  header = $el.closest('.column-header.dropdown');
-
-    var  filterValHandlerName = header.data('filter-value-handler');
-    var filterValHandler = FilterValueHandlers[filterValHandlerName];
-    filterValHandler = filterValHandler || FilterValueHandlers.string;
-    var value = filterValHandler(header).get();
+    var header = $el.closest('.column-header.dropdown');
+    var $filter = header.find('.entity-filter');
+    var filterType = $filter.data('filter-type');
+    var filterValHandler = FilterTemplates.handlers[filterType].valuehandler;
+    var value = filterValHandler.get($filter);
     FilterHandler.setValue(header, value?value:'');
     FilterHandler.closeDropdowns();
 
@@ -1204,7 +1233,6 @@ var tallybook = tallybook || {};
   };
 
   host.entity = {
-    data: EntityData,
     grid: GridControl,
     initOnDocReady: onDocReady
   };

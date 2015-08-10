@@ -77,6 +77,7 @@ var tallybook = tallybook || {};
       var $contentHolder = $('<div class="tab-pane fade">');
       $contentHolder.attr('id', id);
       if(active)$contentHolder.addClass('in active');
+      $contentHolder.html($content);
 
       this.$nav.append($tag);
       this.$content.append($contentHolder);

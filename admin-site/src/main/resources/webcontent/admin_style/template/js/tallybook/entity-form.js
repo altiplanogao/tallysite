@@ -11,6 +11,19 @@ var tallybook = tallybook || {};
     TAB_HOLDER : 'div.tab-holder'
   };
 
+//var formElementExample={
+  //  data-form-field-type : string, integer-range, decimal range, foreign-key
+  //  data-support-field-types : string, email, phone, boolean
+  //}
+  var ElementTemplates = {
+    _elementTemplateByFieldInfo : (function () {
+      
+    })(),
+    createElementByFieldInfo: function (fieldInfo) {
+      
+    }
+  };
+  
   function EntityDataAccess(form){
     this.form = form;
 
@@ -26,13 +39,32 @@ var tallybook = tallybook || {};
     dataContent: function(){
       return this.$container.find('.data-content p').data("content");
     },
+    createGroupContent : function(groupInfo, fields){
+      var $group = $('<fieldset>').attr('data-group-name', groupInfo.name);
+      var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
+      $group.append($groupTitle);
+
+      return $group;
+    },
+    createTabContent : function (tabInfo, fields){
+      var _this = this;
+      var $div = $('<div>').attr('data-tab-name', tabInfo.name);
+      var $groups = tabInfo.groups.map(function(group, index, array){
+        var $group = _this.createGroupContent(group, fields);
+        return $group;
+      });
+      $div.html($groups);
+      return $div;
+    },
     buildUpForm : function(fillData){
+      var _this = this;
       var rawData = this.dataContent();
       var data = this.entityData.processData(rawData);
       var formInfo = this.entityData.formInfo(data);
       var tabHolder = new TabHolder(this.$tabholder);
       formInfo.tabs.forEach(function(item, index, array){
-        tabHolder.addTab(item.name, item.friendlyName, '');
+        var $div = _this.createTabContent(item, formInfo.fields);
+        tabHolder.addTab(item.name, item.friendlyName, $div);
       });
       tabHolder.activeByIndexOrName(0);
 

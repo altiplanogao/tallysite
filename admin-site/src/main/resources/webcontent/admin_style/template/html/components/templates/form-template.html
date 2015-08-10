@@ -14,25 +14,47 @@
   <link rel="stylesheet" type="text/css" href="../../css/entity/entity.css"/>
 
   <style>
-    table.entity-filters-table,
-    .entity-filters-table > thead,
-    .entity-filters-table > tbody,
-    .entity-filters-table > tfoot,
-    .entity-filters-table tr.filters-table-row,
-    .entity-filters-table tr.filters-table-row > th,
-    .entity-filters-table tr.filters-table-row > td {
+    table.entity-field-template-table{
+      width: 100%;
+    }
+    table.entity-field-template-table,
+    .entity-field-template-table > thead,
+    .entity-field-template-table > tbody,
+    .entity-field-template-table > tfoot,
+    .entity-field-template-table tr.filters-table-row,
+    .entity-field-template-table tr.filters-table-row > th,
+    .entity-field-template-table tr.filters-table-row > td {
       border: 1px solid black;
       background-color: white;
       padding: 5px;
     }
 
-    .entity-filters-table tr.filters-table-row > td > ul.entity-filter {
+    .entity-field-template-table tr.filters-table-row > td > ul.entity-filter {
       position: relative;
     }
   </style>
 </head>
 <body>
 <div th:fragment="full-template">
+  <table class="entity-field-template-table">
+    <thead>
+    <tr class="filters-table-row">
+      <th style="width: 20%;">Field Type</th>
+      <th class="toggle" style="width: 80%;">Layout</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr class="filters-table-row">
+      <td>Basic</td>
+      <td>
+        <div class="field-box" data-form-field-type="string" data-support-field-types="basic,string,email,default">
+          <div class="field-label inline">Label</div>
+          <input type="text" class="form-control"/>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
 </div>
 
 <footer>
