@@ -55,7 +55,7 @@ var tallybook = tallybook || {};
     this.valuehandler = valuehandler;
   }
   var FilterTemplates = {
-    handlers : {
+    handlers : { // keys are filter-types
       string: new FilterHandler(
         function (filter, fieldInfo) {
           var $input = $('input.filter-input', filter);
@@ -75,7 +75,7 @@ var tallybook = tallybook || {};
         var $filter = $(fltr);
         var fldtypes = $filter.attr('data-support-field-types').split(',');
         fldtypes.forEach(function (fldtp) {
-          filterMap[fldtp] = $filter;
+          filterMap[fldtp.toLowerCase()] = $filter;
         })
       });
       return function (fieldType) {
