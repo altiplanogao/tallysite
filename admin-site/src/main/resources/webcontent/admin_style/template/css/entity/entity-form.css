@@ -4,3 +4,35 @@
     
 }
 
+.entity-form-container fieldset.entity-group {
+    border: 1px solid #B8B8B8;
+
+    border-radius: 3px;
+    padding: 10px;
+    background-color: hsl(0, 0%, 98%);
+}
+
+.entity-form-container fieldset.entity-group > legend{
+    width: initial;
+
+    font-size: medium;
+    border: 1px solid;
+    padding: 0 10px;
+    /* margin-left: 10px; */
+    background-color: #FAFAFA;      
+    border-color: #B8B8B8;
+    border-radius: 3px;
+    margin-bottom: auto;
+    /* font-weight: bold; */
+}
+
+.entity-form-container div.field-box{
+    margin: 5px 0 15px;
+}
+.entity-form-container div.field-box:last-child{
+    margin-bottom: 0;
+}
+
+.entity-form-container div.field-box div.field-label{
+    font-weight: bold;
+}

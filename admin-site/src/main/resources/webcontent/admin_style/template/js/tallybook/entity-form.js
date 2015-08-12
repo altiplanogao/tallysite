@@ -82,7 +82,7 @@ var tallybook = tallybook || {};
       return this.$container.find('.data-content p').data("content");
     },
     createGroupContent : function(groupInfo, fields, entity){
-      var $group = $('<fieldset>').attr('data-group-name', groupInfo.name);
+      var $group = $('<fieldset>').addClass('entity-group').attr('data-group-name', groupInfo.name);
       var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
       $group.append($groupTitle);
 
@@ -100,7 +100,7 @@ var tallybook = tallybook || {};
     },
     createTabContent : function (tabInfo, fields, entity){
       var _this = this;
-      var $div = $('<div>').attr('data-tab-name', tabInfo.name);
+      var $div = $('<div>').addClass('entity-tab').attr('data-tab-name', tabInfo.name);
       var $groups = tabInfo.groups.map(function(group, index, array){
         var $group = _this.createGroupContent(group, fields, entity);
         return $group;
