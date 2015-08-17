@@ -21,6 +21,22 @@
        data-pagesize="0"
        data-baseurl="/">
     <div class="data-content"><p th:attr="data-content=${data}"></p></div>
+    <div class="toolbar row">
+      <div class="col-sm-4 search-group">
+        <div class="input-group">
+          <button class="btn search-btn" type="button"><i class="fa fa-filter"></i></button>
+          <span class="search-text">
+            <span class="search-input-element">
+              <i class="fa fa-search embed-hint"></i>
+              <input class="search-input" data-name="" placeholder="" type="text"/>
+              <i class="fa fa-times-circle  embed-delete"></i>
+            </span>
+          </span>
+        </div>
+      </div>
+      <div class="col-sm-6">
+      </div>
+    </div>
     <div class="header">
       <table class="table table-condensed table-hover">
         <thead>

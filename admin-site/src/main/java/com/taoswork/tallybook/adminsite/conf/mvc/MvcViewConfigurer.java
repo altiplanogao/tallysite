@@ -78,7 +78,6 @@ public class MvcViewConfigurer {
             i18nMessageFileArranger arranger = new i18nMessageFileArranger();
             for (Resource res : resources) {
                 try {
-//                    String respath = res.getFilename();
                     String respath = res.getURI().getPath();
                     int offset = respath.indexOf("/entity-messages/");
                     String workoutPath = respath.substring(offset);

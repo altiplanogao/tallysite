@@ -12,23 +12,6 @@
 
   <div class="entity-listgrid-action-row row" id="entitySearch" th:inline="text"
        th:with="entityGridInfo=${gridInfo}">
-    <div class="col-xs-7">
-      <form class="custom-entity-search" th:action="${current.url}" method="get">
-        <div class="row">
-          <div class="col-xs-6">
-            <input style="" type="search"
-                   class="form-control"
-                   th:placeholder="#{general.Search_Placeholder(${entityGridInfo.friendlyName},${entityGridInfo.primarySearchFieldFriendly})}"
-                   placeholder="Search Placeholder"/>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div class="col-xs-5">
-      <div style="float: right;">
-        <a href="#" class="btn btn-primary">XXX Add</a>
-      </div>
-    </div>
   </div>
 
   <div th:include="components/entity-grid :: full_entity_grid"

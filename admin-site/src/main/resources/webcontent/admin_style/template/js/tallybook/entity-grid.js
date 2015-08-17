@@ -180,13 +180,14 @@ var tallybook = tallybook || {};
           url: function (/*urlbuilder*/) {
             var $tbody = grid.body.$tbody;
 
+            var fullRange = new Range(0, grid.data.totalRecords());
             var topIndex = grid.getTopVisibleIndex();
             var botIndex = grid.getBottomVisibleIndex();
-            var dataWindowRange = new Range(topIndex, botIndex);
+            var dataWindowRange = fullRange.intersect(new Range(topIndex, botIndex));
             var loadedRanges = grid.data.recordRanges();
             var pageSize = grid.data.pageSize();
 
-            var missingRanges = Ranges.findMissingRangesWithin(loadedRanges, topIndex, botIndex);
+            var missingRanges = Ranges.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
             if (missingRanges.length > 0) {
               var baseUrl = grid.data.baseUrl();
               baseUrl = host.url.connectUrl(window.location.origin, baseUrl);
@@ -298,7 +299,9 @@ var tallybook = tallybook || {};
       }
 
       grid.scrollHolder.customScrollbar("resize", true);
-      grid.scrollToIndex(range.lo);
+      if(range.lo != this.grid.getTopVisibleIndex()){
+        grid.scrollToIndex(range.lo);
+      }
     }
   };
 
