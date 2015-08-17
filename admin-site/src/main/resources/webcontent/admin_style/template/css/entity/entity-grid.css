@@ -91,6 +91,18 @@ div.entity-grid-container
 .toolbar .embed-delete{
     right: 8px;
 }
+
+div.entity-grid-container
+.toolbar .action-group{
+    text-align: right;
+    padding-right: 6px;
+}
+div.entity-grid-container
+.toolbar .action-btn{
+    padding-bottom: 2px;
+
+    padding-top: 2px;
+}
 /*  Header Wrapper  */
 
 div.entity-grid-container

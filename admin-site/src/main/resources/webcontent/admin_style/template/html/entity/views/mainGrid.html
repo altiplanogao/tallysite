@@ -10,10 +10,6 @@
     </div>
   </div>
 
-  <div class="entity-listgrid-action-row row" id="entitySearch" th:inline="text"
-       th:with="entityGridInfo=${gridInfo}">
-  </div>
-
   <div th:include="components/entity-grid :: full_entity_grid"
        th:with="data=${queryResult}"
        data-grid-scope="main"
