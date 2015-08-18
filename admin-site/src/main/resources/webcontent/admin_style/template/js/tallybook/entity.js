@@ -41,9 +41,7 @@ var tallybook = tallybook || {};
     columnHeader: (function () {
       var template = $('.template.grid-template .column-header-template');
       template.removeClass('column-header-template');
-      return function () {
-        return template.clone();
-      };
+      return function () {return template.clone();};
     })()
   };
 
@@ -373,7 +371,6 @@ var tallybook = tallybook || {};
       var _onloadevent = GridControl.prototype.onReloadEvent;
       _onloadevent.apply(_this, arguments);
     };
-    this._loadEventInstallation = 0;
   };
   GridControl.prototype = {
     constructor :GridControl,
@@ -566,17 +563,7 @@ var tallybook = tallybook || {};
     // LOAD FUNCTIONS         *
     // ********************** *
     loadByUrl : function(url, parameter){
-      var inUrl = host.url.getBaseUrl(url);
-      parameter = host.url.param.connect( host.url.getParameter(url),parameter);
-
-      var griddata = new GridDataAccess(this);
-
-      griddata.baseUrl(inUrl ? inUrl : '');
-      griddata.parameter(parameter ? parameter : '');
-
-      griddata.criteriaParameter('').pageSize('').totalRecords('');
-
-      GridControl.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.URL));
+      GridControl.loadByUrl(this.$container, url, parameter);
     },
     loadBySortFilterParam : function (criteriaParameter) {
       GridControl.loadBySortFilterParam(this.$container, criteriaParameter);
@@ -629,11 +616,8 @@ var tallybook = tallybook || {};
       }
       var url = null;
       if(options.url){
-        if(typeof options.url == 'function' ){
-          url = options.url();
-        }else{
-          url = options.url;
-        }
+        if(typeof options.url == 'function' ){ url = options.url();}
+        else{ url = options.url;}
       }
       if(url){
         grid.getSpinner().show(true);
@@ -651,7 +635,6 @@ var tallybook = tallybook || {};
              var newurl = host.url.getUrlWithParameterString(paramsStr, null, url);
              //var skipParam = [ReservedParameter.PageSize];
              newurl = host.url.getUrlWithParameter(ReservedParameter.PageSize, null, null, newurl);
-
              host.history.replaceUrl(newurl);
            }
 
@@ -672,14 +655,14 @@ var tallybook = tallybook || {};
     // ********************** *
 
     unbindEvents : function(){
-      GridControl.unbindUiEvent(this);
+      GridControl.eh.unbindUiEvent(this);
       (new ColumnResizer()).unbindEvents(this);
       (new SortHandler()).unbindEvents(this);
       (new FilterHandler()).unbindEvents(this);
       (new ToolbarHandler()).unbindEvents(this);
     },
     bindEvents : function(){
-      GridControl.bindUiEvent(this);
+      GridControl.eh.bindUiEvent(this);
       (new ColumnResizer()).bindEvents(this);
       (new SortHandler()).bindEvents(this);
       (new FilterHandler()).bindEvents(this);
@@ -689,49 +672,61 @@ var tallybook = tallybook || {};
       this.unbindEvents();
       this.bindEvents();
     }
-
   };
-  GridControl.ReservedParameter = ReservedParameter;
-  GridControl._loadEventInstallation = 0;
-  GridControl.bindUiEvent = function (grid) {
-    grid.header.$row.on(ENTITY_RELOAD_EVENT, grid.reloadTriggerPoint);
-    grid.body.$tbody.on('click', 'tr.data-row', GridControl.rowClickHandler);
-
-    grid._loadEventInstallation++;
-    console.log('GridControl.install. [' + grid._loadEventInstallation + ']');
-  };
-  GridControl.unbindUiEvent = function (grid) {
-    grid.header.$row.off(ENTITY_RELOAD_EVENT, this.reloadTriggerPoint);
-    grid.body.$tbody.off('click', 'tr.data-row', GridControl.rowClickHandler);
-
-    grid._loadEventInstallation--;
-    console.log('GridControl.uninstall. [' + grid._loadEventInstallation + ']');
-  };
-  GridControl.rebindUiEvent = function (grid) {
-    GridControl.unbindUiEvent(grid);
-    GridControl.bindUiEvent(grid);
-  };
-  GridControl.fireReloadEvent = function ($ele, reloadVent){
-    var $container = ($ele.is(PageSymbols.GRID_CONTAINER_CLASS) ? $ele : $ele.closest(PageSymbols.GRID_CONTAINER));
-    var header = $container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_HEADER__ROW);
-    var griddata = new GridDataAccess($container);
-    griddata.totalRecords('');
-    griddata.recordRanges('set', '0-0');
-
-    header.trigger(ENTITY_RELOAD_EVENT, reloadVent);
-  };
-  GridControl.loadBySortFilterParam = function (gridContainer, criteriaParameter) {
-    var griddata = new GridDataAccess(gridContainer);
-
-    var url = griddata.baseUrl();
-    var param = griddata.parameter();
-
-    griddata.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
-
-    GridControl.fireReloadEvent(gridContainer.find(PageSymbols.GRID_HEADER), new LoadEventData(LoadEventData.source.PARAMETER));
-  }
-
   GridControl.PageSymbols = PageSymbols;
+  GridControl.ReservedParameter = ReservedParameter;
+  GridControl.eh= {
+    _eventInstall : 0,
+    bindUiEvent: function (grid) {
+      grid.header.$row.on(ENTITY_RELOAD_EVENT, grid.reloadTriggerPoint);
+      grid.body.$tbody.on('click', 'tr.data-row', this.rowClickHandler);
+
+      GridControl.eh._eventInstall++;
+      console.log('GridControl.install. [' + GridControl.eh._eventInstall + ']');
+    },
+    unbindUiEvent: function (grid) {
+      grid.header.$row.off(ENTITY_RELOAD_EVENT, this.reloadTriggerPoint);
+      grid.body.$tbody.off('click', 'tr.data-row', this.rowClickHandler);
+
+      GridControl.eh._eventInstall--;
+      console.log('GridControl.uninstall. [' + GridControl.eh._eventInstall + ']');
+    },
+    fireReloadEvent: function ($ele, reloadVent) {
+      var $container = ($ele.is(PageSymbols.GRID_CONTAINER_CLASS) ? $ele : $ele.closest(PageSymbols.GRID_CONTAINER));
+      var header = $container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_HEADER__ROW);
+      var griddata = new GridDataAccess($container);
+      griddata.totalRecords('');
+      griddata.recordRanges('set', '0-0');
+
+      header.trigger(ENTITY_RELOAD_EVENT, reloadVent);
+    },
+    rowClickHandler: function (e) {
+      var $el = $(this),
+        $row = $el.closest('tr.data-row'),
+        $tbody = $row.closest('tbody');
+      var dataaccess = (new GridDataAccess($row));
+      if ($row.length == 0) {
+        dataaccess.selectedIndex(-1);
+        return;
+      }
+
+      var oldindex = dataaccess.selectedIndex();
+      var rowindex = $row.attr('data-entity-index');
+
+      if (oldindex == rowindex) {
+        $row.removeClass('selected');
+        dataaccess.selectedIndex(-1);
+        return;
+      }
+
+      var $oldSelectedRow = (oldindex == -1) ? null : $tbody.find('tr[data-entity-index=' + oldindex + '].data-row');
+      if (!!$oldSelectedRow)$oldSelectedRow.removeClass('selected');
+
+      var selected = $row.toggleClass('selected').is('.selected');
+      dataaccess.selectedIndex(rowindex);
+    }
+  };
+
   GridControl.findFromPage = function ($page) {
     var $ctrls = $page.find(PageSymbols.GRID_CONTAINER);
     var gcs = $ctrls.map(function (index, $ctrl, array) {
@@ -750,28 +745,28 @@ var tallybook = tallybook || {};
     return gcs;
   };
 
-  GridControl.rowClickHandler =function(e){
-    var $el = $(this),
-      $row = $el.closest('tr.data-row'),
-      $tbody = $row.closest('tbody');
-    var dataaccess = (new GridDataAccess($row));
-    if($row.length == 0){dataaccess.selectedIndex(-1);return;}
+  GridControl.loadBySortFilterParam = function (gridContainer, criteriaParameter) {
+    var griddata = new GridDataAccess(gridContainer);
 
-    var oldindex = dataaccess.selectedIndex();
-    var rowindex = $row.attr('data-entity-index');
+    var url = griddata.baseUrl();
+    var param = griddata.parameter();
 
-    if(oldindex == rowindex){
-      $row.removeClass('selected');
-      dataaccess.selectedIndex(-1);
-      return;
-    }
+    griddata.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
 
-    var $oldSelectedRow = (oldindex == -1) ? null : $tbody.find('tr[data-entity-index='+oldindex+'].data-row');
-    if(!!$oldSelectedRow)$oldSelectedRow.removeClass('selected');
+    GridControl.eh.fireReloadEvent(gridContainer.find(PageSymbols.GRID_HEADER), new LoadEventData(LoadEventData.source.PARAMETER));
+  }
+  GridControl.loadByUrl = function(gridContainer, url, parameter){
+    var griddata = new GridDataAccess(gridContainer);
 
-    var selected = $row.toggleClass('selected').is('.selected');
-    dataaccess.selectedIndex(rowindex);
+    var inUrl = host.url.getBaseUrl(url);
+    parameter = host.url.param.connect( host.url.getParameter(url),parameter);
 
+    griddata.baseUrl(inUrl ? inUrl : '');
+    griddata.parameter(parameter ? parameter : '');
+
+    griddata.criteriaParameter('').pageSize('').totalRecords('');
+
+    GridControl.eh.fireReloadEvent(gridContainer.find(PageSymbols.GRID_HEADER), new LoadEventData(LoadEventData.source.URL));
   }
 
   function ColumnControl($th, fieldInfo) {
@@ -875,55 +870,58 @@ var tallybook = tallybook || {};
     },
     bindEvents : function(grid){
       var $ele = this.element(grid);
-      $ele.on('keyup change focusin', 'input.search-input', ToolbarHandler.inputChangeHandler);
-      $ele.on('click', 'i.embed-delete', ToolbarHandler.inputDelClickHandler);
-      $ele.on('click', '.btn.search-btn', ToolbarHandler.invokeDoFilterHandler);
-      $ele.on('keypress', '.search-input', ToolbarHandler.invokeKeyTriggerDoFilterHandler);
+      $ele.on('keyup change focusin', 'input.search-input', ToolbarHandler.eh.inputChangeHandler);
+      $ele.on('click', 'i.embed-delete', ToolbarHandler.eh.inputDelClickHandler);
+      $ele.on('click', '.btn.search-btn', ToolbarHandler.eh.invokeDoFilterHandler);
+      $ele.on('keypress', '.search-input', ToolbarHandler.eh.invokeKeyTriggerDoFilterHandler);
     },
     unbindEvents : function(grid){
       var $ele = this.element(grid);
-      $ele.off('keyup change focusin', 'input.search-input', ToolbarHandler.inputChangeHandler);
-      $ele.off('click', 'i.embed-delete', ToolbarHandler.inputDelClickHandler);
-      $ele.off('click', '.btn.search-btn', ToolbarHandler.invokeDoFilterHandler);
-      $ele.off('keypress', '.search-input', ToolbarHandler.invokeKeyTriggerDoFilterHandler);
+      $ele.off('keyup change focusin', 'input.search-input', ToolbarHandler.eh.inputChangeHandler);
+      $ele.off('click', 'i.embed-delete', ToolbarHandler.eh.inputDelClickHandler);
+      $ele.off('click', '.btn.search-btn', ToolbarHandler.eh.invokeDoFilterHandler);
+      $ele.off('keypress', '.search-input', ToolbarHandler.eh.invokeKeyTriggerDoFilterHandler);
     }
   };
-  ToolbarHandler.inputChangeHandler= function (e) {
-    var $el = $(this),
-      inputElement = $el.closest('.search-input-element');
+  ToolbarHandler.eh = {
+    inputChangeHandler: function (e) {
+      var $el = $(this),
+        inputElement = $el.closest('.search-input-element');
 
-    var $input = inputElement.find('input.search-input');
-    if($input){
-      var newVal = $input.val();
-      inputElement.find('i.embed-delete').toggle(!!newVal);
+      var $input = inputElement.find('input.search-input');
+      if ($input) {
+        var newVal = $input.val();
+        inputElement.find('i.embed-delete').toggle(!!newVal);
+      }
+    },
+    inputDelClickHandler: function (e) {
+      var $el = $(this),
+        inputElement = $el.closest('.search-input-element');
+
+      var $delIcon = inputElement.find('i.embed-delete');
+      var $input = inputElement.find('input.search-input');
+      if ($input) {
+        $delIcon.hide();
+        $input.val('').focus();
+      }
+    },
+    invokeKeyTriggerDoFilterHandler: function (event) {
+      var keycode = (event.keyCode ? event.keyCode : event.which);
+      if (keycode == '13') {
+        ToolbarHandler.eh.invokeDoFilterHandler(event);
+        event.stopPropagation();
+      }
+    },
+    invokeDoFilterHandler: function (e) {
+      var $el = $(e.currentTarget);
+      var $inputGroup = $el.closest('.search-group');
+      var inputVal = $inputGroup.find('input.search-input').val();
+      var searchColumn = $inputGroup.attr('data-search-column');
+
+      var parameter = (!!inputVal) ? ('' + searchColumn + '=' + inputVal) : '';
+
+      GridControl.loadBySortFilterParam($inputGroup.closest(PageSymbols.GRID_CONTAINER), parameter);
     }
-  };
-  ToolbarHandler.inputDelClickHandler= function (e) {
-    var $el = $(this),
-      inputElement = $el.closest('.search-input-element');
-
-    var $delIcon = inputElement.find('i.embed-delete');
-    var $input = inputElement.find('input.search-input');
-    if($input){
-      $delIcon.hide(); $input.val('').focus();
-    }
-  };
-  ToolbarHandler.invokeKeyTriggerDoFilterHandler = function(event) {
-    var keycode = (event.keyCode ? event.keyCode : event.which);
-    if(keycode == '13'){
-      ToolbarHandler.invokeDoFilterHandler(event);
-      event.stopPropagation();
-    }
-  };
-  ToolbarHandler.invokeDoFilterHandler = function(e) {
-    var $el = $(e.currentTarget);
-    var $inputGroup = $el.closest('.search-group');
-    var inputVal = $inputGroup.find('input.search-input').val();
-    var searchColumn = $inputGroup.attr('data-search-column');
-
-    var parameter = (!!inputVal) ? ('' + searchColumn + '=' + inputVal) : '';
-
-    GridControl.loadBySortFilterParam($inputGroup.closest(PageSymbols.GRID_CONTAINER), parameter);
   };
 
   function HeaderControl(grid, $header) {
@@ -1067,22 +1065,22 @@ var tallybook = tallybook || {};
     bindEvents : function (grid) {
       var colsRow = grid.header.$row;
 
-      colsRow.on('click', '.filter-icon',FilterHandler.clickHandler);
-      colsRow.on('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.inputDelClickHandler);
-      colsRow.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.inputChangeHandler);
-      colsRow.on('keypress', '.entity-filter *', FilterHandler.invokeKeyTriggerDoFilterHandler);
-      colsRow.on('click', '.entity-filter .filter-button', FilterHandler.invokeDoFilterHandler);
+      colsRow.on('click', '.filter-icon',FilterHandler.eh.clickHandler);
+      colsRow.on('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
+      colsRow.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
+      colsRow.on('keypress', '.entity-filter *', FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
+      colsRow.on('click', '.entity-filter .filter-button', FilterHandler.eh.invokeDoFilterHandler);
       FilterHandler._installation++;
       console.log('FilterHandler.install. [' + FilterHandler._installation + ']');
     },
     unbindEvents : function (grid) {
       var colsRow = grid.header.$row;
 
-      colsRow.off('click', '.filter-icon',FilterHandler.clickHandler);
-      colsRow.off('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.inputDelClickHandler);
-      colsRow.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.inputChangeHandler);
-      colsRow.off('keypress', '.entity-filter *', FilterHandler.invokeKeyTriggerDoFilterHandler);
-      colsRow.off('click', '.entity-filter .filter-button', FilterHandler.invokeDoFilterHandler);
+      colsRow.off('click', '.filter-icon',FilterHandler.eh.clickHandler);
+      colsRow.off('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
+      colsRow.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
+      colsRow.off('keypress', '.entity-filter *', FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
+      colsRow.off('click', '.entity-filter .filter-button', FilterHandler.eh.invokeDoFilterHandler);
       FilterHandler._installation--;
       console.log('FilterHandler.uninstall. [' + FilterHandler._installation + ']');
     },
@@ -1100,69 +1098,80 @@ var tallybook = tallybook || {};
   FilterHandler.closeDropdowns = function (header) {
     $('.column-header.dropdown.show-filter').not(header).removeClass('show-filter');
   };
-  FilterHandler.clickHandler=function(e){
-    var $el = $(this),
-      header = $el.closest('.column-header.dropdown'),
-      dropdown = $('> ul', header),
-      colsRow = header.closest('tr');
+  FilterHandler.eh = {
+    clickHandler: function (e) {
+      var $el = $(this),
+        header = $el.closest('.column-header.dropdown'),
+        dropdown = $('> ul', header),
+        colsRow = header.closest('tr');
 
-    setTimeout(function () {
-      header.toggleClass('show-filter');
-      HeaderControl.getAllCols(colsRow).not(header).removeClass('show-filter');
-    }, 0);
-  };
-  FilterHandler.outsideClickHandler =function (e) {
-    if (e.originalEvent == undefined) return;
-    var $target = $(e.originalEvent.target);
-    if (!($target.parents().is('.column-header.dropdown'))) {
+      setTimeout(function () {
+        header.toggleClass('show-filter');
+        HeaderControl.getAllCols(colsRow).not(header).removeClass('show-filter');
+      }, 0);
+    },
+    outsideClickHandler: function (e) {
+      if (e.originalEvent == undefined) return;
+      var $target = $(e.originalEvent.target);
+      if (!($target.parents().is('.column-header.dropdown'))) {
+        FilterHandler.closeDropdowns();
+      }
+    },
+    inputChangeHandler: function (e) {
+      var $el = $(this),
+        inputElement = $el.closest('.input-element');
+
+      var $delIcon = inputElement.find('i.embed-delete');
+      var $input = inputElement.find('input.filter-input');
+      if ($input) {
+        var newVal = $input.val();
+        (!!newVal) ? $delIcon.show() : $delIcon.hide();
+      }
+    },
+    inputDelClickHandler: function (e) {
+      var $el = $(this),
+        inputElement = $el.closest('.input-element');
+
+      var $delIcon = inputElement.find('i.embed-delete');
+      var $input = inputElement.find('input.filter-input');
+      if ($input) {
+        $delIcon.hide();
+        $input.val('').focus();
+      }
+    },
+    invokeKeyTriggerDoFilterHandler: function (event) {
+      var keycode = (event.keyCode ? event.keyCode : event.which);
+      if (keycode == '13') {
+        FilterHandler.eh.invokeDoFilterHandler(event);
+        event.stopPropagation();
+      }
+    },
+    invokeDoFilterHandler: function (e) {
+      var $el = $(e.currentTarget);
+      var header = $el.closest('.column-header.dropdown');
+      var $filter = header.find('.entity-filter');
+      var filterType = $filter.data('filter-type');
+      var filterValHandler = FilterTemplates.handlers[filterType].valuehandler;
+      var value = filterValHandler.get($filter);
+      FilterHandler.setValue(header, value ? value : '');
       FilterHandler.closeDropdowns();
-    }
-  };
-  FilterHandler.inputChangeHandler= function (e) {
-    var $el = $(this),
-      inputElement = $el.closest('.input-element');
 
-    var $delIcon = inputElement.find('i.embed-delete');
-    var $input = inputElement.find('input.filter-input');
-    if($input){
-      var newVal = $input.val();
-      (!!newVal) ? $delIcon.show() : $delIcon.hide();
+      GridControl.eh.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));
     }
-  };
-  FilterHandler.inputDelClickHandler= function (e) {
-    var $el = $(this),
-      inputElement = $el.closest('.input-element');
-
-    var $delIcon = inputElement.find('i.embed-delete');
-    var $input = inputElement.find('input.filter-input');
-    if($input){
-      $delIcon.hide(); $input.val('').focus();
-    }
-  };
-  FilterHandler.invokeKeyTriggerDoFilterHandler = function(event) {
-    var keycode = (event.keyCode ? event.keyCode : event.which);
-    if(keycode == '13'){
-      FilterHandler.invokeDoFilterHandler(event);
-      event.stopPropagation();
-    }
-  },
-  FilterHandler.invokeDoFilterHandler = function(e) {
-    var $el = $(e.currentTarget);
-    var header = $el.closest('.column-header.dropdown');
-    var $filter = header.find('.entity-filter');
-    var filterType = $filter.data('filter-type');
-    var filterValHandler = FilterTemplates.handlers[filterType].valuehandler;
-    var value = filterValHandler.get($filter);
-    FilterHandler.setValue(header, value?value:'');
-    FilterHandler.closeDropdowns();
-
-    GridControl.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));
   };
 
   var SortHandler = function(){};
-  SortHandler.ORDER_DEFAULT ='_';
-  SortHandler.ORDER_ASC ='asc';
-  SortHandler.ORDER_DESC ='desc';
+  SortHandler.orders= {
+    DEFAULT: '_', ASC: 'asc', DESC: 'desc',
+    calcNextOrder: function (order) {
+      switch (order) {
+        case this.DEFAULT:return this.ASC;
+        case this.ASC:return this.DESC;
+        case this.DESC:return this.DEFAULT;
+        default :return this.DEFAULT;
+      }
+    }
+  };
   SortHandler.prototype={
     bindEvents : function (grid) {
       var colsRow = grid.header.$row;
@@ -1182,51 +1191,38 @@ var tallybook = tallybook || {};
   SortHandler.getOrder = function (header) {
     var $el = header.find('i.sort-icon');
     if ($el.is('.fa-sort-amount-asc'))
-      return SortHandler.ORDER_ASC;
+      return SortHandler.orders.ASC;
     if ($el.is('.fa-sort-amount-desc'))
-      return SortHandler.ORDER_DESC;
-    return SortHandler.ORDER_DEFAULT;
-  };
-  SortHandler.setOrderKey= function (header) {
-    var $valEle = header.find('input[type=hidden].sort-value');
-    return $valEle.attr('name');
+      return SortHandler.orders.DESC;
+    return SortHandler.orders.DEFAULT;
   };
   SortHandler.setOrder= function (header, order) {
-    if(!order){order =SortHandler.ORDER_DEFAULT;}
+    if(!order){order =SortHandler.orders.DEFAULT;}
     if(this.getOrder(header) === order){
       return;
     }
     var $el = header.find('i.sort-icon');
-    $el.removeClass('fa-sort-amount-desc');
-    $el.removeClass('fa-sort-amount-asc');
+    $el.removeClass('fa-sort-amount-desc').removeClass('fa-sort-amount-asc');
     var $container = $el.parent('.filter-sort-container');
     var $valEle = header.find('input[type=hidden].sort-value');
     var sortVal = null;
     switch (order) {
-      case SortHandler.ORDER_DESC:
+      case SortHandler.orders.DESC:
         $el.addClass('fa-sort-amount-desc');
         $container.addClass('sort-active');
         sortVal = 'desc';
         break;
-      case SortHandler.ORDER_ASC:
+      case SortHandler.orders.ASC:
         $el.addClass('fa-sort-amount-asc');
         $container.addClass('sort-active');
         sortVal = 'asc';
         break;
-      case SortHandler.ORDER_DEFAULT:
+      case SortHandler.orders.DEFAULT:
         $container.removeClass('sort-active');
         sortVal = null;
         break;
     }
     $valEle.val(sortVal);
-  };
-  SortHandler.calcNextOrder = function (order) {
-    switch(order){
-      case SortHandler.ORDER_DEFAULT:return SortHandler.ORDER_ASC;
-      case SortHandler.ORDER_ASC:return SortHandler.ORDER_DESC;
-      case SortHandler.ORDER_DESC:return SortHandler.ORDER_DEFAULT;
-      default :return SortHandler.ORDER_DEFAULT;
-    }
   };
   SortHandler.clickHandler = function(e){
     var $el = $(this),
@@ -1235,13 +1231,13 @@ var tallybook = tallybook || {};
       colsRow = header.closest('tr');
 
     var currentOrder = SortHandler.getOrder(header);
-    var nextOrder = SortHandler.calcNextOrder(currentOrder);
+    var nextOrder = SortHandler.orders.calcNextOrder(currentOrder);
     SortHandler.setOrder(header, nextOrder);
 
     HeaderControl.getAllCols(colsRow).not(header).map(function(i,item){
-      SortHandler.setOrder($(item), SortHandler.ORDER_DEFAULT);
+      SortHandler.setOrder($(item), SortHandler.orders.DEFAULT);
     });
-    GridControl.fireReloadEvent(header,new LoadEventData(LoadEventData.source.UI));
+    GridControl.eh.fireReloadEvent(header,new LoadEventData(LoadEventData.source.UI));
   };
 
   var ColumnResizer = function () {};
@@ -1249,104 +1245,107 @@ var tallybook = tallybook || {};
     rebindEvents:function(grid){this.unbindEvents(grid);this.bindEvents(grid);},
     bindEvents: function (grid) {
       var $headerTableThead = grid.header.$row;
-      $headerTableThead.on('mousedown', 'th div.resizer', ColumnResizer._mousedown);
+      $headerTableThead.on('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
 
       ColumnResizer._installation++;
       console.log('ColumnResizer.install. [' + ColumnResizer._installation + ']');
     },
     unbindEvents : function(grid){
       var $headerTableThead = grid.header.$row;
-      $headerTableThead.off('mousedown', 'th div.resizer', ColumnResizer._mousedown);
+      $headerTableThead.off('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
 
       ColumnResizer._installation--;
       console.log('ColumnResizer.uninstall. [' + ColumnResizer._installation + ']');
     }
   };
   ColumnResizer._installation = 0;
-  ColumnResizer.resizing = {
-    active: (function(){var act=false;
-      return function(a){
-        if(a === undefined)return act;
-        act = a;
-      };
-    })(),
-    headColumnRow: undefined,
-    bodyColumnRow: undefined,
-    columnIndex: 0,
-    startX: undefined,
-    startWidths: undefined,
-    totalWidth: 0
-  };
-  ColumnResizer._mousedown = function (e) {
-    var $resizeEle = $(this).closest('th');
-    var container = $resizeEle.closest(PageSymbols.GRID_CONTAINER);
-    var $headerColumnRow = container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_HEADER__ROW);
-    var $bodyColumnRow = container.find(PageSymbols.GRID_BODY + ' ' + PageSymbols.GRID_BODY__THEAD_ROW);
+  ColumnResizer.eh = {
+    resizing : {
+      active: (function () {
+        var act = false;
+        return function (a) {if (a === undefined)return act;act = a;};
+      })(),
+      headColumnRow: undefined,
+      bodyColumnRow: undefined,
+      columnIndex: 0,
+      startX: undefined,
+      startWidths: undefined,
+      totalWidth: 0
+    },
+    _mousedown: function (e) {
+      var $resizeEle = $(this).closest('th');
+      var container = $resizeEle.closest(PageSymbols.GRID_CONTAINER);
+      var $headerColumnRow = container.find(PageSymbols.GRID_HEADER + ' ' + PageSymbols.GRID_HEADER__ROW);
+      var $bodyColumnRow = container.find(PageSymbols.GRID_BODY + ' ' + PageSymbols.GRID_BODY__THEAD_ROW);
 
-    var resizing = ColumnResizer.resizing;
-    resizing.active(true);
-    resizing.headColumnRow = $headerColumnRow;
-    resizing.bodyColumnRow = $bodyColumnRow;
-    resizing.columnIndex = $resizeEle.index();
-    resizing.startX = e.pageX;
-    resizing.startWidths = [];
-    resizing.totalWidth = 0;
+      var resizing = ColumnResizer.eh.resizing;
+      resizing.active(true);
+      resizing.headColumnRow = $headerColumnRow;
+      resizing.bodyColumnRow = $bodyColumnRow;
+      resizing.columnIndex = $resizeEle.index();
+      resizing.startX = e.pageX;
+      resizing.startWidths = [];
+      resizing.totalWidth = 0;
 
-    resizing.headColumnRow.find('th').each(function (index, element) {
-      resizing.startWidths.push($(this).outerWidth());
-      resizing.totalWidth += $(this).outerWidth();
-    });
-    $(document).disableSelection();
-  };
-  ColumnResizer._mousemove = function (e) {
-    var resizing = ColumnResizer.resizing;
-    if (resizing.active()) {
-      var headColumnRow = resizing.headColumnRow;
-      var headerTableOffset = headColumnRow.offset();
-      if (e.pageX < (headerTableOffset.left - 100) || e.pageX > (headerTableOffset.left + headColumnRow.width() + 100) ||
-        (e.pageY < (headerTableOffset.top - 100)) || (e.pageY > (headerTableOffset.top + headColumnRow.height() + 100))) {
+      resizing.headColumnRow.find('th').each(function (index, element) {
+        resizing.startWidths.push($(this).outerWidth());
+        resizing.totalWidth += $(this).outerWidth();
+      });
+      $(document).disableSelection();
+    },
+    _mousemove: function (e) {
+      var resizing = ColumnResizer.eh.resizing;
+      if (resizing.active()) {
+        var headColumnRow = resizing.headColumnRow;
+        var headerTableOffset = headColumnRow.offset();
+        if (e.pageX < (headerTableOffset.left - 100) || e.pageX > (headerTableOffset.left + headColumnRow.width() + 100) ||
+          (e.pageY < (headerTableOffset.top - 100)) || (e.pageY > (headerTableOffset.top + headColumnRow.height() + 100))) {
+          resizing.active(false);
+          $(document).enableSelection();
+          return;
+        }
+
+        var minColumnWidth = 30;
+        var index = resizing.columnIndex;
+        var widthDiff = (e.pageX - resizing.startX);
+        var minAllow = -resizing.startWidths[index] + minColumnWidth;
+        var maxAllow = resizing.startWidths[index + 1] - minColumnWidth;
+
+        if (widthDiff < minAllow) {
+          widthDiff = minAllow;
+        }
+        else if (widthDiff > maxAllow) {
+          widthDiff = maxAllow;
+        }
+
+        var newLeftWidth = resizing.startWidths[index] + widthDiff;
+        var newRightWidth = resizing.startWidths[index + 1] - widthDiff;
+
+        var newWidths = resizing.startWidths.slice(0);
+        newWidths[index] = newLeftWidth;
+        newWidths[index + 1] = newRightWidth;
+
+        var headerCols = resizing.headColumnRow.find('th');
+        var bodyCols = resizing.bodyColumnRow.find('th');
+        for (var i = 0; i < resizing.startWidths.length; i++) {
+          $(headerCols[i]).outerWidth(newWidths[i]);
+          $(bodyCols[i]).outerWidth(newWidths[i]);
+        }
+      }
+    },
+    _mouseup: function () {
+      var resizing = ColumnResizer.eh.resizing;
+      if (resizing.active()) {
         resizing.active(false);
         $(document).enableSelection();
-        return;
-      }
-
-      var minColumnWidth = 30;
-      var index = resizing.columnIndex;
-      var widthDiff = (e.pageX - resizing.startX);
-      var minAllow = -resizing.startWidths[index] + minColumnWidth;
-      var maxAllow = resizing.startWidths[index + 1] - minColumnWidth;
-
-      if (widthDiff < minAllow) {widthDiff = minAllow;}
-      else if (widthDiff > maxAllow) {widthDiff = maxAllow;}
-
-      var newLeftWidth = resizing.startWidths[index] + widthDiff;
-      var newRightWidth = resizing.startWidths[index + 1] - widthDiff;
-
-      var newWidths = resizing.startWidths.slice(0);
-      newWidths[index] = newLeftWidth;
-      newWidths[index + 1] = newRightWidth;
-
-      var headerCols = resizing.headColumnRow.find('th');
-      var bodyCols = resizing.bodyColumnRow.find('th');
-      for (var i = 0; i < resizing.startWidths.length; i++) {
-        $(headerCols[i]).outerWidth(newWidths[i]);
-        $(bodyCols[i]).outerWidth(newWidths[i]);
       }
     }
   };
-  ColumnResizer._mouseup = function () {
-    var resizing = ColumnResizer.resizing;
-    if (resizing.active()) {
-      resizing.active(false);
-      $(document).enableSelection();
-    }
-  };
-
   var onDocReady = function ($doc) {
     GridControl.autoLoad($doc);
-    $(document).bind('mousemove',ColumnResizer._mousemove);
-    $(document).bind('mouseup', ColumnResizer._mouseup);
-    $doc.on('click', 'body, html',FilterHandler.outsideClickHandler);
+    $(document).bind('mousemove',ColumnResizer.eh._mousemove);
+    $(document).bind('mouseup', ColumnResizer.eh._mouseup);
+    $doc.on('click', 'body, html',FilterHandler.eh.outsideClickHandler);
   };
 
   host.entity = {

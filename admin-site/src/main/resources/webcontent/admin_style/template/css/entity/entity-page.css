@@ -12,7 +12,8 @@ section#contentContainer {
     position: relative;
 }
 
-.entity-grid-container > div.raw-data {
+.entity-form-container > div.data-content,
+.entity-grid-container > div.data-content {
     display: none;
 }
 
