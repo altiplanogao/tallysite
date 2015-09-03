@@ -34,9 +34,30 @@
     min-width: 222px;
 }
 
+.entity-filter.string-filter{
+    min-width: 222px;
+}
+
+.entity-filter.enum-filter{
+    min-width: 150px;
+}
+
 .show-filter
 .entity-filter{
     display: block !important;
+}
+
+.entity-filter hr{
+    margin: 5px 0;
+    border: none;
+    border-top: solid 1px rgba(129, 129, 129, 0.42);
+}
+
+.entity-filter .bottom-control{
+    display: inline;
+    position: relative;
+    /* margin-top: 10px; */
+    float: right;
 }
 
 /*Dropdown layout*/
@@ -79,6 +100,10 @@
     background-color: #8EAA2B;
     border-color: #90AE25;
     margin-left: 8px;
+}
+.entity-filter .bottom-control .filter-button{
+    float:none;
+    right: 0;
 }
 
 /* Entity Input Element: text element */
@@ -142,9 +167,12 @@
     margin: 0 3px 0 10px;
 }
 .entity-filter.option-filter a.reset{
-    float: right;
+    /* float: right; */
+    bottom: 0;
+    vertical-align: bottom;
 }
 
 .entity-filter.option-filter span.option{
-    display: inline-block;;
+    display: block;;
+    font-weight: initial;
 }

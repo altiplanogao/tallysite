@@ -63,7 +63,7 @@ var tallybook = tallybook || {};
     }},
     resize:{value: function () {
       this.updateBodyHeight();
-       this.scrollHolder.customScrollbar("resize", true);
+      this.scrollHolder.customScrollbar("resize", true);
       this.alignHeaderAndBody();
       this.updateRangeInfo();
       this.triggerLoad();

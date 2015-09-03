@@ -52,7 +52,7 @@
 
     <th class='column-header-template column explicit-size' scope='col'>
       <div href='#' class='column-header dropdown'>
-        <input type="hidden" class="filter-value" name="filterName" value=""/>
+        <input type="hidden" class="filter-value" name="filterName" data-multi-value="false" value=""/>
         <input type="hidden" class="sort-value" name="sort_filterName" value=""/>
         <div class='title'>
           <span class='col-name'>Name Placeholder</span>
@@ -183,22 +183,23 @@
         <td>enum</td>
         <td>
           <ul class="entity-filter option-filter enum-filter no-hover"
-              data-filter-type="enum"
-              data-support-field-types="enum">
+              data-filter-type="enumeration"
+              data-support-field-types="enumeration">
             <li>
               <div class="filter-fields" data-action="">
                 <div class="option-filter-control">
-                  <button class="filter-button btn btn-info" th:inline="text">
-                    <i class="fa fa-filter"></i>
-                  </button>
-                  <a class="reset" href="#">Reset</a>
-                  <span class="option"><input type="checkbox"/>AAA</span>
-                  <span class="option"><input type="checkbox"/>BBB</span>
-                  <span class="option"><input type="checkbox"/>CCC</span>
-                  <span class="option"><input type="checkbox"/>DDD</span>
-                  <span class="option"><input type="checkbox"/>EEE</span>
-                  <span class="option"><input type="checkbox"/>FFF</span>
-                  <span class="option"><input type="checkbox"/>DDD</span>
+                  <div class="options">
+                    <!--
+                    <span class="option"><input type="checkbox" name="xxx" value="xxx"/>AAA</span>
+                    -->
+                  </div>
+                  <hr/>
+                  <div class="bottom-control">
+                    <a class="filter-reset-button" href="#">Reset</a>
+                    <button class="filter-button btn btn-info" th:inline="text">
+                      <i class="fa fa-filter"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </li>

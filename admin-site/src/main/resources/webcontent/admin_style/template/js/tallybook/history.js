@@ -92,38 +92,82 @@ var tallybook = tallybook || {};
         };
     })();
 
+    var UrlParams = {};
+    UrlParams.makeParamObject = function (paramsStr, keepEmpty /*keep keys with null value*/) {
+        var obj = {};
+        keepEmpty = (keepEmpty == undefined ? false : !!keepEmpty);
+        for (var member in obj) delete obj[member];
+        if((paramsStr == null) || (paramsStr == '')){return obj;}
+        var pathAndParam = paramsStr.split('?');
+        var params = (pathAndParam.length == 2)?pathAndParam[1]:pathAndParam[0];
+        var pairs = params.split('&');
+        pairs.forEach(function(pair, i, array){
+            var kv = pair.split('='); var k = kv[0]; var v = kv[1];
+            if(keepEmpty || (v != '')){
+                if(obj[k] == undefined){obj[k] = [];}
+                if(v != ''){obj[k].push(v);}
+            }
+        });
+        return obj;
+    };
+    UrlParams.addParamValue = function (obj, k, v) {
+        if(obj[k] == undefined){obj[k] = [];}
+        obj[k].push(v);
+    };
+    UrlParams.setParamValue = function (obj, k, v) {
+        obj[k] = [v];
+    };
+    UrlParams.deleteParamKey = function (obj, k) {
+        delete obj[k];
+    };
+    UrlParams.makeParamsString = function (paramObj, includeEmpty) {
+        var obj = paramObj;
+        var paramsUrl ='';
+        var pairs = [];
+        for(k in obj){
+            var vs = obj[k];
+            if(includeEmpty || vs){
+                vs.forEach(function(v, i){
+                    var pair = (''+k+'='+v);
+                    pairs.push(pair);
+                });
+            }
+        }
+        return pairs.join('&');
+    };
+    UrlParams.removeDuplicates = function (paramObj) {
+        var obj = paramObj;
+        for(k in obj){
+            var vs = obj[k]; var vo ={}; var ovs=[];
+            vs.forEach(function (v, i) {vo[v]=0;})
+            for(v in vo){ovs.push(v);}
+            obj[k]=ovs;
+        }
+    };
+    UrlParams.merge = function(){
+        var merged ={};
+        for(i=0;i<arguments.length;i++){
+            var obj = arguments[i];
+            if(!!obj){
+                for(k in obj){
+                    var vs = obj[k]; var mvs = merged[k];
+                    merged[k] = ((!!mvs)? (mvs.concat(vs)) : ([].concat(vs)));
+                }}
+        }
+        UrlParams.removeDuplicates(merged);
+        return merged;
+    }
+
     var Url={
         param:{
-            string2Object:function(urlParams) {
-                var paramObj = {};
-                if ((urlParams != null) && ('' != urlParams)) {
-                    paramObj =
-                      JSON.parse('{"'
-                      + decodeURI(encodeURI(urlParams.replace(/&/g, "\",\"").replace(/=/g, "\":\""))) + '"}');
-                }
-                return paramObj;
+            string2Object:function(urlParams, keepEmpty) {
+                return UrlParams.makeParamObject(urlParams, keepEmpty);
             },
             object2String:function(paramsObj, includeEmpty){
-                var paramsUrl ='';
-                for(k in paramsObj){
-                    if(includeEmpty || paramsObj[k]){
-                        paramsUrl += ('' + k + '=' + paramsObj[k] + '&');
-                    }
-                }
-                var urlLen = paramsUrl.length;
-                if(paramsUrl.length > 0){paramsUrl = paramsUrl.substring(0, urlLen - 1);}
-                return paramsUrl;
+                return UrlParams.makeParamsString(paramsObj, includeEmpty);
             },
             mergeObjects: function(){
-                var merged ={};
-                for(i=0;i<arguments.length;i++){
-                    var arg = arguments[i];
-                    if(!!arg){
-                        for(k in arg){
-                            merged[k] = arg[k];
-                        }}
-                }
-                return merged;
+                return UrlParams.merge.apply(null, arguments);
             },
             connect:function(){
                 var merged ='';
@@ -145,11 +189,8 @@ var tallybook = tallybook || {};
                 baseUrl = window.location.href;
             }
 
-            var indexOfQ = baseUrl.indexOf('?');
-            var urlParams = null;
-            if (indexOfQ >= 0) {
-                baseUrl = baseUrl.substring(0, indexOfQ);
-            }
+            var urlAndParams = baseUrl.split('?');
+            baseUrl = urlAndParams[0];
             return baseUrl;
         },
         getParameter:function(baseUrl) {
@@ -157,12 +198,7 @@ var tallybook = tallybook || {};
                 baseUrl = window.location.href;
             }
 
-            var indexOfQ = baseUrl.indexOf('?');
-            var urlParams = null;
-            if (indexOfQ >= 0) {
-                urlParams = baseUrl.substring(indexOfQ + 1);
-            }
-            return urlParams;
+            return websanovaJsUrl('?', baseUrl);
         },
         getParametersObject : function(baseUrl) {
             return this.param.string2Object(this.getParameter(baseUrl));
@@ -183,26 +219,24 @@ var tallybook = tallybook || {};
                 baseUrl = window.location.href;
             }
 
-            var indexOfQ = baseUrl.indexOf('?');
-            var urlParams = null;
-            if (indexOfQ >= 0) {
-                urlParams = baseUrl.substring(indexOfQ + 1);
-                baseUrl = baseUrl.substring(0, indexOfQ);
-            }
+            var urlAndParams = baseUrl.split('?');
+            baseUrl = urlAndParams[0];
+            var urlParams = urlAndParams[1];
 
             // Parse the current url parameters into an object
             var newParamObj = this.param.string2Object(urlParams);
 
             if (value == null || value === "") {
-                delete newParamObj[param];
+                UrlParams.deleteParamKey(newParamObj, param);
             } else {
                 // Update the desired parameter to its new value
                 if ($.isArray(param)) {
                     $(param).each(function(index, param) {
-                        newParamObj[param[index]] = value[index];
+                        var k = param[index]; var v = value[index];
+                        UrlParams.setParamValue(newParamObj,k,v);
                     });
                 } else {
-                    newParamObj[param] = value;
+                    UrlParams.setParamValue(newParamObj,param,value);
                 }
             }
             newParamObj = this.param.mergeObjects(newParamObj, paramObj);

@@ -23,11 +23,32 @@ var tallybook = tallybook || {};
     handlers : { // keys are element-types
       string : new ElementHandler(
         function(element, fieldInfo){
-
         },
         {
           get : function(element) {return element.find('input').val();},
           set : function(element, val){return  element.find('input').val(val);}
+        }
+      ),
+      enum : new ElementHandler(
+        function(element, fieldInfo){
+          var optionsContainer = $('select.options', element).attr('name', fieldInfo.name);
+          var options = fieldInfo.facets.Enum.options;
+          var friendlyNames = fieldInfo.facets.Enum.friendlyNames;
+          var opElems = options.map(function(t){
+            var $opE = $('<option>').attr('value', t).text(friendlyNames[t]);
+            return $opE;
+          });
+          optionsContainer.empty().wrapInner(opElems);
+        },
+        {
+          get : function(element) {
+            var optionsContainer = $('select.options', element);
+            return optionsContainer.val();
+          },
+          set : function(element, val){
+            var optionsContainer = $('select.options', element);
+            return  optionsContainer.val(val);
+          }
         }
       )
     },
