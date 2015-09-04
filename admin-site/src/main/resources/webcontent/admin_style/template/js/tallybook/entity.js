@@ -233,6 +233,12 @@ var tallybook = tallybook || {};
       entities.range = range;
       entities.baseUrl = data.baseUrl;
 
+      var linksObj = {};
+      data.links.forEach(function(t,i){
+        linksObj[t.rel]=t.href;
+      });
+      data.linksObj = linksObj;
+
       var entityInfos = data.info;
       var gridinfo = this.processGridInfo(entityInfos);
 
@@ -259,16 +265,7 @@ var tallybook = tallybook || {};
   };
 
   function GridDataAccess(grid) {
-    if(grid instanceof GridControl){
-      this.gridcontainer = grid.$container;
-    } else {
-      var gridIsParent = grid.closest(PageSymbols.GRID_CONTAINER);
-      if(gridIsParent.length == 1){
-        this.gridcontainer = $(gridIsParent[0]);
-      }else if(gridIsParent.length == 0){
-        this.gridcontainer = $(grid.find(PageSymbols.GRID_CONTAINER)[0]);
-      }
-    }
+    this.gridcontainer = GridControl.findGridContainerElement(grid);
   };
   GridDataAccess.elementValueAccess = function(_this, key, defVal, val) {
     var $ele = _this.gridcontainer;
@@ -354,7 +351,7 @@ var tallybook = tallybook || {};
     criteriaParameter : GridDataAccess.specifyValueAccess('criteria-parameter',''),
     pageSize : GridDataAccess.specifyValueAccess('pagesize',''),
     totalRecords : GridDataAccess.specifyValueAccess('totalrecords', 0),
-    selectedIndex : GridDataAccess.specifyValueAccess('selectedIndex', -1),
+    selectedIndex : GridDataAccess.specifyValueAccess('selected-index', -1),
 
     //make parameter string: http://abc.com/xxx?a=1&b=2&b=3&c=4 (support multi-value for a particular key)
     gatherCriteriaParameter : function(includeAll){
@@ -541,7 +538,7 @@ var tallybook = tallybook || {};
       var range = entities.range;
       var gridinfo = entityInfos.details['pageGrid'];
 
-      (new ToolbarHandler()).init(this, gridinfo);
+      (new ToolbarHandler()).init(this, gridinfo, data.actions, data.linksObj);
 
       if (fillcols) {
         this.header.makeColumnsAndSet(gridinfo);
@@ -776,19 +773,18 @@ var tallybook = tallybook || {};
       }
 
       var oldindex = dataaccess.selectedIndex();
-      var rowindex = $row.attr('data-entity-index');
+      var newindex = $row.attr('data-entity-index');
+      if (newindex == oldindex) {newindex = -1;}
 
-      if (oldindex == rowindex) {
-        $row.removeClass('selected');
-        dataaccess.selectedIndex(-1);
-        return;
-      }
+      var $oldRow = (oldindex == -1) ? null : $tbody.find('tr[data-entity-index=' + oldindex + '].data-row');
+      if (!!$oldRow)$oldRow.removeClass('selected');
 
-      var $oldSelectedRow = (oldindex == -1) ? null : $tbody.find('tr[data-entity-index=' + oldindex + '].data-row');
-      if (!!$oldSelectedRow)$oldSelectedRow.removeClass('selected');
+      var selected = $row.toggleClass('selected', (newindex != -1)).is('.selected');
+      dataaccess.selectedIndex(newindex);
+      var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
 
-      var selected = $row.toggleClass('selected').is('.selected');
-      dataaccess.selectedIndex(rowindex);
+      var gridEle = GridControl.findGridContainerElement($row);
+      (new ToolbarHandler()).switchElementAction(gridEle, dataUrl)
     }
   };
   GridControl.updateColumnWidth = function (headColRow, bodyColRow, newWidths, totalWidth) {
@@ -806,6 +802,20 @@ var tallybook = tallybook || {};
 
   }
 
+  GridControl.findGridContainerElement = function(anyEle){
+    var gridEle = null;
+    if(anyEle instanceof GridControl){
+      gridEle = anyEle.$container;
+    } else {
+      var gridIsParent = anyEle.closest(PageSymbols.GRID_CONTAINER);
+      if(gridIsParent.length == 1){
+        gridEle = $(gridIsParent[0]);
+      }else if(gridIsParent.length == 0){
+        gridEle = $(anyEle.find(PageSymbols.GRID_CONTAINER)[0]);
+      }
+    }
+    return gridEle;
+  };
   GridControl.findFromPage = function ($page) {
     var $ctrls = $page.find(PageSymbols.GRID_CONTAINER);
     var gcs = $ctrls.map(function (index, $ctrl, array) {
@@ -918,15 +928,17 @@ var tallybook = tallybook || {};
       });
       return $cells;
     },
-    _makeRowContainer: function (gridinfo, entity, entityIndex) {
+    _makeRowContainer: function (gridinfo, entity, entityIndex, cellCreationContext) {
       var $row = $('<tr class="data-row">');
       $row.attr('data-id', entity[gridinfo.idField]);
       $row.attr('data-name', entity[gridinfo.nameField]);
       $row.attr('data-entity-index', entityIndex);
+      var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);     
+      $row.attr('data-url', url);
       return $row;
     },
     fillByEntity: function (gridinfo, entity, entityIndex, cellCreationContext) {
-      var $row = this._makeRowContainer(gridinfo, entity, entityIndex);
+      var $row = this._makeRowContainer(gridinfo, entity, entityIndex, cellCreationContext);
       var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
       $row.html($cells);
       this.$tr = $row;
@@ -934,9 +946,9 @@ var tallybook = tallybook || {};
     }
   };
 
-  function ToolbarHandler(grid){};
+  function ToolbarHandler(){};
   ToolbarHandler.prototype = {
-    init : function(grid, gridinfo){
+    init : function(grid, gridinfo, actions, linksObj){
       var $ele = this.element(grid);
       var searchGrp = $ele.find('.search-group');
       if(gridinfo.primarySearchField){
@@ -947,9 +959,32 @@ var tallybook = tallybook || {};
       }else{
         searchGrp.hide();
       }
+      var actionGrp = $ele.find('.action-group');
+      actionGrp.hide();
+      if(actions){
+        actionGrp.find('.action-btn[data-action]').each(function(i,btn){
+          var $btn = $(btn);
+          var action = $btn.data('action');
+          $btn.toggle(actions.indexOf(action) >= 0);
+          if(linksObj[action]){
+            $btn.attr('data-action-url', linksObj[action]);
+          }
+        });
+        actionGrp.show();
+      }
+    },
+    switchElementAction: function (grid, dataUrl) {
+      var $ele = this.element(grid);
+      var actionGrp = $ele.find('.action-group');
+      actionGrp.find('.action-btn.entity-action').each(function(i,btn){
+        var $btn = $(btn);
+        $btn.attr('data-action-url', dataUrl);
+        btn.disabled = (!dataUrl);
+      });
+
     },
     element : function (grid){
-      return grid.$toolbar;
+      return GridControl.findGridContainerElement(grid).find(PageSymbols.GRID_TOOLBAR);
     },
     bindEvents : function(grid){
       var $ele = this.element(grid);
