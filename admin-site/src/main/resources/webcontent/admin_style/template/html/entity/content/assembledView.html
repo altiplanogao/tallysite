@@ -1,0 +1,8 @@
+<section id="contentContainer"  th:fragment="entity_content">
+  <div th:replace="entity/mainframe :: entity-template"></div>
+  <div th:replace="entity/mainframe :: entity_content_breadcrumbs"></div>
+
+  <div class="entity-content-main" th:fragment="entity_main">
+    <div th:replace="${'entity/views/' + viewType}:: content" />
+  </div>
+</section>

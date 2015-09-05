@@ -123,22 +123,40 @@
         </li>
     </ul>
   </nav>
-</section>
+  </section>
 
-  <section id="contentContainer" th:fragment="entity_content">
-    <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
-      <ol class="breadcrumb">
-        <li>[[#{${current.menuGroup.key}}]]</li>
-        <li><a href="#" th:href="@{${current.menuEntry.url}}">
-          [[#{${current.menuEntry.key}}]]</a>
-        </li>
-        <li th:if="${entityForm}">[[$entityForm.mainEntityName]]</li>
-      </ol>
+  <section th:fragment="entity-template">
+    <div class="slide-show right production-hide" style="width: 90%;z-index: 100;">
+      <div class="indexer">
+        <span>Grid Template</span>
+      </div>
+      <div class="content">
+        <div th:include="components/templates/grid-template :: full-template"
+             class="template grid-template"/>
+      </div>
     </div>
-    <div class="entity-content-main" th:fragment="entity_main">
-      <div th:replace="${'entity/views/' + viewType}:: content" />
+    <div class="slide-show right production-hide" style="width: 90%;;margin-top: 50px;z-index: 101;">
+      <div class="indexer">
+        <span>Form Template</span>
+      </div>
+      <div class="content">
+        <div th:include="components/templates/form-template :: full-template"
+             class="template form-template"/>
+      </div>
     </div>
   </section>
+  <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
+    <ol class="breadcrumb">
+      <li>[[#{${current.menuGroup.key}}]]</li>
+      <li><a href="#" th:href="@{${current.menuEntry.url}}">
+        [[#{${current.menuEntry.key}}]]</a>
+      </li>
+      <li th:if="${entityForm}">[[$entityForm.mainEntityName]]</li>
+    </ol>
+  </div>
+  <div class="entity-content-main" th:fragment="entity_main">
+    <div th:replace="${'entity/views/' + viewType}:: content" />
+  </div>
 </div>
 
 <footer th:fragment="entity_footer">
@@ -180,6 +198,11 @@
           src="../../js/tallybook/history.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/tabholder.js}"
           src="../../js/tallybook/tabholder.js"></script>
+
+  <script type="text/javascript" th:src="@{/js/tallybook/entity-grid.js}"
+          src="../../js/tallybook/entity-grid.js"></script>
+  <script type="text/javascript" th:src="@{/js/tallybook/entity-form.js}"
+          src="../../js/tallybook/entity-form.js"></script>
 
   <!-- content script -->
   <div th:replace="${'entity/views/' + viewType}:: scripts" />

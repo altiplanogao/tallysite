@@ -1,0 +1,11 @@
+<section th:fragment="content">
+
+  <div th:include="components/entity-grid :: full_entity_grid"
+       th:with="data=${queryResult}"
+       data-grid-scope="main"
+       data-entity-grid-align-type="window"
+       data-entity-grid-align-offset="50"/>
+
+</section>
+<div th:fragment="scripts">
+</div>

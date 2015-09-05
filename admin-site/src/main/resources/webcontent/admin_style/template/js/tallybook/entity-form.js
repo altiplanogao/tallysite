@@ -89,7 +89,6 @@ var tallybook = tallybook || {};
   
   function EntityDataAccess(form){
     this.form = form;
-
   }
   EntityDataAccess.prototype={
   }
@@ -106,7 +105,6 @@ var tallybook = tallybook || {};
       var $group = $('<fieldset>').addClass('entity-group').attr('data-group-name', groupInfo.name);
       var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
       $group.append($groupTitle);
-
       var fieldEles = groupInfo.fields.map(function(fieldName){
         var field = fields[fieldName];
         if(field.formVisible){
@@ -114,9 +112,7 @@ var tallybook = tallybook || {};
           return fieldEle;
         }else{return '';}
       });
-
       $group.append(fieldEles);
-
       return $group;
     },
     createTabContent : function (tabInfo, fields, entity){
@@ -141,7 +137,6 @@ var tallybook = tallybook || {};
         tabHolder.addTab(tab.name, tab.friendlyName, $div);
       });
       tabHolder.activeByIndexOrName(0);
-
     },
     dataWithName : function(name, defVal){
       var _this = this;
@@ -194,11 +189,12 @@ var tallybook = tallybook || {};
     return null;
   };
   EntityForm.initOnDocReady = function ($doc) {
-    var form = EntityForm.findFirstFromPage($doc);
-    form.buildUpForm(true);
+    var $ctrls = $doc.find(PageSymbols.ENTITY_FORM).each(function () {
+      var $container = $(this);
+      var fm = new EntityForm($container);
+      fm.buildUpForm(true);
+    });
   }
-
-
 
   host.entity.form = EntityForm;
 

@@ -1,0 +1,10 @@
+<section th:fragment="content">
+
+
+  <div th:include="components/entity-form :: full_entity_form"
+       th:with="data=${readResult}"/>
+
+</section>
+
+<div th:fragment="scripts">
+</div>

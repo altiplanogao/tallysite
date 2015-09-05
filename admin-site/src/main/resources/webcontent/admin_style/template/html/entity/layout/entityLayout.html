@@ -7,7 +7,7 @@
     <div class="container-fluid">
 
         <div th:replace="entity/mainframe :: entity_side_nav"></div>
-        <div th:replace="entity/mainframe :: entity_content"></div>
+        <div th:replace="${templateName}::entity_content" />
 
     </div>
 
