@@ -960,29 +960,12 @@ var tallybook = tallybook || {};
         searchGrp.hide();
       }
       var actionGrp = $ele.find('.action-group');
-      actionGrp.hide();
-      if(actions){
-        actionGrp.find('.action-btn[data-action]').each(function(i,btn){
-          var $btn = $(btn);
-          var action = $btn.data('action');
-          $btn.toggle(actions.indexOf(action) >= 0);
-          if(linksObj[action]){
-            $btn.attr('data-action-url', linksObj[action]);
-          }
-        });
-        actionGrp.show();
-      }
+      (new ActionGroup(actionGrp)).setup(actions, linksObj);
     },
     switchElementAction: function (grid, dataUrl) {
       var $ele = this.element(grid);
-      var actionGrp = $ele.find('.action-group');
-      actionGrp.find('.action-btn.entity-action').each(function(i,btn){
-        var $btn = $(btn);
-        $btn.attr('data-action-url', dataUrl);
-        btn.disabled = (!dataUrl);
-      });
-
-    },
+      (new ActionGroup($ele.find('.action-group'))).switchElementAction(dataUrl);
+     },
     element : function (grid){
       return GridControl.findGridContainerElement(grid).find(PageSymbols.GRID_TOOLBAR);
     },
@@ -1488,7 +1471,56 @@ var tallybook = tallybook || {};
     $doc.on('click', 'body, html',FilterHandler.eh.outsideClickHandler);
   };
 
+  var ActionGroup = function(grpEle){
+    this.$grpEle = $(grpEle);
+  }
+  ActionGroup.prototype={
+    setup : function(actions, linksObj){
+      var actionGrp = this.$grpEle;
+      actionGrp.hide();
+      if(actions){
+        actionGrp.find('.action-btn[data-action]').each(function(i,btn){
+          var $btn = $(btn); var action = $btn.data('action');
+          $btn.toggle(actions.indexOf(action) >= 0);
+          if(linksObj[action]){ $btn.attr('data-action-url', linksObj[action]);}
+        });
+        actionGrp.show();
+      }
+    },
+    switchElementAction: function(entityUrl){
+      var actionGrp = this.$grpEle;
+      actionGrp.find('.action-btn.entity-action').each(function(i,btn){
+        var $btn = $(btn);
+        $btn.attr('data-action-url', entityUrl);
+        btn.disabled = (!entityUrl);
+      });
+    },
+    switchAllActions : function(on){
+      var actionGrp = this.$grpEle;
+      actionGrp.hide();
+      actionGrp.find('.action-btn[data-action]').each(function(i,btn){
+        var $btn = $(btn); var action = $btn.data('action');
+        $btn.toggle(!!on);
+        actionGrp.show();
+      });
+    },
+    switchAction : function(actions, on){
+      var actionGrp = this.$grpEle;
+      actionGrp.find('.action-btn[data-action]').each(function(i,btn){
+        var $btn = $(btn); var action = $btn.data('action');
+        if(actions.indexOf(action) >= 0){
+          $btn.toggle(!!on);
+        }
+      });
+    }
+  };
+  ActionGroup.findEntityActionGroup = function ($doc) {
+    var $grpEle = $('.entity-action-group .action-group', $doc);
+    return new ActionGroup($grpEle);
+  }
+
   host.entity = {
+    actionGroup : ActionGroup,
     grid: GridControl,
     initOnDocReady: onDocReady
   };

@@ -22,11 +22,8 @@ section#contentContainer .entity-content-main{
     padding: 15px 15px 15px 15px;
 }
 
-section#contentContainer > div.content-path {
-    padding: 5px 10px;
-    border-bottom: 2px solid #8eaa2b;
-}
-
-section#contentContainer > div > ol.breadcrumb {
+section#contentContainer ol.breadcrumb {
+    padding: 4px 15px;
     margin-bottom: 0px;
+    display: inline-block;
 }

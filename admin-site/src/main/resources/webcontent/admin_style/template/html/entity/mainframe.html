@@ -145,14 +145,20 @@
       </div>
     </div>
   </section>
-  <div th:inline="text" th:fragment="entity_content_breadcrumbs" class="entity-content-breadcrumbs">
-    <ol class="breadcrumb">
-      <li>[[#{${current.menuGroup.key}}]]</li>
-      <li><a href="#" th:href="@{${current.menuEntry.url}}">
-        [[#{${current.menuEntry.key}}]]</a>
-      </li>
-      <li th:if="${entityForm}">[[$entityForm.mainEntityName]]</li>
-    </ol>
+  <div th:inline="text" th:fragment="entity_content_breadcrumbs"
+       class="entity-content-breadcrumbs">
+    <div class="breadcrumb-section">
+      <ol class="breadcrumb">
+        <li>[[#{${current.menuGroup.key}}]]</li>
+        <li><a href="#" th:href="@{${current.menuEntry.url}}">
+          [[#{${current.menuEntry.key}}]]</a>
+        </li>
+        <li th:if="${entityForm}">[[$entityForm.mainEntityName]]</li>
+      </ol>
+    </div>
+    <div  class="actions-section entity-action-group" th:include="components/entity-actions">
+
+    </div>
   </div>
   <div class="entity-content-main" th:fragment="entity_main">
     <div th:replace="${'entity/views/' + viewType}:: content" />

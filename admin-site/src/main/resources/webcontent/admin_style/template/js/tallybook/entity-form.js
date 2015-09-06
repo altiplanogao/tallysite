@@ -4,6 +4,7 @@ var tallybook = tallybook || {};
 (function ($, window, host) {
   'use strict';
 
+  var ActionGroup = host.entity.actionGroup;
   var TabHolder = host.tabholder;
 
   var PageSymbols ={
@@ -137,6 +138,9 @@ var tallybook = tallybook || {};
         tabHolder.addTab(tab.name, tab.friendlyName, $div);
       });
       tabHolder.activeByIndexOrName(0);
+      var ag = ActionGroup.findEntityActionGroup(document);
+      ag.switchAllActions(false);
+      ag.switchAction(data.actions, true);
     },
     dataWithName : function(name, defVal){
       var _this = this;

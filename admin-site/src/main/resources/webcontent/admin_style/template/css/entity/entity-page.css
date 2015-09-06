@@ -18,13 +18,32 @@ section#contentContainer {
 }
 
 section#contentContainer .entity-content-breadcrumbs{
+    padding-bottom: 4px;
+    padding-top: 4px;
     margin-left: 0;
     background: #fff;
     width: 100%;
     border: 2px solid #CCC;
+    background-color: #f5f5f5;
     float: right;
     position: relative;
     border-bottom: 2px solid #8eaa2b;
+}
+
+section#contentContainer .entity-content-breadcrumbs .breadcrumb-section{
+    float: left;
+}
+section#contentContainer .entity-content-breadcrumbs .actions-section{
+    float: right;
+    margin-right: 15px;
+}
+
+section#contentContainer .entity-content-breadcrumbs .action-group{
+    text-align: right;
+}
+section#contentContainer .entity-content-breadcrumbs .action-group .action-btn {
+    padding-bottom: 2px;
+    padding-top: 2px;
 }
 
 div.template{

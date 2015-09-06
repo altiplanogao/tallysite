@@ -38,11 +38,7 @@
           </span>
         </div>
       </div>
-      <div class="col-sm-8 action-group" style="display: none">
-        <button type="button" class="btn btn-default action-btn" data-action="add" data-action-url=""><span class="fa fa-plus" aria-hidden="true"></span> New</button>
-        <button type="button" class="btn btn-default action-btn" data-action="reorder" data-action-url=""><span class="fa fa-bars" aria-hidden="true"></span> Reorder</button>
-        <button type="button" class="btn btn-default action-btn entity-action" th:disabled="true" data-action="update" data-action-url="" ><span class="fa fa-pencil-square-o" aria-hidden="true"></span> Edit</button>
-        <button type="button" class="btn btn-default action-btn entity-action" th:disabled="true" data-action="delete" data-action-url="" ><span class="fa fa-times" aria-hidden="true"></span> Delete</button>
+      <div class="col-sm-8 " th:include="components/entity-actions">
       </div>
     </div>
     <div class="header">
