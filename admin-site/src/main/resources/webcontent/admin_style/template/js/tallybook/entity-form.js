@@ -36,7 +36,7 @@ var tallybook = tallybook || {};
           var options = fieldInfo.facets.Enum.options;
           var friendlyNames = fieldInfo.facets.Enum.friendlyNames;
           var opElems = options.map(function(t){
-            var $opE = $('<option>').attr('value', t).text(friendlyNames[t]);
+            var $opE = $('<option>', {'value' : t} ).text(friendlyNames[t]);
             return $opE;
           });
           optionsContainer.empty().wrapInner(opElems);
@@ -103,7 +103,7 @@ var tallybook = tallybook || {};
       return this.$container.find('.data-content p').data("content");
     },
     createGroupContent : function(groupInfo, fields, entity){
-      var $group = $('<fieldset>').addClass('entity-group').attr('data-group-name', groupInfo.name);
+      var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupInfo.name});
       var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
       $group.append($groupTitle);
       var fieldEles = groupInfo.fields.map(function(fieldName){
@@ -118,7 +118,7 @@ var tallybook = tallybook || {};
     },
     createTabContent : function (tabInfo, fields, entity){
       var _this = this;
-      var $div = $('<div>').addClass('entity-tab').attr('data-tab-name', tabInfo.name);
+      var $div = $('<div>', {'class':'entity-tab', 'data-tab-name': tabInfo.name});
       var $groups = tabInfo.groups.map(function(group, index, array){
         var $group = _this.createGroupContent(group, fields, entity);
         return $group;
@@ -140,6 +140,7 @@ var tallybook = tallybook || {};
       tabHolder.activeByIndexOrName(0);
       var ag = ActionGroup.findEntityActionGroup(document);
       ag.switchAllActions(false);
+      ag.switchElementActionUrl(data.baseUrl);
       ag.switchAction(data.actions, true);
     },
     dataWithName : function(name, defVal){

@@ -3,7 +3,8 @@ package com.taoswork.tallybook.adminsite.conf.mvc;
 import com.taoswork.tallybook.admincore.TallyBookAdminCoreRoot;
 import com.taoswork.tallybook.general.extension.collections.MapBuilder;
 import com.taoswork.tallybook.general.extension.collections.SetBuilder;
-import com.taoswork.tallybook.general.solution.i18n.i18nMessageFileArranger;
+import com.taoswork.tallybook.general.solution.message.MessageUtility;
+import com.taoswork.tallybook.general.solution.message.i18nMessageFileArranger;
 import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookDataViewResolver;
 import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookDialect;
 import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookThymeleafViewResolver;
@@ -70,31 +71,11 @@ public class MvcViewConfigurer {
         List<String> basenameList = new ArrayList<String>();
         basenameList.add("classpath:/messages/OpenAdminGeneralMessages");
         basenameList.add("classpath:/messages/OpenAdminMessages");
-        try {
-            Resource[] resources = resolver.getResources(
-                    //ResourceUtils.CLASSPATH_URL_PREFIX +
-                    ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-                            "/entity-messages/**/*.properties");
-            i18nMessageFileArranger arranger = new i18nMessageFileArranger();
-            for (Resource res : resources) {
-                try {
-                    String respath = res.getURI().getPath();
-                    int offset = respath.indexOf("/entity-messages/");
-                    String workoutPath = respath.substring(offset);
-                    arranger.add(workoutPath);
-                } catch (Exception e) {
-                    LOGGER.error("Resource '{}' failed to return path.", res.getURI());
-                }
-            }
-            for (String simplefilename : arranger.fileNamesWithoutLocalization()) {
-                basenameList.add(ResourceUtils.CLASSPATH_URL_PREFIX + simplefilename);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        MessageUtility.getMessageBasenamesUnderDirectory(resolver, "entity-messages", basenameList);
         ms.setBasenames(basenameList.toArray(new String[basenameList.size()]));
         return ms;
     }
+
 
     @Bean
     public SpringMessageResolver messageResolver() {
@@ -135,7 +116,9 @@ public class MvcViewConfigurer {
         viewResolver.setDefaultLayout("entity/layout/entityLayout");
         viewResolver.setLayoutMap(
             new MapBuilder<String, String>()
-                .append("login/", "login/layout/loginLayout"));
+                .append("login/", "login/layout/loginLayout")
+                .append("entity/content/modalView", "NULL")
+        );
         return viewResolver;
     }
 

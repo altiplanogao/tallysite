@@ -1,9 +1,7 @@
 ;
-var tallybook;
-if(!tallybook)
-  tallybook={};
+var tallybook = tallybook || {};
 
-(function () {
+(function (host) {
   var Range = function (rangeDesc) {
     if (arguments.length == 2) {
       this.lo = arguments[0];
@@ -194,7 +192,7 @@ if(!tallybook)
     }
   }
 
-  tallybook.Range = Range;
-  tallybook.Ranges = Ranges;
+  host.Range = Range;
+  host.Ranges = Ranges;
 
-})();
+})(tallybook);

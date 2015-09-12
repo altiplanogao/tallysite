@@ -12,6 +12,7 @@ section#contentContainer {
     position: relative;
 }
 
+div.message-dict,
 .entity-form-container > div.data-content,
 .entity-grid-container > div.data-content {
     display: none;

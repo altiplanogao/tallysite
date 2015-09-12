@@ -79,7 +79,7 @@ var tallybook = tallybook || {};
           optionsVals.forEach(function(opv){
             //<span class="option"><input type="checkbox"/>BBB</span>
             var opName = optionsNames[opv];
-            var opipt = $('<input type="checkbox">').attr('name', fieldInfo.name).attr('value', opv);
+            var opipt = $('<input type="checkbox">',{'name': fieldInfo.name, 'value': opv});
             var op = $('<span class="option">').html(opipt).append(opName);
             $options.append(op);
           });
@@ -163,13 +163,13 @@ var tallybook = tallybook || {};
           var fieldname = fieldInfo.name;
           var fieldvalue = entity[fieldname];
           var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
-          var $content = $('<a>').attr('href', url).text(fieldvalue);
+          var $content = $('<a>', {'href': url}).text(fieldvalue);
           return $content;
         }),
         new CellTemplateEntry('email', 'email', function(entity, fieldInfo, cellCreationContext){
           var fieldname = fieldInfo.name;
           var fieldvalue = entity[fieldname];
-          var $content = $('<a>').attr('href', 'mailto:' + fieldvalue).text(fieldvalue);
+          var $content = $('<a>', {'href': 'mailto:' + fieldvalue}).text(fieldvalue);
           return $content;
         }),
         new CellTemplateEntry('enumeration', 'enumeration', function(entity, fieldInfo, cellCreationContext){
@@ -197,7 +197,7 @@ var tallybook = tallybook || {};
             }
             formatedPhone = segs.join('-');
           }
-          var $content = $('<a>').attr('href', 'tel:' + fieldvalue).text(formatedPhone);
+          var $content = $('<a>', {'href' : 'tel:' + fieldvalue}).text(formatedPhone);
           return $content;
         })
       ];
@@ -365,7 +365,7 @@ var tallybook = tallybook || {};
           if($item.data("multi-value")){
             var vars = val.split(',');
             vars.forEach(function(singleVal, index, array){
-              var $tmpInput = $('<input>').attr('name', $item.attr('name')).attr('value', singleVal);
+              var $tmpInput = $('<input>', {'name': $item.attr('name'), 'value' : singleVal});
               inputsWithVal.push($tmpInput[0]);
             });
           }else{
@@ -784,7 +784,7 @@ var tallybook = tallybook || {};
       var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
 
       var gridEle = GridControl.findGridContainerElement($row);
-      (new ToolbarHandler()).switchElementAction(gridEle, dataUrl)
+      (new ToolbarHandler()).switchElementActionUrl(gridEle, dataUrl)
     }
   };
   GridControl.updateColumnWidth = function (headColRow, bodyColRow, newWidths, totalWidth) {
@@ -929,12 +929,13 @@ var tallybook = tallybook || {};
       return $cells;
     },
     _makeRowContainer: function (gridinfo, entity, entityIndex, cellCreationContext) {
-      var $row = $('<tr class="data-row">');
-      $row.attr('data-id', entity[gridinfo.idField]);
-      $row.attr('data-name', entity[gridinfo.nameField]);
-      $row.attr('data-entity-index', entityIndex);
-      var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);     
-      $row.attr('data-url', url);
+      var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
+      var $row = $('<tr class="data-row">', {
+        'data-id': entity[gridinfo.idField],
+        'data-name': entity[gridinfo.nameField],
+        'data-entity-index' : entityIndex,
+        'data-url' : url
+      });
       return $row;
     },
     fillByEntity: function (gridinfo, entity, entityIndex, cellCreationContext) {
@@ -962,9 +963,9 @@ var tallybook = tallybook || {};
       var actionGrp = $ele.find('.action-group');
       (new ActionGroup(actionGrp)).setup(actions, linksObj);
     },
-    switchElementAction: function (grid, dataUrl) {
+    switchElementActionUrl: function (grid, dataUrl) {
       var $ele = this.element(grid);
-      (new ActionGroup($ele.find('.action-group'))).switchElementAction(dataUrl);
+      (new ActionGroup($ele.find('.action-group'))).switchElementActionUrl(dataUrl);
      },
     element : function (grid){
       return GridControl.findGridContainerElement(grid).find(PageSymbols.GRID_TOOLBAR);
@@ -1469,6 +1470,7 @@ var tallybook = tallybook || {};
     $(document).bind('mousemove',ColumnResizer.eh._mousemove);
     $(document).bind('mouseup', ColumnResizer.eh._mouseup);
     $doc.on('click', 'body, html',FilterHandler.eh.outsideClickHandler);
+    EntityPage.onDocReady($doc);
   };
 
   var ActionGroup = function(grpEle){
@@ -1487,7 +1489,7 @@ var tallybook = tallybook || {};
         actionGrp.show();
       }
     },
-    switchElementAction: function(entityUrl){
+    switchElementActionUrl: function(entityUrl){
       var actionGrp = this.$grpEle;
       actionGrp.find('.action-btn.entity-action').each(function(i,btn){
         var $btn = $(btn);
@@ -1512,6 +1514,12 @@ var tallybook = tallybook || {};
           $btn.toggle(!!on);
         }
       });
+    },
+    updateEditMethod : function(isModal){
+      var actionGrp = this.$grpEle;
+      actionGrp.find('.action-btn[data-action][data-edit-in-modal]').each(function(i, btn){
+        var $btn = $(btn); $btn.attr('data-edit-in-modal', (!!isModal)?'true':'false');
+      })
     }
   };
   ActionGroup.findEntityActionGroup = function ($doc) {
@@ -1519,9 +1527,22 @@ var tallybook = tallybook || {};
     return new ActionGroup($grpEle);
   }
 
+  var EntityPage = function(){}
+  EntityPage.onDocReady = function ($doc) {
+    $('body').on('click', '.action-btn[data-action=add], .action-btn[data-action=update]', function(event){
+      var url = $(this).data('action-url');
+      var isModal = ('true' == $(this).data('edit-in-modal'))
+      if(isModal){
+        window.location.href = url;
+      }else{
+        window.location.href = url;
+      }
+    });
+  }
+
   host.entity = {
     actionGroup : ActionGroup,
     grid: GridControl,
     initOnDocReady: onDocReady
   };
-})($, tallybook);
+})(jQuery, tallybook);
