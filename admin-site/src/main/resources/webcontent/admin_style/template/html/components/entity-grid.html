@@ -17,14 +17,23 @@
 <div th:fragment="full_entity_grid">
   <comment th:remove="all">
     <!--entity grid, use parameter:-->
-    <!--data: EntityQueryResponse-->
+    <!-- isTemplate=true,false -->
+    <!-- gridScope="main","normal"-->
+    <!-- alignType="window","none" -->
+    <!-- alignOffset="50","0" />-->
+    <!-- data : EntityQueryResponse -->
+
   </comment>
-  <div class="entity-grid-container entity-grid-autofill"
+  <div class="entity-grid-autofill"
+       th:classappend="${isTemplate}?'entity-grid-container-template':'entity-grid-container'"
+       th:attr="data-grid-scope=${gridScope}?:'normal',
+        data-align-type=${alignType}?:'none',
+        data-align-offset=${alignOffset}?:'0'"
        data-recordranges=""
        data-totalrecords="0"
        data-pagesize="0"
        data-baseurl="/">
-    <div class="data-content"><p th:attr="data-content=${data}"></p></div>
+    <div class="data-content"><p th:attr="data-content=${data}?:''"></p></div>
     <div class="toolbar row">
       <div class="col-sm-4 search-group" style="display: none">
         <div class="input-group">
@@ -70,7 +79,7 @@
       </table>
 
     </div>
-    <span class="spinner">
+    <span class="spinner" style="display: none;">
       <i class="spinner-item fa fa-spin fa-spinner"></i>
     </span>
 

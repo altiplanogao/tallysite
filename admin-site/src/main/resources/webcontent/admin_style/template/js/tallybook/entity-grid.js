@@ -41,13 +41,13 @@ var tallybook = tallybook || {};
       this.alignHeaderAndBody();
     }},
     updateBodyHeight:{value: function () {
-      var containerHolder = this.$container.parent();
-      var alignType = containerHolder.data("entity-grid-align-type");
+      var container = this.$container;
+      var alignType = container.data("align-type");
       switch (alignType) {
         case "window":
         {
           var $window = $(window);
-          var offset = containerHolder.data("entity-grid-align-offset");
+          var offset = container.data("align-offset");
           var bodyWrapper = this.body.$body;
           var wrapperMaxHeight = $window.innerHeight() - (bodyWrapper.offset().top) - offset;
           var totalContentHeight = Math.max(this.data.totalRecords() * this.getRowHeight(),bodyWrapper.find("tbody").height());
@@ -158,7 +158,7 @@ var tallybook = tallybook || {};
   };
   ScrollGrid.findFirstOnPage = function () {
     var $page = $(document);
-    var $ctrls = $page.find(GridControl.PageSymbols.GRID_CONTAINER);
+    var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
     if($ctrls.length > 0){
       return new ScrollGrid($($ctrls[0]));
     }

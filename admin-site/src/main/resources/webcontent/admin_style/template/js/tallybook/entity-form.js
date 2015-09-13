@@ -7,7 +7,7 @@ var tallybook = tallybook || {};
   var ActionGroup = host.entity.actionGroup;
   var TabHolder = host.tabholder;
 
-  var PageSymbols ={
+  var FormSymbols ={
     ENTITY_FORM : 'div.entity-form-container',
     TAB_HOLDER : 'div.tab-holder'
   };
@@ -24,6 +24,8 @@ var tallybook = tallybook || {};
     handlers : { // keys are element-types
       string : new ElementHandler(
         function(element, fieldInfo){
+          var fieldName = fieldInfo.name;
+          var input = $('input', element).attr('name', fieldName);
         },
         {
           get : function(element) {return element.find('input').val();},
@@ -53,13 +55,16 @@ var tallybook = tallybook || {};
         }
       )
     },
-    _elementTemplateByFieldInfo : (function () {
-      var $elements = $('.template.form-template table.entity-field-template-table > tbody div.field-box');
+    /**
+     * Get the element template by field type
+     * @param fieldType : the field type of the template
+     */
+    _getFieldTemplate : (function () {
       var elementMap = {};
+      var $elements = $('.template.form-template table.entity-field-template-table > tbody div.field-box');
       $elements.each(function(index, element){
         var $ele = $(element);
-        var fldtypes = $ele.attr('data-support-field-types').split(',');
-        fldtypes.forEach(function (fldtp) {
+        $ele.attr('data-support-field-types').split(',').forEach(function (fldtp) {
           elementMap[fldtp.toLowerCase()] = $ele;
         })
       });
@@ -69,21 +74,25 @@ var tallybook = tallybook || {};
         return $ele.clone();
       }
     })(),
+    /**
+     * Create an html element for a field
+     * @param fieldInfo
+     * @param entity
+     * @returns the html element
+     */
     createElementByFieldInfo: function (fieldInfo, entity) {
       var fieldType = fieldInfo.fieldType.toLowerCase();
-      var element = ElementTemplates._elementTemplateByFieldInfo(fieldType);
       var fieldName = fieldInfo.name;
+      var element = ElementTemplates._getFieldTemplate(fieldType);
       element.attr('data-field-name', fieldName);
-      $('div.field-label', element).text(fieldInfo.friendlyName);
-      var input = $('input', element).attr('name', fieldName);
+      element.find('div.field-label').text(fieldInfo.friendlyName);
       var eleType = element.data('form-field-type');
-      var handler = ElementTemplates.handlers[eleType];
-      if(handler.initializer){
-        handler.initializer(element, fieldInfo);
-      }
-      var valuehandler = handler.valuehandler;
-      valuehandler.set(element, entity[fieldName]);
 
+      var handler = ElementTemplates.handlers[eleType];
+      if(handler){
+        handler.initializer && handler.initializer(element, fieldInfo);
+        handler.valuehandler && handler.valuehandler.set(element, entity[fieldName]);
+      }
       return element;
     }
   };
@@ -96,9 +105,11 @@ var tallybook = tallybook || {};
 
   function EntityForm ($formContainer){
     this.$container = $formContainer;
-    this.$tabholder = $formContainer.find(PageSymbols.TAB_HOLDER);
+    this.$tabholder = $formContainer.find(FormSymbols.TAB_HOLDER);
   }
   EntityForm.prototype = {
+    element : function(){return this.$container},
+    initialized : host.elementValueAccess.defineGetSet('initialized', false),
     dataContent: function(){
       return this.$container.find('.data-content p').data("content");
     },
@@ -127,6 +138,7 @@ var tallybook = tallybook || {};
       return $div;
     },
     buildUpForm : function(fillData){
+      if(this.initialized()){return;}
       var _this = this;
       var rawData = this.dataContent();
       var data = this.entityData.processData(rawData);
@@ -142,28 +154,7 @@ var tallybook = tallybook || {};
       ag.switchAllActions(false);
       ag.switchElementActionUrl(data.baseUrl);
       ag.switchAction(data.actions, true);
-    },
-    dataWithName : function(name, defVal){
-      var _this = this;
-      var $ele = this.$container;
-      var dataname = 'data-' + name;
-      return function(val){
-        if(val === undefined){/*get*/
-          var existing = $ele.data(name);
-          if(existing === undefined){
-            return defVal;
-          }else{
-            return existing;
-          }
-        }else{/*set*/
-          $ele.attr(dataname, val);
-          $ele.data(name, val);
-          return _this;
-        }
-      }
-    },
-    data : {
-
+      this.initialized(true);
     },
     entityData :{
       processData : function(rawData){
@@ -172,13 +163,11 @@ var tallybook = tallybook || {};
       formInfo : function(data){
         return data.info.details['form'];
       }
-
     }
-
   }
 
   EntityForm.findFromPage= function($page){
-    var $ctrls = $page.find(PageSymbols.ENTITY_FORM);
+    var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
     var fms = $ctrls.map(function(index, ctrl, array){
       var fm = new EntityForm($(ctrl));
       return fm;
@@ -186,7 +175,7 @@ var tallybook = tallybook || {};
     return fms;
   }
   EntityForm.findFirstFromPage= function($page){
-    var $ctrls = $page.find(PageSymbols.ENTITY_FORM);
+    var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
     if($ctrls.length >= 1){
       var fm = new EntityForm($($ctrls[0]));
       return fm;
@@ -194,7 +183,7 @@ var tallybook = tallybook || {};
     return null;
   };
   EntityForm.initOnDocReady = function ($doc) {
-    var $ctrls = $doc.find(PageSymbols.ENTITY_FORM).each(function () {
+    var $ctrls = $doc.find(FormSymbols.ENTITY_FORM).each(function () {
       var $container = $(this);
       var fm = new EntityForm($container);
       fm.buildUpForm(true);

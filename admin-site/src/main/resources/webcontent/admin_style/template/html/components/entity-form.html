@@ -1,10 +1,11 @@
 <div th:fragment="full_entity_form">
   <comment th:remove="all">
     <!--entity form, use parameter:-->
+    <!-- isTemplate=true,false -->
     <!--data: EntityInstanceResponse-->
   </comment>
-  <div class="entity-form-container">
-    <div class="data-content"><p th:attr="data-content=${data}"></p></div>
+  <div th:classappend="${isTemplate}?'entity-form-container-template':'entity-form-container'">
+    <div class="data-content"><p th:attr="data-content=${data}?:''"></p></div>
     <form method="POST" class="twelve columns custom "
           action="">
       <div class="tab-holder">

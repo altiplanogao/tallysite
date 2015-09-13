@@ -44,6 +44,15 @@
     }
   </style>
   <p class="template-group">
+    Grid Frame Template
+  </p>
+  <div>
+    <div th:include="components/entity-grid :: full_entity_grid "
+         th:with="data='',
+       isTemplate=true"/>
+  </div>
+
+  <p class="template-group">
     Column Header Template
   </p>
 

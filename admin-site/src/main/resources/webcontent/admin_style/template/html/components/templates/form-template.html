@@ -36,6 +36,14 @@
 </head>
 <body>
 <div th:fragment="full-template">
+  <p class="template-group">
+    Form Frame Template
+  </p>
+  <div>
+    <div th:include="components/entity-form :: full_entity_form "
+         th:with="isTemplate=true"/>
+  </div>
+
   <table class="entity-field-template-table">
     <thead>
     <tr>

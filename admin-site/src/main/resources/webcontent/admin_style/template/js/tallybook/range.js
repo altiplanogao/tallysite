@@ -103,6 +103,10 @@ var tallybook = tallybook || {};
     }
   };
 
+  /**
+   * A utility object for range array operations
+   * @type {{addRange: Function, containsIndex: Function, merge: Function, intersect: Function, findMissingRangesWithin: Function, findMissingRanges: Function, makePageRanges: Function}}
+   */
   var Ranges = {
     addRange: function (ranges, range) {
       ranges.push(range);
