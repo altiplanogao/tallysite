@@ -248,6 +248,7 @@ var tallybook = tallybook || {};
 
             // Reassemble the new url
             var paramStr = this.param.dataToString(newParamObj);
+            if('' == paramStr)return baseUrl;
             return [baseUrl, paramStr].join('?');
         },
 

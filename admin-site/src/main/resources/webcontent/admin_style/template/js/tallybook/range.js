@@ -118,7 +118,7 @@ var tallybook = tallybook || {};
   Range.compare = function (a, b) {
     if(a.lo == b.lo)return a.hi - b.hi;
     return a.lo - b.lo
-  }
+  };
 
   /**
    * A utility object for range array operations
@@ -134,6 +134,9 @@ var tallybook = tallybook || {};
       return ranges.some(function (item, arrayIndex, array) {
         return item.containsIndex(index);
       });
+    },
+    sort: function (ranges) {
+      ranges.sort(Range.compare);
     },
     merge: function (ranges) {
       var result = [];

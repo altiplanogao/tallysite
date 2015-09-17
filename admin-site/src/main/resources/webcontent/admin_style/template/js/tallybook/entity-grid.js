@@ -6,7 +6,8 @@ var tallybook = tallybook || {};
 
   var ENABLE_SCROLL_DEBUG= false;
 
-  var ENTITY_GRID_CONTAINER = "div.entity-grid-container";
+  var ENTITY_GRID_CONTAINER = ".entity-grid-container";
+  var SCROLL_GRID_CONTROL_KEY = 'tallybook.scroll.grid';
 
   var fetchDebounce = 200;
   var updateUrlDebounce = 800;
@@ -21,6 +22,7 @@ var tallybook = tallybook || {};
     this._enableScrollSupport();
     this.scrollviewport = this.body.$body.find('div.viewport');
     this.scrolloverview = this.scrollviewport.find('div.overview');
+    this.paging = new Paging(this);
     this.setup();
   };
   ScrollGrid.prototype = Object.create(GridControl.prototype, {
@@ -72,10 +74,6 @@ var tallybook = tallybook || {};
       if (this.initialized()) {
         return;
       }
-
-      this.paging = new Paging(this);
-      this.paging.paddingAdjustAfterFirstLoad();
-
  //     GridControl.bindReloadEvent(this);
 
       this.triggerLoad();
@@ -144,26 +142,48 @@ var tallybook = tallybook || {};
     }},
     fill :{value: function () {
       GridControl.prototype.fill.apply(this,arguments);
+      this.paging.paddingAdjustAfterFirstLoad();
+
       this.teardown();
       this.setup();
+      this.resize();
       //this.constructor.prototype.
+    }},
+    buildAjaxLoadUrl :{value : function(baseUrl, parameter, range){
+      var start = range.lo; start = (start < 0)? null:start;
+      var url = tallybook.url.getUrlWithParameterString(parameter,null,baseUrl);
+      url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.StartIndex, start, null, url);
+      url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.PageSize, range.width(), null, url);
+      return url;
     }}
   });
-  ScrollGrid.buildAjaxLoadUrl = function(baseUrl, parameter, range){
-    var start = range.lo; start = (start < 0)? null:start;
-    var url = tallybook.url.getUrlWithParameterString(parameter,null,baseUrl);
-    url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.StartIndex, start, null, url);
-    url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.PageSize, range.width(), null, url);
-    return url;
-  };
+  ScrollGrid.getScrollGrid = function($container){
+    var existingGrid = $container.data(SCROLL_GRID_CONTROL_KEY);
+    if(!existingGrid){
+      existingGrid = new ScrollGrid($container);
+      $container.data(SCROLL_GRID_CONTROL_KEY, existingGrid);
+    }
+    return existingGrid;
+  }
   ScrollGrid.findFirstOnPage = function () {
     var $page = $(document);
     var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
     if($ctrls.length > 0){
-      return new ScrollGrid($($ctrls[0]));
+      return new ScrollGrid.getScrollGrid($($ctrls[0]));
     }
   };
-
+  ScrollGrid.findFromPage = function ($page) {
+    var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
+    var gcs = $ctrls.map(function (index, ctrl, array) {
+      var gc = ScrollGrid.getScrollGrid($(ctrl));return gc;
+    });
+    return gcs;
+  };
+  ScrollGrid.findFirstOnPage = function () {
+    var $page = $(document);
+    var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
+    if($ctrls.length > 0){return GridControl.getScrollGrid($($ctrls[0]));}
+  };
 
   var Paging = function (grid) {
     this.grid = grid;
@@ -187,6 +207,10 @@ var tallybook = tallybook || {};
             var loadedRanges = grid.data.recordRanges();
             var pageSize = grid.data.pageSize();
 
+            if(dataWindowRange == null){
+              return null;
+            }
+
             var missingRanges = RangeArrayHelper.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
             if (missingRanges.length > 0) {
               var baseUrl = grid.data.baseUrl();
@@ -206,7 +230,7 @@ var tallybook = tallybook || {};
               var cParameter = grid.data.criteriaParameter();
               var allParam = host.url.param.connect(parameter, cParameter);
 
-              var url = ScrollGrid.buildAjaxLoadUrl(baseUrl, allParam, firstMissingRange);
+              var url = grid.buildAjaxLoadUrl(baseUrl, allParam, firstMissingRange);
               return url
             } else {
               return null;
@@ -242,7 +266,7 @@ var tallybook = tallybook || {};
       var result = RangeArrayHelper.findMissingRangesWithin(loadedRange, newRange.lo, newRange.hi);
       var tobefilled = (result && result.length) ? result[0] : null;
 
-      var fill = 0;
+      var filled = 0;
       $tbody.find('tr.blank-padding').each(function (index, element) {
         var $e = $(element);
         var range = new Range($e.data('range'));
@@ -268,11 +292,11 @@ var tallybook = tallybook || {};
           }
           $e.replaceWith($newTrs);
           _this.grid.data.recordRanges('add', intersect);
-          fill++;
+          filled++;
         }
       });
 
-      if(tobefilled && (!fill)){
+      if(tobefilled && (!filled)){
         this.paddingAdjustAfterFirstLoad()
         return false;
       }
@@ -308,7 +332,8 @@ var tallybook = tallybook || {};
   ScrollGrid.initOnDocReady = function ( $doc) {
     ($(ENTITY_GRID_CONTAINER)).each(function () {
       var $container = $(this);
-      var grid = new ScrollGrid($container);
+      var grid = ScrollGrid.getScrollGrid($container);
+      grid.fill();
       grid.bindEvents();
       $(window).resize(function () {
         $.doTimeout('resize', 250, function () {

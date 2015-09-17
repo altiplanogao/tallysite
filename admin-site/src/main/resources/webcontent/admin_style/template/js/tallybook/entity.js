@@ -11,6 +11,7 @@ var tallybook = tallybook || {};
   var Range = host.Range;
   var RangeArrayHelper = Range.rangeArrayHelper;
   var AJAX = host.ajax;
+  var ElementValueAccess = host.elementValueAccess;
 
   //const
   var lockDebounce = 200;
@@ -20,10 +21,10 @@ var tallybook = tallybook || {};
     StartIndex :'startIndex',
     PageSize : 'pageSize'
   };
+  var PersistentUrlParams = [ReservedParameter.PageSize];
   //page symbols
   var GridSymbols = {
-    GRID_CONTAINER: "div.entity-grid-container",
-    GRID_CONTAINER_CLASS: "entity-grid-container",
+    GRID_CONTAINER: ".entity-grid-container",
 
     GRID_TOOLBAR: ".toolbar",
     GRID_HEADER: ".header",
@@ -35,128 +36,156 @@ var tallybook = tallybook || {};
     GRID_BODY__TABLE: ".body table",
     GRID_BODY__THEAD_ROW: "table thead tr",
     GRID_SPINNER__ITEM: 'i.spinner-item'
+
   };
 
-  var Template = {
-    columnHeader: (function () {
-      var template = $('.template.grid-template .column-header-template');
-      template.removeClass('column-header-template');
-      return function () {return template.clone();};
-    })()
-  };
-
-//var filterExample={
-  //  data-filter-type : string, integer-range, decimal range, foreign-key
-  //  data-support-field-types : string, email, phone, boolean  (enum FieldType)
-  //}
-  var FilterDefinition = function(initializer, valueaccess){
-    this.initializer = initializer;
-    this.valueaccess = valueaccess;
-  }
-  var FilterTemplates = {
-    definitions : { // keys are filter-types
-      string: new FilterDefinition(
-        function (filter, fieldInfo) {
-          var $input = $('input.filter-input', filter);
-          $input.attr('data-name', fieldInfo.name);
-          $input.attr('placeholder', fieldInfo.friendlyName);
-        },
-        {//get: ui value -> string; set: string -> ui value
-          get: function (entityFilter) {
-            return entityFilter.find('.filter-input').val();
-          },
-          set: function (entityFilter, val) {
-            entityFilter.find('i.embed-delete').toggle(!!val);
-            return entityFilter.find('.filter-input').val(val);
-          }
-        }
-      ),
-      enumeration : new FilterDefinition(
-        function (filter, fieldInfo) {
-          var $options = $('div.options', filter);
-          var optionsVals = fieldInfo.facets.Enum.options;
-          var optionsNames = fieldInfo.facets.Enum.friendlyNames;
-          optionsVals.forEach(function(opv){
-            //<span class="option"><input type="checkbox"/>BBB</span>
-            var opName = optionsNames[opv];
-            var opipt = $('<input>', { 'type':"checkbox", 'name': fieldInfo.name, 'value': opv});
-            var op = $('<span>',{ 'class':"option"}).html(opipt).append(opName);
-            $options.append(op);
-          });
-        },
-        {//get: ui value -> string; set: string -> ui value
-          get: function (entityFilter) {
-            var $options = $('div.options span.option input[type=checkbox]', entityFilter);
-            var checkedVals = [];
-            $options.filter(function(index, item){return item.checked;})
-              .each(function(index, item){checkedVals.push($(item).attr('value'));});
-            var checkedValsJoined = checkedVals.join(',');
-            return checkedValsJoined;
-          },
-          set: function (entityFilter, val) {
-            var selectedVals = [];
-            if(val){
-              selectedVals = val.split(',');
-            }
-            var $options = $('div.options span.option input[type=checkbox]', entityFilter);
-            $options.each(function(index, item){
-              var $item = $(item);
-              var val = $item.attr('value');
-              item.checked = !!(selectedVals.indexOf(val) >= 0);
-            })
-          }
-        }
-      )
-    },
+  var FilterTemplates = (function(){
     /**
-     * Get the filter template by field type
-     * @param fieldType : the field type of the template
+     * Filter definition, define the initializer of filter, and how to access its value
+     * Example:
+     *      data-filter-type : string, integer-range, decimal range, foreign-key
+     *      data-support-field-types : string, email, phone, boolean  (enum FieldType)
+     * @param initializer: initialize the ui elements of the filter
+     * @param valueaccess, define get/set (value in string) method of the filter,
+     *        get: get value from the ui element, the return value in string
+     *        set: set value to the ui element, input the value in string
+     *        typically, the value of the ui element will be saved/restored from Column's 'input[type=hidden].filter-value' element
+     * @constructor
      */
-    _getFilterTemplate: (function () {
-      var filterMap = {};
-      var $filters = $('.template.grid-template table.entity-filters-table > tbody ul.entity-filter');
-      $filters.each(function (index, fltr) {
-        var $filter = $(fltr);
-        var fldtypes = $filter.attr('data-support-field-types').split(',');
-        fldtypes.forEach(function (fldtp) {
-          filterMap[fldtp.toLowerCase()] = $filter;
-        })
-      });
-      return function (fieldType) {
-        var filterTmplt = filterMap[fieldType];
-        filterTmplt = filterTmplt? filterTmplt : filterMap['default'];
-        return filterTmplt.clone();
-      }
-    })(),
-    createFilterByFieldInfo : function(fieldInfo){
-      var fieldType = fieldInfo.fieldType.toLowerCase();
-      var filter = FilterTemplates._getFilterTemplate(fieldType);
-      var filterType = filter.data('filter-type');
-      $('input.filter-property', filter).val(fieldInfo.name);
-      $('input.sort-property', filter).val('sort_' + fieldInfo.name);
+    var FilterTemplate = function(initializer, valueaccess){
+      this.initializer = initializer;
+      this.valueaccess = valueaccess;
+    };
 
-      var definition = this.definitions[filterType];
-      if(definition){
-        definition.initializer && definition.initializer(filter, fieldInfo);
+    return {
+      _definitions : { // keys are filter-types
+        string: new FilterTemplate(
+          function (filter, fieldInfo) {
+            var $input = $('input.filter-input', filter);
+            $input.attr('data-name', fieldInfo.name);
+            $input.attr('placeholder', fieldInfo.friendlyName);
+          },
+          {//get: ui value -> string; set: string -> ui value
+            get: function (entityFilter) {
+              return entityFilter.find('.filter-input').val();
+            },
+            set: function (entityFilter, val) {
+              entityFilter.find('i.embed-delete').toggle(!!val);
+              return entityFilter.find('.filter-input').val(val);
+            }
+          }
+        ),
+        enumeration : new FilterTemplate(
+          function (filter, fieldInfo) {
+            var $options = $('div.options', filter);
+            var optionsVals = fieldInfo.facets.Enum.options;
+            var optionsNames = fieldInfo.facets.Enum.friendlyNames;
+            optionsVals.forEach(function(opv){
+              //<span class="option"><input type="checkbox"/>BBB</span>
+              var opName = optionsNames[opv];
+              var opipt = $('<input>', { 'type':"checkbox", 'name': fieldInfo.name, 'value': opv});
+              var op = $('<span>',{ 'class':"option"}).html(opipt).append(opName);
+              $options.append(op);
+            });
+          },
+          {//get: ui value -> string; set: string -> ui value
+            get: function (entityFilter) {
+              var $options = $('div.options span.option input[type=checkbox]', entityFilter);
+              var checkedVals = [];
+              $options.filter(function(index, item){return item.checked;})
+                .each(function(index, item){checkedVals.push($(item).attr('value'));});
+              var checkedValsJoined = checkedVals.join(',');
+              return checkedValsJoined;
+            },
+            set: function (entityFilter, val) {
+              var selectedVals = [];
+              if(val){
+                selectedVals = val.split(',');
+              }
+              var $options = $('div.options span.option input[type=checkbox]', entityFilter);
+              $options.each(function(index, item){
+                var $item = $(item);
+                var val = $item.attr('value');
+                item.checked = !!(selectedVals.indexOf(val) >= 0);
+              })
+            }
+          }
+        )
+      },
+      /**
+       * Get the filter template by field type
+       * @param fieldType : the field type of the template
+       */
+      _getFilterTemplate: (function () {
+        var filterMap = {};
+        var $filters = $('.template.grid-template table.entity-filters-table > tbody ul.entity-filter');
+        $filters.each(function (index, fltr) {
+          var $filter = $(fltr);
+          var fldtypes = $filter.attr('data-support-field-types').split(',');
+          fldtypes.forEach(function (fldtp) {
+            filterMap[fldtp.toLowerCase()] = $filter;
+          })
+        });
+        return function (fieldType) {
+          var filterTmplt = filterMap[fieldType];
+          filterTmplt = filterTmplt? filterTmplt : filterMap['default'];
+          return filterTmplt.clone();
+        }
+      })(),
+      createFilterByFieldInfo : function(fieldInfo){
+        var fieldType = fieldInfo.fieldType.toLowerCase();
+        var filter = FilterTemplates._getFilterTemplate(fieldType);
+        var filterType = filter.data('filter-type');
+        $('input.filter-property', filter).val(fieldInfo.name);
+        $('input.sort-property', filter).val('sort_' + fieldInfo.name);
+
+        var definition = this._definitions[filterType];
+        if(definition){
+          definition.initializer && definition.initializer(filter, fieldInfo);
+        }
+        return filter;
+      },
+      getValueAccess : function(filterType){
+        return this._definitions[filterType].valueaccess;
+      },
+      getValue : function($filter){
+        var filterType = $filter.data('filter-type');
+        if(filterType){
+          var valueAccess = this.getValueAccess(filterType);
+          return valueAccess.get($filter);
+        }
+      },
+      setValue : function($filter, val){
+        var filterType = $filter.data('filter-type');
+        if(filterType){
+          var valueAccess = this.getValueAccess(filterType);
+          return valueAccess.set($filter, val);
+        }
       }
-      return filter;
     }
-  };
+  })();
 
-//var cellExample={
-  //  data-cell-type : string, integer, decimal, foreign-key
-  //  data-support-field-types : string, email, phone, boolean
-  //}
-  var CellCreationContext = function(idField, baseUrl){
-    this.idField = idField;
-    this.baseUrl = baseUrl;
-  }
   var CellTemplates = {
+    CellCreationContext : function(idField, baseUrl){
+      this.idField = idField;
+      this.baseUrl = baseUrl;
+    },
     /**
      * Get Cell Maker by field Type
      * @params fieldType: the field type
      */
     _cellTemplateByFieldType : (function(){
+      /**
+       * @param celltype :
+       * @param supportedFieldTypes
+       * @param cellmaker
+       * @constructor
+       *
+       * Example={
+       *   data-cell-type : string, integer, decimal, foreign-key
+       *   data-support-field-types : string, email, phone, boolean
+       * }
+       */
       var CellTemplateEntry = function(celltype, supportedFieldTypes, cellmaker){
         this.celltype = celltype;
         this.supportedFieldTypes = supportedFieldTypes.split(',');
@@ -226,14 +255,666 @@ var tallybook = tallybook || {};
         return cellType2CellMaker[cellType];
       }
     })(),
-    createCellByFieldInfo : function(entity, fieldInfo, cellCreationContext){
+    createCell : function(entity, fieldInfo, cellCreationContext){
       var fieldType = fieldInfo.fieldType.toLowerCase();
       var cellmaker = this._cellTemplateByFieldType(fieldType);
       var cellcontent = cellmaker(entity, fieldInfo, cellCreationContext);
       return cellcontent;
     }
-
   }
+
+  var comp = (function(){
+    function ColumnCreator() {};
+    ColumnCreator.prototype = {
+      _makeColumnHeader: (function () {
+        var template = $('.template.grid-template .column-header-template');
+        template.removeClass('column-header-template');
+        return function () {return template.clone();};
+      })(),
+      makeElement : function(fieldInfo){
+        if (fieldInfo) {
+          var $col = this._makeColumnHeader();
+          $col.find('.col-name').text(fieldInfo.friendlyName);
+          if (!fieldInfo.gridVisible) {
+            $col.css('display', 'none');
+          }
+          $col.find('.column-header').attr('data-column-key', fieldInfo.name);
+          var iconSort = $col.find('.sort-icon');
+          var iconFilter = $col.find('.filter-icon');
+          if (fieldInfo.supportSort) {
+            var sortValEle = $col.find('.sort-value');
+            sortValEle.attr('name', 'sort_' + fieldInfo.name);
+          } else {
+            iconSort.hide();
+          }
+          if (fieldInfo.gridVisible && fieldInfo.supportFilter) {
+            var filterValEle = $col.find('.filter-value');
+            filterValEle.attr('name', fieldInfo.name);
+            if(fieldInfo.fieldType == "ENUMERATION"){
+              filterValEle.attr("data-multi-value", "true");
+              filterValEle.data("multi-value", true);
+            }
+
+            var filter = FilterTemplates.createFilterByFieldInfo(fieldInfo);
+            $col.find('.entity-filter').replaceWith(filter);
+          } else {
+            iconFilter.hide();
+          }
+          return $col;
+        }
+      }
+    };
+
+    function RowCreator($tr) {
+      this.$tr = $tr;
+    };
+    RowCreator.prototype = {
+      element: function () {
+        return this.$tr;
+      },
+      _makeCellContainer: function (fieldname, fieldvalue) {
+        var obj = $("<td>");
+        obj.attr("data-fieldname", fieldname);
+        obj.attr("data-fieldvalue", fieldvalue);
+        return obj;
+      },
+      _makeCell: function ( field, entity, cellCreationContext) {
+        var fieldname = field.name;
+        var fieldvalue = entity[fieldname];
+        var $cell = this._makeCellContainer(fieldname, fieldvalue);
+        var content = CellTemplates.createCell(entity, field, cellCreationContext);
+        $cell.html(content);
+        $cell.toggle(field.gridVisible);
+
+        return $cell;
+      },
+      _makeCells: function (fields, entity, cellCreationContext) {
+        var _this = this;
+        var $cells = fields.map(function (field, index, array) {
+          var $cell = _this._makeCell(field, entity, cellCreationContext);
+          return $cell;
+        });
+        return $cells;
+      },
+      _makeRowContainer: function (gridinfo, entity, entityIndex, cellCreationContext) {
+        var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
+        var $row = $('<tr>', {
+          'class' : "data-row",
+          'data-id': entity[gridinfo.idField],
+          'data-name': entity[gridinfo.nameField],
+          'data-entity-index' : entityIndex,
+          'data-url' : url
+        });
+        return $row;
+      },
+      fillByEntity: function (gridinfo, entity, entityIndex, cellCreationContext) {
+        var $row = this._makeRowContainer(gridinfo, entity, entityIndex, cellCreationContext);
+        var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
+        $row.html($cells);
+        this.$tr = $row;
+        return this;
+      }
+    };
+
+    function ToolbarControl(grid){
+      this.grid = grid;
+      this.$element = this.grid.element().find(GridSymbols.GRID_TOOLBAR);
+    };
+    ToolbarControl.prototype = {
+      init : function(gridinfo, actions, linksObj){
+        var $ele = this.element();
+        var searchGrp = $ele.find('.search-group');
+        if(gridinfo.primarySearchField){
+          searchGrp.show();
+          searchGrp.attr('data-search-column', gridinfo.primarySearchField);
+          $ele.find('i.embed-delete').hide();
+          $ele.find('input.search-input').attr(
+            {'data-name' : gridinfo.primarySearchField,
+              placeholder : gridinfo.primarySearchFieldFriendly} ).val('');
+        }else{
+          searchGrp.hide();
+        }
+        var actionGrp = $ele.find('.action-group');
+        (new ActionGroup(actionGrp)).setup(actions, linksObj);
+      },
+      switchElementActionUrl: function (dataUrl) {
+        var $ele = this.element();
+        (new ActionGroup($ele.find('.action-group'))).switchElementActionUrl(dataUrl);
+      },
+      element : function (){
+        return this.$element;
+      },
+      bindEvents : function(){
+        var $ele = this.element();
+        $ele.on('keyup change focusin', 'input.search-input', this, ToolbarControl.eh.inputChangeHandler);
+        $ele.on('click', 'i.embed-delete', this, ToolbarControl.eh.inputDelClickHandler);
+        $ele.on('click', '.btn.search-btn', this, ToolbarControl.eh.invokeDoFilterHandler);
+        $ele.on('keypress', '.search-input', this, ToolbarControl.eh.invokeKeyTriggerDoFilterHandler);
+      },
+      unbindEvents : function(){
+        var $ele = this.element();
+        $ele.off('keyup change focusin', 'input.search-input', ToolbarControl.eh.inputChangeHandler);
+        $ele.off('click', 'i.embed-delete', ToolbarControl.eh.inputDelClickHandler);
+        $ele.off('click', '.btn.search-btn', ToolbarControl.eh.invokeDoFilterHandler);
+        $ele.off('keypress', '.search-input', ToolbarControl.eh.invokeKeyTriggerDoFilterHandler);
+      }
+    };
+    ToolbarControl.eh = {
+      inputChangeHandler: function (e) {
+        var $el = $(this),//NOTE: 'this' is the element triggers the event
+          inputElement = $el.closest('.search-input-element');
+
+        var $input = inputElement.find('input.search-input');
+        if ($input) {
+          var newVal = $input.val();
+          inputElement.find('i.embed-delete').toggle(!!newVal);
+        }
+      },
+      inputDelClickHandler: function (e) {
+        var $el = $(this),//NOTE: 'this' is the element triggers the event
+          inputElement = $el.closest('.search-input-element');
+
+        var $delIcon = inputElement.find('i.embed-delete').hide();
+        var $input = inputElement.find('input.search-input').val('').focus();
+      },
+      invokeKeyTriggerDoFilterHandler: function (event) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if (keycode == '13') {
+          ToolbarControl.eh.invokeDoFilterHandler(event);
+          event.stopPropagation();
+        }
+      },
+      invokeDoFilterHandler: function (e) {
+        var $el = $(e.currentTarget);//NOTE: 'this' is the element triggers the event
+        var $inputGroup = $el.closest('.search-group');
+        var inputVal = $inputGroup.find('input.search-input').val();
+        var searchColumn = $inputGroup.attr('data-search-column');
+        var parameter = (!!inputVal) ? ('' + searchColumn + '=' + inputVal) : '';
+
+        var toolbar = e.data;
+        toolbar.grid.loadBySortFilterParam(parameter);
+      }
+    };
+
+    function HeaderControl(grid) {
+      this.$ele = grid.element().find(GridSymbols.GRID_HEADER);
+      this.$row = this.$ele.find(GridSymbols.GRID_HEADER__ROW);
+    };
+    HeaderControl.prototype = {
+      element: function () {
+        return this.$ele;
+      },
+      row:function(){return this.$row;},
+      width: function () {
+        return this.$ele.width();
+      },
+      columnCount: function () {
+        return this.$row.find('th').length;
+      },
+      makeColumnsAndSet: function (gridinfo) {
+        var visibles = [];
+        var visibleTotal = 0;
+        var $cols = gridinfo.fields.map(function (fieldInfo, index, array) {
+          var $col = new ColumnCreator().makeElement(fieldInfo);
+          var visi = (fieldInfo.gridVisible ? 1 : 0);
+          visibles.push(visi);
+          visibleTotal += visi;
+          return $col;
+        });
+        if(visibleTotal == 0)visibleTotal=1;
+        var visPer = visibles.map(function(t,i){
+          return 1.0*t/visibleTotal;
+        });
+        this.$row.attr({'data-col-visible': visibles, 'data-col-percents': visPer});
+        this.$row.empty().wrapInner($cols);
+      }
+    };
+    HeaderControl.getAllCols = function($colsRow){
+      return $colsRow.find('.column-header.dropdown');
+    };
+
+    function BodyControl(grid) {
+      this.grid = grid;
+      this.$body = grid.element().find(GridSymbols.GRID_BODY);
+      this.$table = this.$body.find('table');
+      this.$theadRow = this.$table.find('thead tr');
+      this.$tbody = this.$table.find('tbody');
+      this.$emptyCell = this.$tbody.find('td.entity-grid-no-results');
+      var headerCtrl = grid.header;
+      this.$emptyCell.attr('colspan', headerCtrl.columnCount());
+      this.$emptyRow = this.$emptyCell.closest('tr');
+    };
+    BodyControl.prototype = {
+      element: function () {
+        return this.$body;
+      },
+      makeHeaderMirror: function () {
+        var headerCtrl = this.grid.getHeader();
+        this.$emptyCell.attr('colspan', headerCtrl.columnCount());
+        var $row = headerCtrl.$row.clone();
+        $row.find('th').empty();
+
+        this.$theadRow.html($row.html());
+      },
+      initEmptyRow: function (entities) {
+        if (entities.totalCount == 0) {
+          this.$emptyRow.show();
+        } else {
+          this.$emptyRow.hide();
+        }
+      },
+      clearTable: function () {
+        this.$tbody.empty().append(this.$emptyRow);
+      },
+      makeRowsAndSet: function (gridinfo, entities) {
+        BodyControl.makeRowsAndAppend(gridinfo, entities, this.$tbody);
+      },
+      getRowHeight: function () {
+        var $row = this.$tbody.find('tr:not(.blank-padding):not(.empty-mark):first');
+        return $row.height();
+      }
+    };
+    BodyControl.makeRowsAndAppend = function (gridinfo, entities, $tbody) {
+      var baseUrl = entities.baseUrl;
+      var cellCreationContext = new CellTemplates.CellCreationContext(gridinfo.idField, baseUrl);
+      var $rows = entities.records.map(function (entity, index, array) {
+        var entityIndex = entities.startIndex + index;
+        var row = new RowCreator();
+        row.fillByEntity(gridinfo, entity, entityIndex, cellCreationContext);
+        return row.element();
+      });
+      $tbody.append($rows);
+    };
+
+    function FooterControl(grid) {
+      this.$footer = grid.element().find(GridSymbols.GRID_FOOTER);
+    };
+    FooterControl.prototype = {
+      element: function () {
+        return this.$footer;
+      },
+      setDataRange: function (from, to, total) {
+        if (total == 0) {
+          from = 0; to = 0;
+        } else {
+          from += 1;
+        }
+        this.$footer.find('.low-index').text(from);
+        this.$footer.find('.high-index').text(to);
+        this.$footer.find('.total-records').text(total);
+      }
+    };
+
+    function SpinnerControl(grid) {
+      this.grid = grid;
+      this.$spinner = grid.element().find(GridSymbols.GRID_SPINNER);
+      this.$icon = this.$spinner.find(GridSymbols.GRID_SPINNER__ITEM);
+    };
+    SpinnerControl.prototype = {
+      element: function () {
+        return this.$spinner;
+      },
+      setOffset : function (offsetFromBodyTop) {
+        var bodyCtrl = this.grid.body;
+        var bodyHeight = bodyCtrl.element().height();
+        var iconHeight = this.$icon.height();
+
+        var offsetFromBottom = 0;
+        if('middle' == offsetFromBodyTop){
+          offsetFromBottom = (bodyHeight / 2);
+        }else if(offsetFromBodyTop === undefined) {
+          offsetFromBottom = 0;
+        }else{
+          offsetFromBottom = (bodyHeight - offsetFromBodyTop);
+        }
+        offsetFromBottom -= iconHeight / 2;
+        this.$icon.css('bottom', offsetFromBottom + 'px');
+      },
+      show: function (show, offsetFromBodyTop) {
+        if(offsetFromBodyTop !== undefined){
+          this.setOffset(offsetFromBodyTop);
+        }
+        if (show) {
+          this.$spinner.css('display', 'block');
+        } else {
+          this.$spinner.css('display', 'none');
+          this.setOffset(undefined);
+        }
+      }
+    };
+
+    return {
+      Toolbar : ToolbarControl,
+      Header : HeaderControl,
+      Body : BodyControl,
+      Footer : FooterControl,
+      Spinner : SpinnerControl
+    };
+  })();
+
+  var handlers = (function(){
+    var FilterHandler = function(grid){
+      this.grid = grid;
+      this._installation = 0;
+    };
+    FilterHandler.prototype={
+      bindEvents : function () {
+        var colsRow = this.grid.getHeader().row();
+        var grid = this.grid;
+
+        colsRow.on('click', '.filter-icon', FilterHandler.eh.popupHandler);
+        colsRow.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
+        colsRow.on('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
+        colsRow.on('click', '.entity-filter .filter-reset-button', FilterHandler.eh.resetFilterHandler);
+        colsRow.on('keypress', '.entity-filter *', grid, FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
+        colsRow.on('click', '.entity-filter .filter-button', grid, FilterHandler.eh.invokeDoFilterHandler);
+        this._installation++;
+        console.log('FilterHandler.install. [' + this._installation + ']');
+      },
+      unbindEvents : function () {
+        var colsRow = this.grid.getHeader().row();
+
+        colsRow.off('click', '.filter-icon',FilterHandler.eh.popupHandler);
+        colsRow.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
+        colsRow.off('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
+        colsRow.off('click', '.entity-filter .filter-reset-button', FilterHandler.eh.resetFilterHandler);
+        colsRow.off('keypress', '.entity-filter *', FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
+        colsRow.off('click', '.entity-filter .filter-button', FilterHandler.eh.invokeDoFilterHandler);
+        this._installation--;
+        console.log('FilterHandler.uninstall. [' + this._installation + ']');
+      },
+      rebindEvents : function(grid){this.unbindEvents(grid);this.bindEvents(grid);}
+    };
+    FilterHandler.setValue = function (header, value) {
+      $('input[type=hidden].filter-value', header).val(value);
+      $('.filter-sort-container', header).toggleClass('filter-active', !!value);
+      console.log('todo: FilterHandler.setValue for different filters');
+    };
+    FilterHandler.getValue = function (header){
+      return $('input[type=hidden].filter-value', header).val();
+    };
+    FilterHandler.closeDropdowns = function (header) {
+      $('.column-header.dropdown.show-filter').not(header).removeClass('show-filter');
+    };
+    FilterHandler.eh = {
+      popupHandler: function (e) {
+        var $el = $(this),
+          header = $el.closest('.column-header.dropdown'),
+          dropdown = $('> ul', header),
+          colsRow = header.closest('tr');
+
+        setTimeout(function () {
+          header.toggleClass('show-filter');
+          comp.Header.getAllCols(colsRow).not(header).removeClass('show-filter');
+        }, 0);
+      },
+      inputChangeHandler: function (e) {
+        var $el = $(this),
+          inputElement = $el.closest('.input-element');
+
+        var $delIcon = inputElement.find('i.embed-delete');
+        var $input = inputElement.find('input.filter-input');
+        if ($input) {
+          var newVal = $input.val();
+          (!!newVal) ? $delIcon.show() : $delIcon.hide();
+        }
+      },
+      inputDelClickHandler: function (e) {
+        var $el = $(this),
+          inputElement = $el.closest('.input-element');
+
+        var $delIcon = inputElement.find('i.embed-delete');
+        var $input = inputElement.find('input.filter-input');
+        if ($input) {
+          $delIcon.hide();
+          $input.val('').focus();
+        }
+      },
+      resetFilterHandler: function (e) {
+        var $el = $(e.currentTarget);
+        var header = $el.closest('.column-header.dropdown');
+        var $filter = header.find('.entity-filter');
+        FilterTemplates.setValue($filter, '');
+        FilterHandler.setValue(header, '');
+      },
+      outsideClickHandler: function (e) {
+        if (e.originalEvent == undefined) return;
+        var $target = $(e.originalEvent.target);
+        if (!($target.parents().is('.column-header.dropdown'))) {
+          FilterHandler.closeDropdowns();
+        }
+      },
+      invokeKeyTriggerDoFilterHandler: function (event) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if (keycode == '13') {
+          FilterHandler.eh.invokeDoFilterHandler(event);
+          event.stopPropagation();
+        }
+      },
+      invokeDoFilterHandler: function (e) {
+        var $el = $(e.currentTarget);
+        var header = $el.closest('.column-header.dropdown');
+        var $filter = header.find('.entity-filter');
+        var value = FilterTemplates.getValue($filter);
+        FilterHandler.setValue(header, value ? value : '');
+        FilterHandler.closeDropdowns();
+
+        var grid = e.data;
+
+        GridControl.eh.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));
+      },
+      bindOnDocReady : function($doc){
+        $doc.on('click', 'body, html', FilterHandler.eh.outsideClickHandler);
+      }
+    };
+
+    var SortHandler = function(grid){
+      this.grid = grid;
+      this._installation = 0;
+    };
+    SortHandler.prototype = {
+      bindEvents : function () {
+        var colsRow = this.grid.getHeader().row();
+        colsRow.on('click', '.sort-icon', this.grid, SortHandler.eh.sortIconHandler);
+        this._installation++;
+        console.log('SortHandler.install. [' + this._installation + ']');
+      },
+      unbindEvents : function () {
+        var colsRow = this.grid.getHeader().row();
+        colsRow.off('click', '.sort-icon', SortHandler.eh.sortIconHandler);
+        this._installation--;
+        console.log('SortHandler.uninstall. [' + this._installation + ']');
+      },
+      rebindEvents : function(){this.unbindEvents();this.bindEvents();}
+    }
+    SortHandler.orders= {
+      DEFAULT: '_', ASC: 'asc', DESC: 'desc',
+      calcNextOrder: function (order) {
+        switch (order) {
+          case this.DEFAULT:return this.ASC;
+          case this.ASC:return this.DESC;
+          case this.DESC:return this.DEFAULT;
+          default :return this.DEFAULT;
+        }
+      },
+      getOrder : function (header) {
+        var $el = header.find('i.sort-icon');
+        if ($el.is('.fa-sort-amount-asc'))
+          return SortHandler.orders.ASC;
+        if ($el.is('.fa-sort-amount-desc'))
+          return SortHandler.orders.DESC;
+        return SortHandler.orders.DEFAULT;
+      },
+      setOrder : function (header, order) {
+        if($.isArray(order)){order = order[0];}
+        if(!order){order =SortHandler.orders.DEFAULT;}
+        if(this.getOrder(header) === order){
+          return;
+        }
+        var $el = header.find('i.sort-icon');
+        $el.removeClass('fa-sort-amount-desc').removeClass('fa-sort-amount-asc');
+        var $container = $el.parent('.filter-sort-container');
+        var $valEle = header.find('input[type=hidden].sort-value');
+        var sortVal = null;
+        switch (order) {
+          case SortHandler.orders.DESC:
+            $el.addClass('fa-sort-amount-desc');
+            $container.addClass('sort-active');
+            sortVal = 'desc';
+            break;
+          case SortHandler.orders.ASC:
+            $el.addClass('fa-sort-amount-asc');
+            $container.addClass('sort-active');
+            sortVal = 'asc';
+            break;
+          case SortHandler.orders.DEFAULT:
+            $container.removeClass('sort-active');
+            sortVal = null;
+            break;
+        }
+        $valEle.val(sortVal);
+      }
+    };
+    /**
+     * Event binded on the header's row
+     */
+    SortHandler.eh = {
+      sortIconHandler : function(e){
+        var $el = $(this),
+          header = $el.closest('.column-header.dropdown'),
+          dropdown = $('> ul', header),
+          colsRow = header.closest('tr');
+
+        var orders = SortHandler.orders;
+        var currentOrder = orders.getOrder(header);
+        var nextOrder = orders.calcNextOrder(currentOrder);
+        orders.setOrder(header, nextOrder);
+
+        comp.Header.getAllCols(colsRow).not(header).map(function(i,item){
+          orders.setOrder($(item), orders.DEFAULT);
+        });
+        var grid = e.data;
+        GridControl.eh.fireReloadEvent(header,new LoadEventData(LoadEventData.source.UI));
+      }
+    };
+
+    var ColumnResizer = function (grid){
+      this.grid = grid;
+      this._installation = 0;
+    };
+    ColumnResizer.prototype={
+      rebindEvents:function(){this.unbindEvents();this.bindEvents();},
+      bindEvents: function () {
+        var $headerTableThead = this.grid.getHeader().element();
+        $headerTableThead.on('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
+
+        this._installation++;
+        console.log('ColumnResizer.install. [' + this._installation + ']');
+      },
+      unbindEvents : function(){
+        var $headerTableThead = this.grid.getHeader().element();
+        $headerTableThead.off('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
+
+        this._installation--;
+        console.log('ColumnResizer.uninstall. [' + this._installation + ']');
+      }
+    }
+    /**
+     * Event binded on the header
+     * @type {{rebindEvents: Function, bindEvents: Function, unbindEvents: Function}}
+     */
+    ColumnResizer.eh = {
+      resizing : {
+        active: (function () {
+          var act = false;
+          return function (a) {if (a === undefined)return act;act = a;};
+        })(),
+        headColumnRow: undefined,
+        bodyColumnRow: undefined,
+        columnIndex: 0,
+        startX: undefined,
+        startWidths: undefined,
+        totalWidth: 0
+      },
+      _mousedown: function (e) {
+        var $resizeEle = $(this).closest('th');
+        var container = $resizeEle.closest(GridSymbols.GRID_CONTAINER);
+        var $headerColumnRow = container.find(GridSymbols.GRID_HEADER + ' ' + GridSymbols.GRID_HEADER__ROW);
+        var $bodyColumnRow = container.find(GridSymbols.GRID_BODY + ' ' + GridSymbols.GRID_BODY__THEAD_ROW);
+
+        var resizing = ColumnResizer.eh.resizing;
+        resizing.active(true);
+        resizing.headColumnRow = $headerColumnRow;
+        resizing.bodyColumnRow = $bodyColumnRow;
+        resizing.columnIndex = $resizeEle.index();
+        resizing.startX = e.pageX;
+        resizing.startWidths = [];
+        resizing.totalWidth = 0;
+
+        resizing.headColumnRow.find('th').each(function (index, element) {
+          var elementWidth = $(this).outerWidth();
+          resizing.startWidths.push(elementWidth);
+          resizing.totalWidth += elementWidth;
+        });
+        $(document).disableSelection();
+      },
+      _mousemove: function (e) {
+        var resizing = ColumnResizer.eh.resizing;
+        if (resizing.active()) {
+          var headColumnRow = resizing.headColumnRow;
+          var headerTableOffset = headColumnRow.offset();
+          if (e.pageX < (headerTableOffset.left - 100) || e.pageX > (headerTableOffset.left + headColumnRow.width() + 100) ||
+            (e.pageY < (headerTableOffset.top - 100)) || (e.pageY > (headerTableOffset.top + headColumnRow.height() + 100))) {
+            resizing.active(false);
+            $(document).enableSelection();
+            return;
+          }
+
+          var minColumnWidth = 30;
+          var index = resizing.columnIndex;
+          var widthDiff = (e.pageX - resizing.startX);
+          var minAllow = -resizing.startWidths[index] + minColumnWidth;
+          var maxAllow = resizing.startWidths[index + 1] - minColumnWidth;
+
+          if (widthDiff < minAllow) {
+            widthDiff = minAllow;
+          }
+          else if (widthDiff > maxAllow) {
+            widthDiff = maxAllow;
+          }
+
+          var newLeftWidth = resizing.startWidths[index] + widthDiff;
+          var newRightWidth = resizing.startWidths[index + 1] - widthDiff;
+
+          var newWidths = resizing.startWidths.slice(0);
+          newWidths[index] = newLeftWidth;
+          newWidths[index + 1] = newRightWidth;
+
+          var widthPercents = newWidths.map(function(t,i){
+            return 1.0*t/resizing.totalWidth;
+          });
+          resizing.headColumnRow.attr('data-col-percents', widthPercents);
+          GridControl.updateColumnWidth(resizing.headColumnRow, resizing.bodyColumnRow, newWidths);
+        }
+      },
+      _mouseup: function () {
+        var resizing = ColumnResizer.eh.resizing;
+        if (resizing.active()) {
+          resizing.active(false);
+          $(document).enableSelection();
+        }
+      },
+      bindOnDocReady : function($doc){
+        $doc.bind('mousemove',ColumnResizer.eh._mousemove);
+        $doc.bind('mouseup', ColumnResizer.eh._mouseup);
+      }
+    };
+    return {
+      FilterHandler : FilterHandler,
+      SortHandler : SortHandler,
+      ColumnResizer : ColumnResizer
+    };
+  })();
 
   var EntityDataHandler = {
     processGridData: function (data) {
@@ -273,73 +954,26 @@ var tallybook = tallybook || {};
     }
   };
 
-  function GridDataAccess(grid) {
-    this.gridcontainer = GridControl.findContainerElement(grid);
+  function GridDataAccess(anyEle) {
+    this.$container = GridControl.findContainerElement(anyEle);
   };
   GridDataAccess.prototype = {
-    element:function(){return this.gridcontainer;},
-    recordRanges: function (/* optional: get set add */op, val) {
-      var $container = this.gridcontainer;
-      if (op === undefined) {
-        op = 'get';
-      }
-      switch (op) {
-        case 'get':
-        {
-          var rangesString = $container.data('recordranges');
-          if (!rangesString) {
-            return null;
-          }
-          var rangeDescriptions = rangesString.split(',');
-          var ranges = [];
-          rangeDescriptions.forEach(function (item, index, array) {
-            RangeArrayHelper.addRange(ranges, new Range(item));
-          })
-          return ranges;
-        }
-        case 'add':
-        {
-          var rangesString = '';
-          if (val) {
-            var rg = new Range(val);
-            var existing = this.recordRanges('get');
-            var ranges = existing || [];
-            RangeArrayHelper.addRange(ranges, rg);
-            ranges = RangeArrayHelper.merge(ranges);
-            var rangesString = ranges.join(',')
-          } else {
-            rangesString = '';
-          }
-          $container.attr('data-recordranges', rangesString);
-          $container.data('recordranges', rangesString);
-          return this;
-        }
-        case 'set':
-        {
-          var rangesString = null;
-          if(val instanceof Array){
-            rangesString = val.join(',');
-          }else{
-            var rg = new Range(val);
-            rangesString = '' + rg;
-          }
-          $container.attr('data-recordranges', rangesString);
-          $container.data('recordranges', rangesString);
-          return this;
-        }
-      }
-    },
-    initialized : host.elementValueAccess.defineGetSet('initialized', false),
-    baseUrl: host.elementValueAccess.defineGetSet('baseurl','/'),
-    parameter : host.elementValueAccess.defineGetSet('parameter',''),
-    criteriaParameter : host.elementValueAccess.defineGetSet('criteria-parameter',''),
-    pageSize : host.elementValueAccess.defineGetSet('pagesize',''),
-    totalRecords : host.elementValueAccess.defineGetSet('totalrecords', 0),
-    selectedIndex : host.elementValueAccess.defineGetSet('selected-index', -1),
+    element:function(){return this.$container;},
+    recordRanges: ElementValueAccess.defineArrayAddGetSet('recordranges', Range, function(array){
+      RangeArrayHelper.sort(array);
+      return RangeArrayHelper.merge(array);
+    }),
+    initialized : ElementValueAccess.defineGetSet('initialized', false),
+    baseUrl: ElementValueAccess.defineGetSet('baseurl','/'),
+    parameter : ElementValueAccess.defineGetSet('parameter',''),
+    criteriaParameter : ElementValueAccess.defineGetSet('criteria-parameter',''),
+    pageSize : ElementValueAccess.defineGetSet('pagesize',''),
+    totalRecords : ElementValueAccess.defineGetSet('totalrecords', 0),
+    selectedIndex : ElementValueAccess.defineGetSet('selected-index', -1),
 
     gatherAllCriteriaParameterKeys : function(){
       var keys = [];
-      var filterSortInputs = this.gridcontainer.find(GridSymbols.GRID_HEADER).find(GridSymbols.GRID_HEADER__ROW)
+      var filterSortInputs = this.$container.find(GridSymbols.GRID_HEADER).find(GridSymbols.GRID_HEADER__ROW)
         .find('input[type=hidden][name].filter-value, input[type=hidden][name].sort-value');
       filterSortInputs.map(function(i,item){
         var name = $(item).attr('name');
@@ -350,8 +984,8 @@ var tallybook = tallybook || {};
     //make parameter string: http://abc.com/xxx?a=1&b=2&b=3&c=4 (support multi-value for a particular key)
     gatherCriteriaParameter : function(includeAll){
       var inputsWithVal = [];
-      var filterSortInputs = this.gridcontainer.find(GridSymbols.GRID_HEADER).find(GridSymbols.GRID_HEADER__ROW)
-          .find('input[type=hidden][name].filter-value, input[type=hidden][name].sort-value');
+      var filterSortInputs = this.$container.find(GridSymbols.GRID_HEADER).find(GridSymbols.GRID_HEADER__ROW)
+        .find('input[type=hidden][name].filter-value, input[type=hidden][name].sort-value');
       filterSortInputs.map(function(i,item){
         var $item = $(item);
         var val = $item.val();
@@ -400,18 +1034,32 @@ var tallybook = tallybook || {};
     if (!$container.is(GridSymbols.GRID_CONTAINER)) {
       throw new Error("$container does not seems tobe a valid gridcontrol.");
     } else {
+      //var existingGrid = $container.data(GridSymbols.GRID_CONTROL_KEY);
+      //if(existingGrid){
+      //  throw new Error("Element already initialized as GridControl.");
+      //}
       this.$container = $container;
     }
     console.log('GridControl construct');
     this.ENTITY_GRID_AJAX_LOCK = 0;
-    this.header = new HeaderControl(this);
-    this.footer = new FooterControl(this);
-    this.body = new BodyControl(this);
-    this.spinner = new SpinnerControl(this);
-    this.data = new GridDataAccess(this);
+    this.toolbar = new comp.Toolbar(this);
+    this.header = new comp.Header(this);
+    this.footer = new comp.Footer(this);
+    this.body = new comp.Body(this);
+    this.spinner = new comp.Spinner(this);
+    this.data = new GridDataAccess(this.$container);
+
+    this.filterHandler = new handlers.FilterHandler(this);
+    this.sortHandler = new handlers.SortHandler(this);
+    this.columnResizer = new handlers.ColumnResizer(this);
+
+    this._eventInstall = 0;
   };
+  GridControl.GridSymbols = GridSymbols;
+  GridControl.ReservedParameter = ReservedParameter;
   GridControl.prototype = {
     constructor :GridControl,
+    element:function(){return this.$container;},
     dataContent : function(/*optional*/val){
       var $ele = this.$container.find('.data-content p');
       if(val === undefined){
@@ -440,6 +1088,9 @@ var tallybook = tallybook || {};
         GridControl.updateColumnWidth(hRow, bTable.find('thead tr'), percents, bTabelWidth);
       }
     },
+    getToolbar: function () {
+      return this.toolbar;
+    },
     getHeader: function () {
       return this.header;
     },
@@ -461,7 +1112,7 @@ var tallybook = tallybook || {};
     // ********************** *
     updateSortFilterUi:function(parameter){
       var paramObj = host.url.param.stringToData(parameter);
-      HeaderControl.getAllCols(this.getHeader().$row).map(function(i,item){
+      comp.Header.getAllCols(this.getHeader().row()).map(function(i,item){
         var $item = $(item);
         var filterValEle = $item.find('.filter-value');
         var keyname = $item.data('column-key');
@@ -471,17 +1122,12 @@ var tallybook = tallybook || {};
           filterVal = filterVal.join(',');
         }
 
-        SortHandler.orders.setOrder($item, paramObj[sortkeyname]);
-        FilterHandler.setValue($item, filterVal);
+        handlers.SortHandler.orders.setOrder($item, paramObj[sortkeyname]);
+        handlers.FilterHandler.setValue($item, filterVal);
 
         //update filter
         var $filter = $item.find('.entity-filter');
-        var filterType = $filter.data('filter-type');
-
-        if(filterType){
-          var valueaccess = FilterTemplates.definitions[filterType].valueaccess;
-          valueaccess.set($filter, filterVal);
-        }
+        FilterTemplates.setValue($filter, filterVal);
       });
     },
 
@@ -490,7 +1136,7 @@ var tallybook = tallybook || {};
     // ********************** *
     doLoadByEvent : function(e, loadEvent){
       //build parameters
-      var griddata = new GridDataAccess(this);
+      var griddata = this.data;
       var params = griddata.parameter();
       if(loadEvent.triggerFrom(LoadEventData.source.UI)){
         var cparams = griddata.gatherCriteriaParameter();
@@ -517,7 +1163,7 @@ var tallybook = tallybook || {};
     // DATA FILL FUNCTIONS    *
     // ********************** *
     fill: function (data, fillrows, fillcols) {
-      var griddata = new GridDataAccess(this);
+      var griddata = this.data;
       if (data === undefined) {
         data = this.dataContent();
       }
@@ -533,7 +1179,7 @@ var tallybook = tallybook || {};
       var range = entities.range;
       var gridinfo = entityInfos.details['pageGrid'];
 
-      (new ToolbarHandler()).init(this, gridinfo, data.actions, data.linksObj);
+      this.toolbar.init(gridinfo, data.actions, data.linksObj);
 
       if (fillcols) {
         this.header.makeColumnsAndSet(gridinfo);
@@ -564,7 +1210,7 @@ var tallybook = tallybook || {};
     },
     splitParameter : function(paramsStr){
       var paramObj = host.url.param.stringToData(paramsStr);
-      var griddata = new GridDataAccess(this);
+      var griddata = this.data;
       //Make sure column ui already built
       var cParamKeys = griddata.gatherAllCriteriaParameterKeys();
 
@@ -583,7 +1229,9 @@ var tallybook = tallybook || {};
         var pv = paramObj[rkey];
         resvParamObj[rkey] = pv;
         if(pv !== undefined){
-          delete paramObj[rkey];
+          if(PersistentUrlParams.indexOf(rkey) < 0){
+            delete paramObj[rkey];
+          }
         }
       }
       return {
@@ -594,7 +1242,7 @@ var tallybook = tallybook || {};
     },
     fillParameterByUrl:function(url){
       var params = this.splitUrlParameter(url);
-      var griddata = new GridDataAccess(this);
+      var griddata = this.data;
 
       griddata.baseUrl(host.url.getPath(url));
       griddata.parameter(params.parameter);
@@ -609,7 +1257,7 @@ var tallybook = tallybook || {};
       var entities = data.entities;
       var range = entities.range;
       var gridinfo = entityInfos.details['pageGrid'];
-      BodyControl.makeRowsAndAppend(gridinfo, entities, $tbody);
+      comp.Body.makeRowsAndAppend(gridinfo, entities, $tbody);
       return $tbody;
     },
 
@@ -632,10 +1280,26 @@ var tallybook = tallybook || {};
     // LOAD FUNCTIONS         *
     // ********************** *
     loadByUrl : function(url, parameter){
-      GridControl.loadByUrl(this.$container, url, parameter);
+      var griddata = this.data;
+
+      var inUrl = host.url.getBaseUrl(url);
+      parameter = host.url.param.connect( host.url.getParameter(url),parameter);
+
+      griddata.baseUrl(inUrl ? inUrl : '');
+      griddata.parameter('').criteriaParameter('').pageSize('').totalRecords('');
+      griddata.parameter(parameter ? parameter : '');
+
+      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.URL));
     },
     loadBySortFilterParam : function (criteriaParameter) {
-      GridControl.loadBySortFilterParam(this.$container, criteriaParameter);
+      var griddata = this.data;
+
+      var url = griddata.baseUrl();
+      var param = griddata.parameter();
+
+      griddata.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
+
+      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER));
     },
 
     // ********************** *
@@ -719,46 +1383,37 @@ var tallybook = tallybook || {};
     // ********************** *
 
     unbindEvents : function(){
-      GridControl.eh.unbindUiEvent(this.$container);
-      ColumnResizer.eh.unbindEvents(this.$container);
-      SortHandler.eh.unbindEvents(this.$container);
-      (new FilterHandler()).unbindEvents(this);
-      (new ToolbarHandler()).unbindEvents(this);
+      var $ele = this.element();
+      $ele.off(ENTITY_RELOAD_EVENT, GridControl.eh.reloadEventHandler);
+      $ele.off('click', 'tr.data-row', GridControl.eh.rowClickHandler);
+
+      this.columnResizer.unbindEvents();
+      this.filterHandler.unbindEvents();
+      this.sortHandler.unbindEvents();
+      this.toolbar.unbindEvents();
+      this._eventInstall --;
     },
     bindEvents : function(){
-      GridControl.eh.bindUiEvent(this.$container);
-      ColumnResizer.eh.bindEvents(this.$container);
-      SortHandler.eh.bindEvents(this.$container);
-      (new FilterHandler()).bindEvents(this);
-      (new ToolbarHandler()).bindEvents(this);
+      var $ele = this.element();
+      $ele.on(ENTITY_RELOAD_EVENT, this, GridControl.eh.reloadEventHandler);
+      $ele.on('click', 'tr.data-row', this, GridControl.eh.rowClickHandler);
+
+      this.columnResizer.bindEvents();
+      this.filterHandler.bindEvents();
+      this.sortHandler.bindEvents();
+      this.toolbar.bindEvents();
+      this._eventInstall ++;
     },
     rebindEvents : function(){
       this.unbindEvents();
       this.bindEvents();
     }
   };
-  GridControl.GridSymbols = GridSymbols;
-  GridControl.ReservedParameter = ReservedParameter;
   /**
    * Reload event bind-ed on the .container element
    * @type {{_eventInstall: number, bindUiEvent: Function, unbindUiEvent: Function, fireReloadEvent: Function, rowClickHandler: Function}}
    */
   GridControl.eh= {
-    _eventInstall : 0,
-    bindUiEvent: function ($container) {
-      $container.on(ENTITY_RELOAD_EVENT, this.reloadEventHandler);
-      $container.on('click', 'tr.data-row', this.rowClickHandler);
-
-      GridControl.eh._eventInstall++;
-      console.log('GridControl.install. [' + GridControl.eh._eventInstall + ']');
-    },
-    unbindUiEvent: function ($container) {
-      $container.off(ENTITY_RELOAD_EVENT, this.reloadEventHandler);
-      $container.off('click', 'tr.data-row', this.rowClickHandler);
-
-      GridControl.eh._eventInstall--;
-      console.log('GridControl.uninstall. [' + GridControl.eh._eventInstall + ']');
-    },
     fireReloadEvent: function ($ele, reloadEvent) {
       var $container = GridControl.findContainerElement($ele);
       var header = $container.find(GridSymbols.GRID_HEADER);
@@ -769,15 +1424,15 @@ var tallybook = tallybook || {};
       header.trigger(ENTITY_RELOAD_EVENT, reloadEvent);
     },
     reloadEventHandler : function(e, reloadEvent){
-      var $el = $(this),
-        grid = GridControl.findContainerElement($el);
-      var gridCtrl = new GridControl(grid);
-      gridCtrl.doLoadByEvent(e, reloadEvent);
+      var $el = $(this);
+      var grid = e.data;
+      grid.doLoadByEvent(e, reloadEvent);
     },
     rowClickHandler: function (e) {
       var $el = $(this),
         $row = $el.closest('tr.data-row'),
-        $tbody = $row.closest('tbody');
+        $tbody = $row.closest('tbody'),
+        grid = e.data;
       var dataaccess = (new GridDataAccess($row));
       if ($row.length == 0) {
         dataaccess.selectedIndex(-1);
@@ -796,7 +1451,7 @@ var tallybook = tallybook || {};
       var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
 
       var gridEle = GridControl.findContainerElement($row);
-      (new ToolbarHandler()).switchElementActionUrl(gridEle, dataUrl)
+      grid.getToolbar().switchElementActionUrl(dataUrl)
     }
   };
   GridControl.updateColumnWidth = function (headColRow, bodyColRow, newWidths, totalWidth) {
@@ -812,7 +1467,6 @@ var tallybook = tallybook || {};
       $(bodyCols[i]).outerWidth(widths[i]);
     }
   }
-
   GridControl.findContainerElement = function(anyEle){
     var gridEle = null;
     if(anyEle instanceof GridControl){
@@ -827,694 +1481,10 @@ var tallybook = tallybook || {};
     }
     return gridEle;
   };
-  GridControl.findFromPage = function ($page) {
-    var $ctrls = $page.find(GridSymbols.GRID_CONTAINER);
-    var gcs = $ctrls.map(function (index, $ctrl, array) {
-      var gc = new GridControl($($ctrl));return gc;
-    });
-    return gcs;
-  };
-  GridControl.findFirstOnPage = function () {
-    var $page = $(document);
-    var $ctrls = $page.find(GridSymbols.GRID_CONTAINER);
-    if($ctrls.length > 0){return new GridControl($($ctrls[0]));}
-  };
-  GridControl.autoLoad = function ($page) {
-    var gcs = GridControl.findFromPage($page);
-    gcs.map(function (index, gc, array) {gc.fill();});
-    return gcs;
-  };
 
-  GridControl.loadBySortFilterParam = function (gridContainer, criteriaParameter) {
-    var griddata = new GridDataAccess(gridContainer);
-
-    var url = griddata.baseUrl();
-    var param = griddata.parameter();
-
-    griddata.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
-
-    GridControl.eh.fireReloadEvent(gridContainer.find(GridSymbols.GRID_HEADER), new LoadEventData(LoadEventData.source.PARAMETER));
-  }
-  GridControl.loadByUrl = function(gridContainer, url, parameter){
-    var griddata = new GridDataAccess(gridContainer);
-
-    var inUrl = host.url.getBaseUrl(url);
-    parameter = host.url.param.connect( host.url.getParameter(url),parameter);
-
-    griddata.baseUrl(inUrl ? inUrl : '');
-    griddata.parameter('').criteriaParameter('').pageSize('').totalRecords('');
-    griddata.parameter(parameter ? parameter : '');
-
-    GridControl.eh.fireReloadEvent(gridContainer.find(GridSymbols.GRID_HEADER), new LoadEventData(LoadEventData.source.URL));
-  }
-
-  function ColumnControl($th) {
-    this.$th = $th;
-  };
-  ColumnControl.prototype = {
-    element: function () {
-      return this.$th;
-    },
-    makeElement : function(fieldInfo){
-      if (fieldInfo) {
-        var $col = Template.columnHeader();
-        this.$th = $col;
-        $col.find('.col-name').text(fieldInfo.friendlyName);
-        if (!fieldInfo.gridVisible) {
-          $col.css('display', 'none');
-        }
-        $col.find('.column-header').attr('data-column-key', fieldInfo.name);
-        var iconSort = $col.find('.sort-icon');
-        var iconFilter = $col.find('.filter-icon');
-        if (fieldInfo.supportSort) {
-          var sortValEle = $col.find('.sort-value');
-          sortValEle.attr('name', 'sort_' + fieldInfo.name);
-        } else {
-          iconSort.hide();
-        }
-        if (fieldInfo.gridVisible && fieldInfo.supportFilter) {
-          var filterValEle = $col.find('.filter-value');
-          filterValEle.attr('name', fieldInfo.name);
-          if(fieldInfo.fieldType == "ENUMERATION"){
-            filterValEle.attr("data-multi-value", "true");
-            filterValEle.data("multi-value", true);
-          }
-
-          var filter = FilterTemplates.createFilterByFieldInfo(fieldInfo);
-          $col.find('.entity-filter').replaceWith(filter);
-        } else {
-          iconFilter.hide();
-        }
-      }
-      return this;
-    }
-  };
-
-  function RowControl($tr) {
-    this.$tr = $tr;
-  };
-  RowControl.prototype = {
-    element: function () {
-      return this.$tr;
-    },
-    _makeCellContainer: function (fieldname, fieldvalue) {
-      var obj = $("<td>");
-      obj.attr("data-fieldname", fieldname);
-      obj.attr("data-fieldvalue", fieldvalue);
-      return obj;
-    },
-    _makeCell: function ( field, entity, cellCreationContext) {
-      var fieldname = field.name;
-      var fieldvalue = entity[fieldname];
-      var $cell = this._makeCellContainer(fieldname, fieldvalue);
-      var content = CellTemplates.createCellByFieldInfo(entity, field, cellCreationContext);
-      $cell.html(content);
-      $cell.toggle(field.gridVisible);
-
-      return $cell;
-    },
-    _makeCells: function (fields, entity, cellCreationContext) {
-      var _this = this;
-      var $cells = fields.map(function (field, index, array) {
-        var $cell = _this._makeCell(field, entity, cellCreationContext);
-        return $cell;
-      });
-      return $cells;
-    },
-    _makeRowContainer: function (gridinfo, entity, entityIndex, cellCreationContext) {
-      var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
-      var $row = $('<tr>', {
-        'class' : "data-row",
-        'data-id': entity[gridinfo.idField],
-        'data-name': entity[gridinfo.nameField],
-        'data-entity-index' : entityIndex,
-        'data-url' : url
-      });
-      return $row;
-    },
-    fillByEntity: function (gridinfo, entity, entityIndex, cellCreationContext) {
-      var $row = this._makeRowContainer(gridinfo, entity, entityIndex, cellCreationContext);
-      var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
-      $row.html($cells);
-      this.$tr = $row;
-      return this;
-    }
-  };
-
-  function ToolbarHandler(){};
-  ToolbarHandler.prototype = {
-    init : function(grid, gridinfo, actions, linksObj){
-      var $ele = this.element(grid);
-      var searchGrp = $ele.find('.search-group');
-      if(gridinfo.primarySearchField){
-        searchGrp.show();
-        searchGrp.attr('data-search-column', gridinfo.primarySearchField);
-        $ele.find('i.embed-delete').hide();
-        $ele.find('input.search-input').attr('data-name', gridinfo.primarySearchField).attr('placeholder', gridinfo.primarySearchFieldFriendly).val('');
-      }else{
-        searchGrp.hide();
-      }
-      var actionGrp = $ele.find('.action-group');
-      (new ActionGroup(actionGrp)).setup(actions, linksObj);
-    },
-    switchElementActionUrl: function (grid, dataUrl) {
-      var $ele = this.element(grid);
-      (new ActionGroup($ele.find('.action-group'))).switchElementActionUrl(dataUrl);
-     },
-    element : function (grid){
-      return ToolbarHandler.findToolbarElement(grid);
-    },
-    bindEvents : function(grid){
-      var $ele = this.element(grid);
-      $ele.on('keyup change focusin', 'input.search-input', ToolbarHandler.eh.inputChangeHandler);
-      $ele.on('click', 'i.embed-delete', ToolbarHandler.eh.inputDelClickHandler);
-      $ele.on('click', '.btn.search-btn', ToolbarHandler.eh.invokeDoFilterHandler);
-      $ele.on('keypress', '.search-input', ToolbarHandler.eh.invokeKeyTriggerDoFilterHandler);
-    },
-    unbindEvents : function(grid){
-      var $ele = this.element(grid);
-      $ele.off('keyup change focusin', 'input.search-input', ToolbarHandler.eh.inputChangeHandler);
-      $ele.off('click', 'i.embed-delete', ToolbarHandler.eh.inputDelClickHandler);
-      $ele.off('click', '.btn.search-btn', ToolbarHandler.eh.invokeDoFilterHandler);
-      $ele.off('keypress', '.search-input', ToolbarHandler.eh.invokeKeyTriggerDoFilterHandler);
-    }
-  };
-  ToolbarHandler.findToolbarElement = function(anyElement){
-    var gridEle = GridControl.findContainerElement(anyElement);
-    return gridEle.find(GridSymbols.GRID_TOOLBAR);
-  };
-  ToolbarHandler.eh = {
-    inputChangeHandler: function (e) {
-      var $el = $(this),
-        inputElement = $el.closest('.search-input-element');
-
-      var $input = inputElement.find('input.search-input');
-      if ($input) {
-        var newVal = $input.val();
-        inputElement.find('i.embed-delete').toggle(!!newVal);
-      }
-    },
-    inputDelClickHandler: function (e) {
-      var $el = $(this),
-        inputElement = $el.closest('.search-input-element');
-
-      var $delIcon = inputElement.find('i.embed-delete');
-      var $input = inputElement.find('input.search-input');
-      if ($input) {
-        $delIcon.hide();
-        $input.val('').focus();
-      }
-    },
-    invokeKeyTriggerDoFilterHandler: function (event) {
-      var keycode = (event.keyCode ? event.keyCode : event.which);
-      if (keycode == '13') {
-        ToolbarHandler.eh.invokeDoFilterHandler(event);
-        event.stopPropagation();
-      }
-    },
-    invokeDoFilterHandler: function (e) {
-      var $el = $(e.currentTarget);
-      var $inputGroup = $el.closest('.search-group');
-      var inputVal = $inputGroup.find('input.search-input').val();
-      var searchColumn = $inputGroup.attr('data-search-column');
-
-      var parameter = (!!inputVal) ? ('' + searchColumn + '=' + inputVal) : '';
-
-      GridControl.loadBySortFilterParam($inputGroup.closest(GridSymbols.GRID_CONTAINER), parameter);
-    }
-  };
-
-  function HeaderControl(grid) {
-    this.$header = HeaderControl.findHeaderElement(grid);
-    this.$row = this.$header.find(GridSymbols.GRID_HEADER__ROW);
-  };
-  HeaderControl.prototype = {
-    element: function () {
-      return this.$header;
-    },
-    width: function () {
-      return this.$header.width();
-    },
-    columnCount: function () {
-      return this.$row.find('th').length;
-    },
-    makeColumnsAndSet: function (gridinfo) {
-      var visibles = [];
-      var visibleTotal = 0;
-      var $cols = gridinfo.fields.map(function (fieldInfo, index, array) {
-        var $col = new ColumnControl(null).makeElement(fieldInfo);
-        var visi = (fieldInfo.gridVisible ? 1 : 0);
-        visibles.push(visi);
-        visibleTotal += visi;
-        return $col.element();
-      });
-      if(visibleTotal == 0)visibleTotal=1;
-      var visPer = visibles.map(function(t,i){
-        return 1.0*t/visibleTotal;
-      });
-      this.$row.attr({'data-col-visible': visibles, 'data-col-percents': visPer});
-      this.$row.empty().wrapInner($cols);
-    }
-  };
-  HeaderControl.findHeaderElement = function(anyElement){
-    var gridEle = GridControl.findContainerElement(anyElement);
-    return gridEle.find(GridSymbols.GRID_HEADER);
-  };
-  HeaderControl.getAllCols = function($colsRow){
-    return $colsRow.find('.column-header.dropdown');
-  };
-
-  function FooterControl(grid) {
-    this.$footer = FooterControl.findFooterElement(grid);
-  };
-  FooterControl.prototype = {
-    element: function () {
-      return this.$footer;
-    },
-    setDataRange: function (from, to, total) {
-      if (total == 0) {
-        from = 0; to = 0;
-      } else {
-        from += 1;
-      }
-      this.$footer.find('.low-index').text(from);
-      this.$footer.find('.high-index').text(to);
-      this.$footer.find('.total-records').text(total);
-    }
-  };
-  FooterControl.findFooterElement = function(anyElement){
-    var gridEle = GridControl.findContainerElement(anyElement);
-    return gridEle.find(GridSymbols.GRID_FOOTER);
-  };
-
-  function SpinnerControl(grid) {
-    this.$spinner = SpinnerControl.findSpinnerElement(grid);
-    this.$icon = this.$spinner.find(GridSymbols.GRID_SPINNER__ITEM);
-  };
-  SpinnerControl.prototype = {
-    element: function () {
-      return this.$spinner;
-    },
-    setOffset : function (offsetFromBodyTop) {
-      var bodyCtrl = new BodyControl(this.element());
-      var bodyHeight = bodyCtrl.element().height();
-      var iconHeight = this.$icon.height();
-
-      var offsetFromBottom = 0;
-      if('middle' == offsetFromBodyTop){
-        offsetFromBottom = (bodyHeight / 2);
-      }else if(offsetFromBodyTop === undefined) {
-        offsetFromBottom = 0;
-      }else{
-        offsetFromBottom = (bodyHeight - offsetFromBodyTop);
-      }
-      offsetFromBottom -= iconHeight / 2;
-      this.$icon.css('bottom', offsetFromBottom + 'px');
-    },
-    show: function (show, offsetFromBodyTop) {
-      if(offsetFromBodyTop !== undefined){
-        this.setOffset(offsetFromBodyTop);
-      }
-      if (show) {
-        this.$spinner.css('display', 'block');
-      } else {
-        this.$spinner.css('display', 'none');
-        this.setOffset(undefined);
-      }
-    }
-  };
-  SpinnerControl.findSpinnerElement = function(anyElement){
-    var gridEle = GridControl.findContainerElement(anyElement);
-    return gridEle.find(GridSymbols.GRID_SPINNER);
-  };
-
-  function BodyControl(grid) {
-    this.$body = BodyControl.findBodyElement(grid);
-    this.$table = this.$body.find('table');
-    this.$theadRow = this.$table.find('thead tr');
-    this.$tbody = this.$table.find('tbody');
-    this.$emptyCell = this.$tbody.find('td.entity-grid-no-results');
-    var headerCtrl = new HeaderControl(grid);
-    this.$emptyCell.attr('colspan', headerCtrl.columnCount());
-    this.$emptyRow = this.$emptyCell.closest('tr');
-  };
-  BodyControl.prototype = {
-    element: function () {
-      return this.$body;
-    },
-    makeHeaderMirror: function () {
-      var headerCtrl = new HeaderControl(this.element());
-      this.$emptyCell.attr('colspan', headerCtrl.columnCount());
-      var $row = headerCtrl.$row.clone();
-      $row.find('th').empty();
-
-      this.$theadRow.html($row.html());
-    },
-    initEmptyRow: function (entities) {
-      if (entities.totalCount == 0) {
-        this.$emptyRow.show();
-      } else {
-        this.$emptyRow.hide();
-      }
-    },
-    clearTable: function () {
-      this.$tbody.empty().append(this.$emptyRow);
-    },
-    makeRowsAndSet: function (gridinfo, entities) {
-      BodyControl.makeRowsAndAppend(gridinfo, entities, this.$tbody);
-    },
-    getRowHeight: function () {
-      var $row = this.$tbody.find('tr:not(.blank-padding):not(.empty-mark):first');
-      return $row.height();
-    }
-  };
-  BodyControl.makeRowsAndAppend = function (gridinfo, entities, $tbody) {
-    var baseUrl = entities.baseUrl;
-    var cellCreationContext = new CellCreationContext(gridinfo.idField, baseUrl);
-    var $rows = entities.records.map(function (entity, index, array) {
-      var entityIndex = entities.startIndex + index;
-      var row = new RowControl();
-      row.fillByEntity(gridinfo, entity, entityIndex, cellCreationContext);
-      return row.element();
-    });
-    $tbody.append($rows);
-  };
-  BodyControl.findBodyElement = function(anyElement){
-    var gridEle = GridControl.findContainerElement(anyElement);
-    return gridEle.find(GridSymbols.GRID_BODY);
-  };
-
-  var FilterHandler = function(){};
-  FilterHandler.prototype={
-    bindEvents : function (grid) {
-      var colsRow = grid.header.$row;
-
-      colsRow.on('click', '.filter-icon',FilterHandler.eh.clickHandler);
-      colsRow.on('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
-      colsRow.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
-      colsRow.on('keypress', '.entity-filter *', FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
-      colsRow.on('click', '.entity-filter .filter-reset-button', FilterHandler.eh.invokeDoCleanFilterHandler);
-      colsRow.on('click', '.entity-filter .filter-button', FilterHandler.eh.invokeDoFilterHandler);
-      FilterHandler._installation++;
-      console.log('FilterHandler.install. [' + FilterHandler._installation + ']');
-    },
-    unbindEvents : function (grid) {
-      var colsRow = grid.header.$row;
-
-      colsRow.off('click', '.filter-icon',FilterHandler.eh.clickHandler);
-      colsRow.off('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
-      colsRow.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
-      colsRow.off('keypress', '.entity-filter *', FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
-      colsRow.off('click', '.entity-filter .filter-button', FilterHandler.eh.invokeDoFilterHandler);
-      colsRow.off('click', '.entity-filter .filter-reset-button', FilterHandler.eh.invokeDoCleanFilterHandler);
-      FilterHandler._installation--;
-      console.log('FilterHandler.uninstall. [' + FilterHandler._installation + ']');
-    },
-    rebindEvents : function(grid){this.unbindEvents(grid);this.bindEvents(grid);}
-  };
-  FilterHandler._installation = 0;
-  FilterHandler.setValue = function (header, value) {
-    $('input[type=hidden].filter-value', header).val(value);
-    $('.filter-sort-container', header).toggleClass('filter-active', !!value);
-    console.log('todo: FilterHandler.setValue for different filters');
-  };
-  FilterHandler.getValue = function (header){
-    return $('input[type=hidden].filter-value', header).val();
-  };
-  FilterHandler.closeDropdowns = function (header) {
-    $('.column-header.dropdown.show-filter').not(header).removeClass('show-filter');
-  };
-  FilterHandler.eh = {
-    clickHandler: function (e) {
-      var $el = $(this),
-        header = $el.closest('.column-header.dropdown'),
-        dropdown = $('> ul', header),
-        colsRow = header.closest('tr');
-
-      setTimeout(function () {
-        header.toggleClass('show-filter');
-        HeaderControl.getAllCols(colsRow).not(header).removeClass('show-filter');
-      }, 0);
-    },
-    outsideClickHandler: function (e) {
-      if (e.originalEvent == undefined) return;
-      var $target = $(e.originalEvent.target);
-      if (!($target.parents().is('.column-header.dropdown'))) {
-        FilterHandler.closeDropdowns();
-      }
-    },
-    inputChangeHandler: function (e) {
-      var $el = $(this),
-        inputElement = $el.closest('.input-element');
-
-      var $delIcon = inputElement.find('i.embed-delete');
-      var $input = inputElement.find('input.filter-input');
-      if ($input) {
-        var newVal = $input.val();
-        (!!newVal) ? $delIcon.show() : $delIcon.hide();
-      }
-    },
-    inputDelClickHandler: function (e) {
-      var $el = $(this),
-        inputElement = $el.closest('.input-element');
-
-      var $delIcon = inputElement.find('i.embed-delete');
-      var $input = inputElement.find('input.filter-input');
-      if ($input) {
-        $delIcon.hide();
-        $input.val('').focus();
-      }
-    },
-    invokeKeyTriggerDoFilterHandler: function (event) {
-      var keycode = (event.keyCode ? event.keyCode : event.which);
-      if (keycode == '13') {
-        FilterHandler.eh.invokeDoFilterHandler(event);
-        event.stopPropagation();
-      }
-    },
-    invokeDoCleanFilterHandler: function (e) {
-      var $el = $(e.currentTarget);
-      var header = $el.closest('.column-header.dropdown');
-      var $filter = header.find('.entity-filter');
-      var filterType = $filter.data('filter-type');
-      var filterValHandler = FilterTemplates.definitions[filterType].valueaccess;
-      FilterHandler.setValue(header, '');
-      filterValHandler.set($filter, '');
-    },
-    invokeDoFilterHandler: function (e) {
-      var $el = $(e.currentTarget);
-      var header = $el.closest('.column-header.dropdown');
-      var $filter = header.find('.entity-filter');
-      var filterType = $filter.data('filter-type');
-      var filterValHandler = FilterTemplates.definitions[filterType].valueaccess;
-      var value = filterValHandler.get($filter);
-      FilterHandler.setValue(header, value ? value : '');
-      FilterHandler.closeDropdowns();
-
-      GridControl.eh.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));
-    }
-  };
-
-  var SortHandler = function(){};
-  SortHandler.prototype = {}
-  SortHandler.orders= {
-    DEFAULT: '_', ASC: 'asc', DESC: 'desc',
-    calcNextOrder: function (order) {
-      switch (order) {
-        case this.DEFAULT:return this.ASC;
-        case this.ASC:return this.DESC;
-        case this.DESC:return this.DEFAULT;
-        default :return this.DEFAULT;
-      }
-    },
-    getOrder : function (header) {
-      var $el = header.find('i.sort-icon');
-      if ($el.is('.fa-sort-amount-asc'))
-        return SortHandler.orders.ASC;
-      if ($el.is('.fa-sort-amount-desc'))
-        return SortHandler.orders.DESC;
-      return SortHandler.orders.DEFAULT;
-    },
-    setOrder : function (header, order) {
-      if($.isArray(order)){order = order[0];}
-      if(!order){order =SortHandler.orders.DEFAULT;}
-      if(this.getOrder(header) === order){
-        return;
-      }
-      var $el = header.find('i.sort-icon');
-      $el.removeClass('fa-sort-amount-desc').removeClass('fa-sort-amount-asc');
-      var $container = $el.parent('.filter-sort-container');
-      var $valEle = header.find('input[type=hidden].sort-value');
-      var sortVal = null;
-      switch (order) {
-        case SortHandler.orders.DESC:
-          $el.addClass('fa-sort-amount-desc');
-          $container.addClass('sort-active');
-          sortVal = 'desc';
-          break;
-        case SortHandler.orders.ASC:
-          $el.addClass('fa-sort-amount-asc');
-          $container.addClass('sort-active');
-          sortVal = 'asc';
-          break;
-        case SortHandler.orders.DEFAULT:
-          $container.removeClass('sort-active');
-          sortVal = null;
-          break;
-      }
-      $valEle.val(sortVal);
-    }
-  };
-  /**
-   * Event binded on the header's row
-   */
-  SortHandler.eh = {
-    _installation : 0,
-    bindEvents : function ($container) {
-      var headerCtrl = new HeaderControl($container);
-      var colsRow = headerCtrl.$row;
-
-      colsRow.on('click', '.sort-icon',this.clickHandler);
-      this._installation++;
-      console.log('SortHandler.install. [' + this._installation + ']');
-    },
-    unbindEvents : function ($container) {
-      var headerCtrl = new HeaderControl($container);
-      var colsRow = headerCtrl.$row;
-
-      colsRow.off('click', '.sort-icon',this.clickHandler);
-      this._installation--;
-      console.log('SortHandler.uninstall. [' + this._installation + ']');
-    },
-    rebindEvents : function($container){this.unbindEvents($container);this.bindEvents($container);},
-    clickHandler : function(e){
-      var $el = $(this),
-        header = $el.closest('.column-header.dropdown'),
-        dropdown = $('> ul', header),
-        colsRow = header.closest('tr');
-
-      var orders = SortHandler.orders;
-      var currentOrder = orders.getOrder(header);
-      var nextOrder = orders.calcNextOrder(currentOrder);
-      orders.setOrder(header, nextOrder);
-
-      HeaderControl.getAllCols(colsRow).not(header).map(function(i,item){
-        orders.setOrder($(item), orders.DEFAULT);
-      });
-      GridControl.eh.fireReloadEvent(header,new LoadEventData(LoadEventData.source.UI));
-    }
-  };
-
-  var ColumnResizer = function () {};
-  /**
-   * Event binded on the header
-   * @type {{rebindEvents: Function, bindEvents: Function, unbindEvents: Function}}
-   */
-  ColumnResizer.eh = {
-    _installation : 0,
-    resizing : {
-      active: (function () {
-        var act = false;
-        return function (a) {if (a === undefined)return act;act = a;};
-      })(),
-      headColumnRow: undefined,
-      bodyColumnRow: undefined,
-      columnIndex: 0,
-      startX: undefined,
-      startWidths: undefined,
-      totalWidth: 0
-    },
-    _mousedown: function (e) {
-      var $resizeEle = $(this).closest('th');
-      var container = $resizeEle.closest(GridSymbols.GRID_CONTAINER);
-      var $headerColumnRow = container.find(GridSymbols.GRID_HEADER + ' ' + GridSymbols.GRID_HEADER__ROW);
-      var $bodyColumnRow = container.find(GridSymbols.GRID_BODY + ' ' + GridSymbols.GRID_BODY__THEAD_ROW);
-
-      var resizing = ColumnResizer.eh.resizing;
-      resizing.active(true);
-      resizing.headColumnRow = $headerColumnRow;
-      resizing.bodyColumnRow = $bodyColumnRow;
-      resizing.columnIndex = $resizeEle.index();
-      resizing.startX = e.pageX;
-      resizing.startWidths = [];
-      resizing.totalWidth = 0;
-
-      resizing.headColumnRow.find('th').each(function (index, element) {
-        var elementWidth = $(this).outerWidth();
-        resizing.startWidths.push(elementWidth);
-        resizing.totalWidth += elementWidth;
-      });
-      $(document).disableSelection();
-    },
-    _mousemove: function (e) {
-      var resizing = ColumnResizer.eh.resizing;
-      if (resizing.active()) {
-        var headColumnRow = resizing.headColumnRow;
-        var headerTableOffset = headColumnRow.offset();
-        if (e.pageX < (headerTableOffset.left - 100) || e.pageX > (headerTableOffset.left + headColumnRow.width() + 100) ||
-          (e.pageY < (headerTableOffset.top - 100)) || (e.pageY > (headerTableOffset.top + headColumnRow.height() + 100))) {
-          resizing.active(false);
-          $(document).enableSelection();
-          return;
-        }
-
-        var minColumnWidth = 30;
-        var index = resizing.columnIndex;
-        var widthDiff = (e.pageX - resizing.startX);
-        var minAllow = -resizing.startWidths[index] + minColumnWidth;
-        var maxAllow = resizing.startWidths[index + 1] - minColumnWidth;
-
-        if (widthDiff < minAllow) {
-          widthDiff = minAllow;
-        }
-        else if (widthDiff > maxAllow) {
-          widthDiff = maxAllow;
-        }
-
-        var newLeftWidth = resizing.startWidths[index] + widthDiff;
-        var newRightWidth = resizing.startWidths[index + 1] - widthDiff;
-
-        var newWidths = resizing.startWidths.slice(0);
-        newWidths[index] = newLeftWidth;
-        newWidths[index + 1] = newRightWidth;
-
-        var widthPercents = newWidths.map(function(t,i){
-          return 1.0*t/resizing.totalWidth;
-        });
-        resizing.headColumnRow.attr('data-col-percents', widthPercents);
-        GridControl.updateColumnWidth(resizing.headColumnRow, resizing.bodyColumnRow, newWidths);
-      }
-    },
-    _mouseup: function () {
-      var resizing = ColumnResizer.eh.resizing;
-      if (resizing.active()) {
-        resizing.active(false);
-        $(document).enableSelection();
-      }
-    },
-    rebindEvents:function($container){this.unbindEvents($container);this.bindEvents($container);},
-    bindEvents: function ($container) {
-      var headerCtrl = new HeaderControl($container);
-      var $headerTableThead = headerCtrl.element();
-      $headerTableThead.on('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
-
-      this._installation++;
-      console.log('ColumnResizer.install. [' + this._installation + ']');
-    },
-    unbindEvents : function($container){
-      var headerCtrl = new HeaderControl($container);
-      var $headerTableThead = headerCtrl.element();
-      $headerTableThead.off('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
-
-      this._installation--;
-      console.log('ColumnResizer.uninstall. [' + this._installation + ']');
-    }
-  };
   var onDocReady = function ($doc) {
-    GridControl.autoLoad($doc);
-    $(document).bind('mousemove',ColumnResizer.eh._mousemove);
-    $(document).bind('mouseup', ColumnResizer.eh._mouseup);
-    $doc.on('click', 'body, html',FilterHandler.eh.outsideClickHandler);
+    handlers.ColumnResizer.eh.bindOnDocReady($doc);
+    handlers.FilterHandler.eh.bindOnDocReady($doc);
     EntityPage.onDocReady($doc);
   };
 
