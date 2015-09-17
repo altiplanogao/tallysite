@@ -92,94 +92,99 @@ var tallybook = tallybook || {};
         };
     })();
 
-    var UrlParams = {};
-    UrlParams.makeParamObject = function (paramsStr, keepEmpty /*keep keys with null value*/) {
-        var obj = {};
-        keepEmpty = (keepEmpty == undefined ? false : !!keepEmpty);
-        for (var member in obj) delete obj[member];
-        if((paramsStr == null) || (paramsStr == '')){return obj;}
-        var pathAndParam = paramsStr.split('?');
-        var params = (pathAndParam.length == 2)?pathAndParam[1]:pathAndParam[0];
-        var pairs = params.split('&');
-        pairs.forEach(function(pair, i, array){
-            var kv = pair.split('='); var k = kv[0]; var v = kv[1];
-            if(keepEmpty || (v != '')){
-                if(obj[k] == undefined){obj[k] = [];}
-                if(v != ''){obj[k].push(v);}
-            }
-        });
-        return obj;
-    };
-    UrlParams.addParamValue = function (obj, k, v) {
-        if(obj[k] == undefined){obj[k] = [];}
-        obj[k].push(v);
-    };
-    UrlParams.setParamValue = function (obj, k, v) {
-        obj[k] = [v];
-    };
-    UrlParams.deleteParamKey = function (obj, k) {
-        delete obj[k];
-    };
-    UrlParams.makeParamsString = function (paramObj, includeEmpty) {
-        var obj = paramObj;
-        var paramsUrl ='';
-        var pairs = [];
-        for(k in obj){
-            var vs = obj[k];
-            if(includeEmpty || vs){
-                vs.forEach(function(v, i){
-                    var pair = (''+k+'='+v);
-                    pairs.push(pair);
-                });
-            }
-        }
-        return pairs.join('&');
-    };
-    UrlParams.removeDuplicates = function (paramObj) {
-        var obj = paramObj;
-        for(k in obj){
-            var vs = obj[k]; var vo ={}; var ovs=[];
-            vs.forEach(function (v, i) {vo[v]=0;})
-            for(v in vo){ovs.push(v);}
-            obj[k]=ovs;
-        }
-    };
-    UrlParams.merge = function(){
-        var merged ={};
-        for(i=0;i<arguments.length;i++){
-            var obj = arguments[i];
-            if(!!obj){
-                for(k in obj){
-                    var vs = obj[k]; var mvs = merged[k];
-                    merged[k] = ((!!mvs)? (mvs.concat(vs)) : ([].concat(vs)));
-                }}
-        }
-        UrlParams.removeDuplicates(merged);
-        return merged;
-    }
-
-    var Url={
-        param:{
-            string2Object:function(urlParams, keepEmpty) {
-                return UrlParams.makeParamObject(urlParams, keepEmpty);
-            },
-            object2String:function(paramsObj, includeEmpty){
-                return UrlParams.makeParamsString(paramsObj, includeEmpty);
-            },
-            mergeObjects: function(){
-                return UrlParams.merge.apply(null, arguments);
-            },
-            connect:function(){
-                var merged ='';
-                for(i=0;i<arguments.length;i++){
-                    var node = arguments[i];
-                    if(node){
-                        merged += ('&' + node);
-                    }
+    var UrlParams = {
+        stringToData : function (paramsStr, keepEmpty /*keep keys with null value*/) {
+            var obj = {};
+            keepEmpty = (keepEmpty == undefined ? false : !!keepEmpty);
+            for (var member in obj) delete obj[member];
+            if((paramsStr == null) || (paramsStr == '')){return obj;}
+            var pathAndParam = paramsStr.split('?');
+            var params = (pathAndParam.length == 2)?pathAndParam[1]:pathAndParam[0];
+            var pairs = params.split('&');
+            pairs.forEach(function(pair, i, array){
+                var kv = pair.split('='); var k = kv[0]; var v = kv[1];
+                if(keepEmpty || (v != '')){
+                    if(obj[k] == undefined){obj[k] = [];}
+                    if(v != ''){obj[k].push(v);}
                 }
-                return (merged.startsWith('&')) ? merged.substring(1) : merged;
+            });
+            return obj;
+        },
+        dataToString : function (obj, includeEmpty) {
+            var paramsUrl ='';
+            var pairs = [];
+            for(k in obj){
+                var vs = obj[k];
+                if(includeEmpty || vs){
+                    vs.forEach(function(v, i){
+                        pairs.push(''+k+'='+v);
+                    });
+                }
+            }
+            return pairs.join('&');
+          },
+        addValue : function (obj, k, v) {
+            if(obj[k] == undefined){obj[k] = [];}
+            obj[k].push(v);
+        },
+        setValue : function (obj, k, v) {
+            obj[k] = [v];
+        },
+        hasKey : function (obj, k) {
+            var v = obj[k];
+            return ($.isArray(v)) && (v.length > 0);
+        },
+        deleteKey : function (obj, k) {
+            delete obj[k];
+        },
+        /**
+         * remove duplicated kv pairs
+         * http://xxx.com/abc?a=1&b=2&b=2&b=3 -> http://xxx.com/abc?a=1&b=2&b=3
+         * @param paramObj
+         */
+        removeDuplicates : function (obj) {
+            for(k in obj){
+                var vs = obj[k]; var vo ={}; var ovs=[];
+                vs.forEach(function (v, i) {vo[v]=0;})
+                for(v in vo){ovs.push(v);}
+                obj[k]=ovs;
             }
         },
+        merge : function(){
+            var merged ={};
+            for(i=0;i<arguments.length;i++){
+                var obj = arguments[i];
+                if(typeof obj == 'string'){
+                    obj = UrlParams.stringToData(obj);
+                }
+                if(!!obj){
+                    for(k in obj){
+                        var vs = obj[k]; var mvs = merged[k];
+                        merged[k] = ((!!mvs)? (mvs.concat(vs)) : ([].concat(vs)));
+                    }}
+            }
+            UrlParams.removeDuplicates(merged);
+            return merged;
+          },
+        mergeAsString : function(){
+            var merged = UrlParams.merge.apply(null, arguments);
+            return UrlParams.dataToString(merged);
+        }
+    };
+    var Url={
+        param: $.extend({}, UrlParams, {
+            connect:function(){
+                //var merged  =Array.prototype.slice.call(arguments);
+                var merged =[];
+                for(i=0;i<arguments.length;i++){
+                    var node = arguments[i];
+                    if(node){//ignore empty
+                        merged.push(node);
+                    }
+                }
+                return merged.join('&');
+            }
+        }),
 
         getPath : function(url){
             return websanovaJsUrl('path', url);
@@ -201,7 +206,7 @@ var tallybook = tallybook || {};
             return websanovaJsUrl('?', baseUrl);
         },
         getParametersObject : function(baseUrl) {
-            return this.param.string2Object(this.getParameter(baseUrl));
+            return this.param.stringToData(this.getParameter(baseUrl));
         },
 
         getUrlWithParameter : function(param, value, state, baseUrl) {
@@ -211,7 +216,7 @@ var tallybook = tallybook || {};
             return this._getUrlWithParameter(null, null, paramObj , state, baseUrl);
         },
         getUrlWithParameterString : function(paramStr, state, baseUrl) {
-            var paramObj = this.param.string2Object(paramStr);
+            var paramObj = this.param.stringToData(paramStr);
             return this.getUrlWithParameterObj(paramObj , state, baseUrl);
         },
         _getUrlWithParameter : function(param, value, paramObj, state, baseUrl) {
@@ -224,30 +229,26 @@ var tallybook = tallybook || {};
             var urlParams = urlAndParams[1];
 
             // Parse the current url parameters into an object
-            var newParamObj = this.param.string2Object(urlParams);
+            var newParamObj = this.param.stringToData(urlParams);
 
             if (value == null || value === "") {
-                UrlParams.deleteParamKey(newParamObj, param);
+                UrlParams.deleteKey(newParamObj, param);
             } else {
                 // Update the desired parameter to its new value
                 if ($.isArray(param)) {
                     $(param).each(function(index, param) {
                         var k = param[index]; var v = value[index];
-                        UrlParams.setParamValue(newParamObj,k,v);
+                        UrlParams.setValue(newParamObj,k,v);
                     });
                 } else {
-                    UrlParams.setParamValue(newParamObj,param,value);
+                    UrlParams.setValue(newParamObj,param,value);
                 }
             }
-            newParamObj = this.param.mergeObjects(newParamObj, paramObj);
+            newParamObj = this.param.merge(newParamObj, paramObj);
 
             // Reassemble the new url
-            var paramStr = this.param.object2String(newParamObj);
-            var newUrl = baseUrl;
-            if(paramStr.length > 0){
-                newUrl += ('?' + paramStr);
-            }
-            return newUrl;
+            var paramStr = this.param.dataToString(newParamObj);
+            return [baseUrl, paramStr].join('?');
         },
 
         connectUrl : function (/* optional paths */) {

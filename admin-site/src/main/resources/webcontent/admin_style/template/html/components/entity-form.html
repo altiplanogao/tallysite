@@ -7,10 +7,12 @@
   <div th:classappend="${isTemplate}?'entity-form-container-template':'entity-form-container'">
     <div class="data-content"><p th:attr="data-content=${data}?:''"></p></div>
     <form method="POST" class="twelve columns custom "
-          action="">
+          th:action="@{${currentUrl}}">
       <div class="tab-holder">
 
       </div>
+
+      <div th:include="components/entity-actions"></div>
     </form>
   </div>
 </div>

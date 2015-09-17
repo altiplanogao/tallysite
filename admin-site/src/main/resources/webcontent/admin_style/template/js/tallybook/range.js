@@ -2,6 +2,7 @@
 var tallybook = tallybook || {};
 
 (function (host) {
+  //[lo, hi)
   var Range = function (rangeDesc) {
     if (arguments.length == 2) {
       this.lo = arguments[0];
@@ -15,13 +16,20 @@ var tallybook = tallybook || {};
       this.hi = rangeDesc.hi;
     }
   };
-
   Range.prototype = {
+    _orderedCall_ : function (ib, callback) {
+      var ia = this;
+      var a, b; (ia.lo < ib.lo) ? (a = ia, b = ib) : (a = ib, b = ia);
+      return callback(a, b);
+    },
     toString: function () {
       return this.lo + '-' + this.hi;
     },
     clone: function () {
       return new Range(this.lo, this.hi);
+    },
+    width: function () {
+      return this.hi - this.lo;
     },
     compareIndex: function (index) {
       return (index < this.lo) ? -1 : ( index >= this.hi ? 1 : 0);
@@ -30,28 +38,33 @@ var tallybook = tallybook || {};
       return ((this.lo <= index) && (index < this.hi));
     },
     overlap: function (range) {
-      var a, b;
-      (this.lo < range.lo) ? (a = this, b = range) : (a = range, b = this);
-      return (b.lo < a.hi);
+      return this._orderedCall_(range, function(a,b){
+        return (b.lo < a.hi);
+      });
     },
+    // if there is overlap between this and @param range, return the merged range, or return null
     merge: function (range) {
-      var a, b;
-      (this.lo < range.lo) ? (a = this, b = range) : (a = range, b = this);
-      return (b.lo <= a.hi) ? (new Range(a.lo, Math.max(a.hi, b.hi))) : null;
+      return this._orderedCall_(range, function(a,b){
+        return (b.lo <= a.hi) ? (new Range(a.lo, Math.max(a.hi, b.hi))) : null;
+      });
     },
+    // if there is overlap between this and @param range, return null, or return the gap between them
     findGap: function (range) {
-      var a, b;
-      (this.lo < range.lo) ? (a = this, b = range) : (a = range, b = this);
-      return (b.lo > a.hi) ? (new Range(a.hi, b.lo)) : null;
-    },
-    width: function () {
-      return this.hi - this.lo;
+      return this._orderedCall_(range, function(a,b){
+        return (b.lo > a.hi) ? (new Range(a.hi, b.lo)) : null;
+      });
     },
     intersect: function (range) {
-      var a, b;
-      (this.lo < range.lo) ? (a = this, b = range) : (a = range, b = this);
-      return (b.lo < a.hi) ? (new Range(Math.max(a.lo, b.lo), Math.min(a.hi, b.hi))) : null;
+      return this._orderedCall_(range, function(a,b){
+        return (b.lo < a.hi) ? (new Range(Math.max(a.lo, b.lo), Math.min(a.hi, b.hi))) : null;
+      });
     },
+    /**
+     *
+     * @param range
+     * @param withempty
+     * @returns {Array}
+     */
     drop: function (range, withempty) {
       if (withempty == undefined) {
         withempty = false;
@@ -102,17 +115,20 @@ var tallybook = tallybook || {};
       return fromTail ? (new Range(this.hi - pieceWidth, this.hi)) : (new Range(this.lo, this.lo + pieceWidth));
     }
   };
+  Range.compare = function (a, b) {
+    if(a.lo == b.lo)return a.hi - b.hi;
+    return a.lo - b.lo
+  }
 
   /**
    * A utility object for range array operations
-   * @type {{addRange: Function, containsIndex: Function, merge: Function, intersect: Function, findMissingRangesWithin: Function, findMissingRanges: Function, makePageRanges: Function}}
+   * @type {{addRange: Function, containsIndex: Function, merge: Function, intersect: Function, findMissingRanges: Function, makePageRanges: Function}}
    */
-  var Ranges = {
-    addRange: function (ranges, range) {
+  var RangeArrayHelper = {
+    addRange: function (ranges, range, merge) {
       ranges.push(range);
-      ranges.sort(function (a, b) {
-        return a.lo - b.lo
-      });
+      ranges.sort(Range.compare);
+      if(!!merge){this.merge(ranges);}
     },
     containsIndex: function (ranges, index) {
       return ranges.some(function (item, arrayIndex, array) {
@@ -158,29 +174,6 @@ var tallybook = tallybook || {};
       }
       return result;
     },
-    findMissingRanges: function (ranges, from, to, totalCount) {
-      var mainRange = new Range(from, to);
-      var result = [];
-      var lastEnd = 0;
-      var itemBehind = null;
-      var finish = false;
-      for (var i = 0; i < ranges.length; ++i) {
-        var item = ranges[i];
-        if (from < item.lo) {
-          result.push(new Range(lastEnd, item.lo));
-        }
-
-        lastEnd = item.hi;
-        if (to <= item.lo) {
-          finish = true;
-          break;
-        }
-      }
-      if (!finish) {
-        result.push(new Range(lastEnd, totalCount))
-      }
-      return result;
-    },
     makePageRanges: function (ranges, pageSize) {
       var result = [];
       if (ranges.length == 0) {
@@ -194,9 +187,10 @@ var tallybook = tallybook || {};
       }
       return result;
     }
-  }
+  };
+
+  Range.rangeArrayHelper = RangeArrayHelper;
 
   host.Range = Range;
-  host.Ranges = Ranges;
 
 })(tallybook);

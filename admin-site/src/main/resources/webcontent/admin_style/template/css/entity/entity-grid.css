@@ -1,8 +1,8 @@
-div.entity-grid-container{
+.entity-grid-container{
 
 }
 /* toolbar */
-div.entity-grid-container
+.entity-grid-container
 .toolbar {
     margin: 0;
     padding: 5px;
@@ -20,12 +20,12 @@ div.entity-grid-container
     border-top-right-radius: 4px;
     min-height: 23px;
 }
-div.entity-grid-container
+.entity-grid-container
 .toolbar .search-group{
     padding-left: 2px;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .toolbar .search-btn{
     float: right;
     padding-bottom: 1px;
@@ -38,20 +38,20 @@ div.entity-grid-container
     color: #B9B9B9;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .toolbar .search-text{
     position: relative;
     display: block;
     overflow: hidden;
 }
-div.entity-grid-container
+.entity-grid-container
 .toolbar .search-input-element{
     position: relative;
     display: inline-block;
     width: 100%;
 }
 
-div.entity-grid-container
+.entity-grid-container
  .toolbar .search-input-element .fa{
     position: absolute;
     color: #aaaaaa;
@@ -60,7 +60,7 @@ div.entity-grid-container
     vertical-align: middle;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .toolbar .search-input{
     width: 100%;
     border-radius: 5px;
@@ -74,7 +74,7 @@ div.entity-grid-container
     font-weight: normal;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .toolbar .search-input:focus{
     border-color: #a0bf30;
     outline: 0;
@@ -82,30 +82,23 @@ div.entity-grid-container
     box-shadow: inset 0 2px 2px rgba(0,0,0,.075), 0 0 8px rgba(185, 221, 56, 0.68);
 }
 
-div.entity-grid-container
+.entity-grid-container
 .toolbar .embed-hint{
     left: 5px;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .toolbar .embed-delete{
     right: 8px;
 }
-
-div.entity-grid-container
-.toolbar .action-group{
+.entity-grid-container
+.toolbar .action-group-container{
     text-align: right;
     padding-right: 6px;
 }
-div.entity-grid-container
-.toolbar .action-btn{
-    padding-bottom: 2px;
-
-    padding-top: 2px;
-}
 /*  Header Wrapper  */
 
-div.entity-grid-container
+.entity-grid-container
 .header{
     position: relative;
     z-index: 4; /*higer than footer, avoid dropdown hidden*/
@@ -114,23 +107,23 @@ div.entity-grid-container
     /*border-top-right-radius: 4px;*/
     border: 1px solid #DDD;
 }
-div.entity-grid-container
+.entity-grid-container
 .header > table{
     margin-bottom: 0;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .header > table > thead th{
     padding: 5px 8px;
     border-bottom: none;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .header thead tr>th.column:last-child {
     padding-right: 0;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .header table > thead{
     /*
      background: #F5F5F5;
@@ -146,7 +139,7 @@ div.entity-grid-container
      border-top: 1px solid #DDD;
      */
 }
-div.entity-grid-container
+.entity-grid-container
 .header thead tr>th.column{
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -164,7 +157,7 @@ div.entity-grid-container
     display: inline-block;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .header thead tr>th.column:last-child div.resizer {
     display: none;
 }
@@ -172,20 +165,20 @@ div.entity-grid-container
 
 /*  Body Wrapper  */
 
-div.entity-grid-container
+.entity-grid-container
 .body{
     z-index: 1;
     border-left: 1px solid #DDD;
     border-right: 1px solid #DDD;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .body table {
     table-layout: fixed;;
     margin-bottom: 0;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .body table > tbody > tr > td {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -194,40 +187,40 @@ div.entity-grid-container
     padding: 5px 8px;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .body table > thead > tr > th{
     padding: 0;
     border: 0;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .body td.entity-grid-no-results{
     margin-bottom: 18px;
     text-align: center;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .body.scrollable.default-skin {
     padding-bottom: 0px;
 }
 
 /*  Row  */
-div.entity-grid-container tbody tr:nth-child(even){
+.entity-grid-container tbody tr:nth-child(even){
     background: hsl(0, 0%, 98%);
 }
-div.entity-grid-container tbody tr:nth-child(odd) {
+.entity-grid-container tbody tr:nth-child(odd) {
     background: #FFF;
 }
 
-div.entity-grid-container tbody tr:hover{
+.entity-grid-container tbody tr:hover{
     background-color: #F5F5F4;
 }
 
-div.entity-grid-container tbody tr.selected{
+.entity-grid-container tbody tr.selected{
     background-color: #D6D6D4;
 }
 /*  Footer Wrapper  */
-div.entity-grid-container
+.entity-grid-container
 .footer{
     position: relative;
     z-index: 3;
@@ -247,12 +240,12 @@ div.entity-grid-container
 
 
 /* Override jquert.custom-scrollbar.css */
-div.entity-grid-container .body .viewport .overview {
+.entity-grid-container .body .viewport .overview {
     position: inherit;
 }
 
 /*  Spinner  */
-div.entity-grid-container
+.entity-grid-container
 .spinner {
     text-align: center;
     position: relative;
@@ -263,7 +256,7 @@ div.entity-grid-container
     display: none;
 }
 
-div.entity-grid-container
+.entity-grid-container
 .spinner i.spinner-item{
     position: absolute;
     font-size: 20px;

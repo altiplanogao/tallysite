@@ -18,7 +18,7 @@ div.message-dict,
     display: none;
 }
 
-section#contentContainer .entity-content-breadcrumbs{
+.entity-content-breadcrumbs{
     padding-bottom: 4px;
     padding-top: 4px;
     margin-left: 0;
@@ -31,20 +31,12 @@ section#contentContainer .entity-content-breadcrumbs{
     border-bottom: 2px solid #8eaa2b;
 }
 
-section#contentContainer .entity-content-breadcrumbs .breadcrumb-section{
+.entity-content-breadcrumbs .breadcrumb-section{
     float: left;
 }
-section#contentContainer .entity-content-breadcrumbs .actions-section{
+.entity-content-breadcrumbs .actions-section{
     float: right;
     margin-right: 15px;
-}
-
-section#contentContainer .entity-content-breadcrumbs .action-group{
-    text-align: right;
-}
-section#contentContainer .entity-content-breadcrumbs .action-group .action-btn {
-    padding-bottom: 2px;
-    padding-top: 2px;
 }
 
 div.template{

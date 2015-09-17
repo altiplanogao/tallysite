@@ -12,7 +12,7 @@ var tallybook = tallybook || {};
   var updateUrlDebounce = 800;
 
   var Range = host.Range;
-  var Ranges = host.Ranges;
+  var RangeArrayHelper = host.Range.rangeArrayHelper;
   var GridControl = host.entity.grid;
 
   function ScrollGrid(container) {
@@ -187,7 +187,7 @@ var tallybook = tallybook || {};
             var loadedRanges = grid.data.recordRanges();
             var pageSize = grid.data.pageSize();
 
-            var missingRanges = Ranges.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
+            var missingRanges = RangeArrayHelper.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
             if (missingRanges.length > 0) {
               var baseUrl = grid.data.baseUrl();
               baseUrl = host.url.connectUrl(window.location.origin, baseUrl);
@@ -239,7 +239,7 @@ var tallybook = tallybook || {};
     injectRecords: function ($tbody, $newTbody, newRange) {
       var _this = this;
       var loadedRange = this.grid.data.recordRanges();
-      var result = Ranges.findMissingRangesWithin(loadedRange, newRange.lo, newRange.hi);
+      var result = RangeArrayHelper.findMissingRangesWithin(loadedRange, newRange.lo, newRange.hi);
       var tobefilled = (result && result.length) ? result[0] : null;
 
       var fill = 0;
