@@ -7,6 +7,8 @@ var tallybook = tallybook || {};
   var ActionGroup = host.entity.actionGroup;
   var TabHolder = host.tabholder;
 
+  var MAIN_TEMPLATE = '.template.form-template';
+
   var FormSymbols ={
     ENTITY_FORM : 'div.entity-form-container',
     TAB_HOLDER : 'div.tab-holder'
@@ -61,7 +63,7 @@ var tallybook = tallybook || {};
      */
     _getFieldTemplate : (function () {
       var elementMap = {};
-      var $elements = $('.template.form-template table.entity-field-template-table > tbody div.field-box');
+      var $elements = $(MAIN_TEMPLATE + ' table.entity-field-template-table > tbody div.field-box');
       $elements.each(function(index, element){
         var $ele = $(element);
         $ele.attr('data-support-field-types').split(',').forEach(function (fldtp) {
@@ -182,6 +184,12 @@ var tallybook = tallybook || {};
     }
     return null;
   };
+
+  EntityForm.makeRawHtmlFormElement = (function () {
+    var $template = $(MAIN_TEMPLATE + ' .entity-form-container-template').clone();
+    $template.removeClass('entity-form-container-template').addClass('entity-form-container');
+    return function () {return $template.clone();}
+  })()
   EntityForm.initOnDocReady = function ($doc) {
     var $ctrls = $doc.find(FormSymbols.ENTITY_FORM).each(function () {
       var $container = $(this);

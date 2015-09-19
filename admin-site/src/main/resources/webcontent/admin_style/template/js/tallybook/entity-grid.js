@@ -19,28 +19,40 @@ var tallybook = tallybook || {};
   function ScrollGrid(container) {
     GridControl.apply(this, arguments);
     this.scrollHolder = null;
-    this._enableScrollSupport();
-    this.scrollviewport = this.body.$body.find('div.viewport');
-    this.scrolloverview = this.scrollviewport.find('div.overview');
-    this.paging = new Paging(this);
+    this.enableScroll();
+    this.bindEvents();
     this.setup();
   };
   ScrollGrid.prototype = Object.create(GridControl.prototype, {
     constructor:{value:ScrollGrid},
-    _enableScrollSupport:{value:function(){
+    enableScroll:{value:function(){
+      if(this.scrollenabled) return;
       this.updateBodyHeight();
+      var _this = this;
       var bodyWrapper  = this.body.$body;
-      var $this = this;
       bodyWrapper.customScrollbar({
-        //updateOnWindowResize: true,
         onCustomScroll: function (event, scrollData) {
           host.debug.log(ENABLE_SCROLL_DEBUG, "scroll to : " + scrollData.direction + ' ' + scrollData.scrollPercent);
-          $this.updateRangeInfo(scrollData.scrollPercent / 100);
-          $this.triggerLoad();
+          _this.updateRangeInfo(scrollData.scrollPercent / 100);
+          _this.triggerLoad();
         }
       });
       this.scrollHolder = bodyWrapper;
       this.alignHeaderAndBody();
+      this.scrollviewport = this.body.element().find('div.viewport');
+      this.scrolloverview = this.scrollviewport.find('div.overview');
+      this.paging = new Paging(this);
+      this.scrollenabled = true;
+    }},
+    disableScroll:{value:function(){
+      if(!this.scrollenabled) return;
+      var bodyWrapper  = this.body.$body;
+      bodyWrapper.customScrollbar("remove");
+      this.scrollHolder=null;
+      this.scrollviewport = null;
+      this.scrolloverview = null;
+      this.paging = null;
+      this.scrollenabled = false;
     }},
     updateBodyHeight:{value: function () {
       var container = this.$container;
@@ -71,17 +83,12 @@ var tallybook = tallybook || {};
       this.triggerLoad();
     }},
     setup:{value: function () {
-      if (this.initialized()) {
-        return;
+      if (!this.initialized()) {
+        this.triggerLoad();
+        this.initialized(true);
       }
- //     GridControl.bindReloadEvent(this);
-
-      this.triggerLoad();
-
-      this.initialized(true);
     }},
     teardown:{value: function () {
- //     GridControl.unbindReloadEvent(this);
       this.initialized(false);
     }},
     getTopVisibleIndex:{value: function (normalpercent) {
@@ -126,7 +133,6 @@ var tallybook = tallybook || {};
       this.getFooter().setDataRange(topIndex,bottomIndex,totalCount);
 
       host.debug.log(ENABLE_SCROLL_DEBUG, 'updateRangeInfo: [' + topIndex + ' - ' + bottomIndex +'] ' + topIndex + '  ' + ((normalpercent === undefined)?'':(''+normalpercent)));
-
       if(this.isMain()) {
         $.doTimeout('updateurl', updateUrlDebounce, function(){
           host.debug.log(ENABLE_SCROLL_DEBUG, 'updateRangeInfo: url actual ' + topIndex);
@@ -140,20 +146,19 @@ var tallybook = tallybook || {};
         _this.paging.loadRecords();
       });
     }},
-    fill :{value: function () {
+    fill :{value: function (data, fillrows, fillcols) {
       GridControl.prototype.fill.apply(this,arguments);
       this.paging.paddingAdjustAfterFirstLoad();
 
       this.teardown();
       this.setup();
       this.resize();
-      //this.constructor.prototype.
     }},
     buildAjaxLoadUrl :{value : function(baseUrl, parameter, range){
       var start = range.lo; start = (start < 0)? null:start;
-      var url = tallybook.url.getUrlWithParameterString(parameter,null,baseUrl);
-      url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.StartIndex, start, null, url);
-      url = tallybook.url.getUrlWithParameter(GridControl.ReservedParameter.PageSize, range.width(), null, url);
+      var url = host.url.getUrlWithParameterString(parameter,null,baseUrl);
+      url = host.url.getUrlWithParameter(GridControl.ReservedParameter.StartIndex, start, null, url);
+      url = host.url.getUrlWithParameter(GridControl.ReservedParameter.PageSize, range.width(), null, url);
       return url;
     }}
   });
@@ -179,15 +184,8 @@ var tallybook = tallybook || {};
     });
     return gcs;
   };
-  ScrollGrid.findFirstOnPage = function () {
-    var $page = $(document);
-    var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
-    if($ctrls.length > 0){return GridControl.getScrollGrid($($ctrls[0]));}
-  };
 
-  var Paging = function (grid) {
-    this.grid = grid;
-  };
+  var Paging = function (grid) {this.grid = grid;};
   Paging.prototype = {
 
     // ************************* *
@@ -261,8 +259,8 @@ var tallybook = tallybook || {};
     // DOM *
     // ************************* *
     injectRecords: function ($tbody, $newTbody, newRange) {
-      var _this = this;
-      var loadedRange = this.grid.data.recordRanges();
+      var _grid = this.grid;
+      var loadedRange = _grid.data.recordRanges();
       var result = RangeArrayHelper.findMissingRangesWithin(loadedRange, newRange.lo, newRange.hi);
       var tobefilled = (result && result.length) ? result[0] : null;
 
@@ -275,23 +273,22 @@ var tallybook = tallybook || {};
           var blanks = range.drop(intersect, true);
           var preblank = blanks[0];
           var posblank = blanks[1];
-          var $prepad = null;
-          var $pospad = null;
+          var $prepad = null, $pospad = null;
           // Extract the new rows
           var $newTrs = $newTbody.find('tr.data-row');
           var rangeHeadOffset = intersect.lo - newRange.lo;
           $newTrs = $newTrs.slice(rangeHeadOffset, intersect.width() + rangeHeadOffset);
 
           if (preblank) {
-            $prepad = _this.grid.createPadding( preblank.lo, preblank.hi);
+            $prepad = _grid.createPadding( preblank.lo, preblank.hi);
             $newTrs.splice(0, 0, $prepad[0]);
           }
           if (posblank) {
-            $pospad = _this.grid.createPadding( posblank.lo, posblank.hi);
+            $pospad = _grid.createPadding( posblank.lo, posblank.hi);
             $newTrs.push($pospad[0]);
           }
           $e.replaceWith($newTrs);
-          _this.grid.data.recordRanges('add', intersect);
+          _grid.data.recordRanges('add', intersect);
           filled++;
         }
       });
@@ -323,7 +320,7 @@ var tallybook = tallybook || {};
       }
 
       grid.scrollHolder.customScrollbar("resize", true);
-      if(range.lo != this.grid.getTopVisibleIndex()){
+      if(range.lo != grid.getTopVisibleIndex()){
         grid.scrollToIndex(range.lo);
       }
     }
@@ -334,7 +331,6 @@ var tallybook = tallybook || {};
       var $container = $(this);
       var grid = ScrollGrid.getScrollGrid($container);
       grid.fill();
-      grid.bindEvents();
       $(window).resize(function () {
         $.doTimeout('resize', 250, function () {
           grid.resize();
