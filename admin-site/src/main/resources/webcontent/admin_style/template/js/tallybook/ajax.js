@@ -71,4 +71,4 @@ var tallybook = tallybook || {};
 
   host.ajax = ajax;
 
-})($, tallybook);
+})(jQuery, tallybook);

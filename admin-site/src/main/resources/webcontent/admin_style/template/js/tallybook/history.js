@@ -290,4 +290,4 @@ var tallybook = tallybook || {};
     host.url = Url;
     host.history = History;
 
-})($,tallybook);
+})(jQuery,tallybook);

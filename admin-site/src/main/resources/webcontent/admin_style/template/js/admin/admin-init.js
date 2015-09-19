@@ -13,5 +13,12 @@
         tallybook.entity.form ? tallybook.entity.form.initOnDocReady( $doc) : null;
     });
 
+    if (!Array.prototype.last) {
+        Array.prototype.last = function() {
+            return this[this.length - 1];
+        };
+    }
+
+
 })(jQuery, this);
 

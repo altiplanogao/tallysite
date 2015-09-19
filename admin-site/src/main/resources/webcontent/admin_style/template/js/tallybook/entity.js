@@ -266,8 +266,7 @@ var tallybook = tallybook || {};
     function ColumnCreator() {};
     ColumnCreator.prototype = {
       _makeColumnHeader: (function () {
-        var template = $(GridSymbols.GRID_MAIN_TEMPLATE + ' .column-header-template');
-        template.removeClass('column-header-template');
+        var template = $(GridSymbols.GRID_MAIN_TEMPLATE + ' .column-header-template').clone().removeClass('column-header-template');
         return function () {return template.clone();};
       })(),
       makeElement : function(fieldInfo){
@@ -444,7 +443,11 @@ var tallybook = tallybook || {};
           case 'update':
             var url = $el.data('action-url'), isModal = $el.data('edit-in-modal');
             if(isModal){
-              var modal = host.modal.makeModal();
+                  console.log('todo: preShowData datahandling');
+              var modal = host.modal.makeModal({preShowData:function(data){
+                  console.log('todo: preShowData datahandling');
+              }});
+              host.modal.manager.showModal(modal);
             }else{
               window.location.href = url;
             }

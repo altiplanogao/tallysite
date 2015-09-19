@@ -327,8 +327,8 @@ var tallybook = tallybook || {};
   };
 
   ScrollGrid.initOnDocReady = function ( $doc) {
-    ($(ENTITY_GRID_CONTAINER)).each(function () {
-      var $container = $(this);
+    ($(ENTITY_GRID_CONTAINER)).each(function (i, item) {
+      var $container = $(item);
       var grid = ScrollGrid.getScrollGrid($container);
       grid.fill();
       $(window).resize(function () {

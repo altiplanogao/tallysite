@@ -1,7 +1,5 @@
 ;
-var tallybook;
-if(!tallybook)
-  tallybook={};
+var tallybook = tallybook || {};
 
 (function($, host){
   'use strict';
@@ -23,4 +21,4 @@ if(!tallybook)
   };
   
   host.menu = menu;
-}($, tallybook));
+}(jQuery, tallybook));

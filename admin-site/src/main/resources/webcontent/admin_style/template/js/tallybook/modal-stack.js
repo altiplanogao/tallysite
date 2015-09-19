@@ -10,50 +10,77 @@ var tallybook = tallybook || {};
     top: 20
   };
 
-  function Modal($modal){
-    this.$modal = $modal;
+  var MODAL_DATA_KEY = 'tallybook.modal.key';
+
+  var ModalDefaultOptions = {
+    preShow:function(){},
+    preShowData:function(data){},
+    preHide:function(){}
+  };
+
+  function Modal(options){
+    this.$ele = null;
+    this.options = $.extend({},ModalDefaultOptions,options);
   };
   Modal.prototype={
     _template : (function () {
-      var $modal = $('<div>', {'class':'modal fade'});
-
-      var $modalHeader = $('<div>', {'class' : 'modal-header'});
-      $modalHeader.append($('<button>', {
-        'type':'button',
-        'class': 'close',
-        'data-dismiss': 'modal'}));
-      $modalHeader.append($('<h4>', {'class':'modal-title'}));
-
-      var $modalBody = $('<div>', {'class' : 'modal-body'});
-
-      var $modalFooter = $('<div>', {'class' : 'modal-footer'});
-
-      $modal.append($modalHeader);
-      $modal.append($modalBody);
-      $modal.append($modalFooter);
+      var modal = 
+      '<div class="modal fade" role="dialog" style="display: block;"> \
+      <div class="modal-dialog">\
+      <div class="modal-content">\
+        <div class="modal-header">\
+          <button type="button" class="close" data-dismiss="modal">×</button>\
+          <h4 class="modal-title"></h4>\
+        </div>\
+        <div class="modal-body"></div>\
+        <div class="modal-footer">\
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+        </div>\
+      </div>\
+      </div>\
+      </div>';
+      var $ele = $(modal);
 
       return function () {
-        return $modal.clone();
+        return $ele.clone();
       }
     })(),
+    element:function(){return this.$ele;},
+    updateMaxHeight:function(){
+      var $ele = this.$ele;
+      var availableHeight = $(window).height()
+        - $ele.find('.modal-header').outerHeight()
+        - $ele.find('.modal-footer').outerHeight()
+        - ($(window).height() * .1);
+      
+      $ele.find('.modal-body').css('max-height', availableHeight);
+    },
     setContentAsBlank : function () {
-      this.$modal = this._template();
+      if(this.$ele != null){this.$ele.data(MODAL_DATA_KEY, null);}
+      this.$ele = this._template();this.$ele.data(MODAL_DATA_KEY, this);
       return this;
     },
     setContentAsLoading : function () {
-      this.$modal.addClass('loading');
-      //  this.$modal.
+      var $ele = this.$ele;
+      $ele.addClass('loading');
+      $ele.find('.modal-title').text(host.messages.loading);
+      $ele.find('.modal-body').append($('<i>', { 'class' : 'icon-spin icon-spinner' }));
+      $ele.find('.modal-body').css({'text-align': 'center', 'font-size': '24px', 'padding-bottom': '15px'});
+      //  this.$ele.
       return this;
     },
+    isLoading : function(){this.$ele.hasClass('loading-modal');},
     setContentByLink : function (link) {
+      var $ele = this.$ele;
+      $ele.removeClass('loading');
       return this;
     },
     setContentAsMessage : function(header, message){
-      var $modal = this.$modal;
+      var $ele = this.$ele;
 
-      $modal.find('.modal-header h3').text(header);
-      $modal.find('.modal-body').text(message);
-      $modal.find('.modal-body').css('padding-bottom', '20px');
+      $ele.find('.modal-header h3').text(header);
+      $ele.find('.modal-body').text(message);
+      $ele.find('.modal-body').css('padding-bottom', '20px');
     },
     showLink : function (link) {
       $.ajax({
@@ -63,13 +90,23 @@ var tallybook = tallybook || {};
         var $data = $(data);
 
       });
-      var $modal = this.template();
+      var $ele = this.template();
+    },
+    onShow:function(){
+      // Allow custom callbacks
+      this.options.preShow();
+
+    },
+    onHide:function(){
+      // Allow custom callbacks
+      this.options.preHide();
+
     }
   };
   Modal.manager={
     modals : [],
-    makeModal : function () {
-      var modal = new Modal().setContentAsBlank();
+    makeModal : function (options) {
+      var modal = new Modal(options).setContentAsBlank().setContentAsLoading();
       return modal;
     },
     currentModal : function () {
@@ -80,17 +117,18 @@ var tallybook = tallybook || {};
         this.currentModal().modal('hide');
       }
     },
-    showModal : function ($data, onModalHide, onModalHideArgs) {
-      if (this.currentModal() != null && this.currentModal().hasClass('loading-modal')) {
+    showModal : function ($data) {
+      if (this.currentModal() != null && this.currentModal().isLoading()) {
         this.hideCurrentModal();
       }
 
-      $('body').append($element);
-      this.takeOverModal($data, onModalHide, onModalHideArgs);
+      $('body').append($data.element());
+      $data.onShow();
+      this.takeOverModal($data);
     },
-    takeOverModal : function($data, onModalHide, onModalHideArgs){
-      var modals = this.modals;
-      $data.modal({
+    takeOverModal : function($data){
+      var modals = this.modals, $element = $data.element();
+      $element.modal({
         backdrop : (modals.length < 1),
         keyboard : false
       });
@@ -98,23 +136,22 @@ var tallybook = tallybook || {};
       // If we already have an active modal, we need to modify its z-index so that it will be
       // hidden by the current backdrop
       if (modals.length > 0) {
-        modals.last().css('z-index', '1040');
+        var lastModal = modals.last();
+        lastModal.css('z-index', '1040');
         var $backdrop = $('.modal-backdrop');
         $backdrop.css('z-index', parseInt($backdrop.css('z-index')) + 1);
 
         // We will also offset modals by the given option values
-        $data.css('left', $data.position().left + (stackedModalOptions.left * modals.length) + 'px');
-        $data.css('top', $data.position().top + (stackedModalOptions.top * modals.length) + 'px');
+        $element.css('left', $data.position().left + (stackedModalOptions.left * modals.length) + 'px');
+        $element.css('top', $data.position().top + (stackedModalOptions.top * modals.length) + 'px');
       }
       // Save our new modal into our stack
       modals.push($data);
       // Bind a callback for the modal hidden event...
-      $data.on('hidden', function() {
-
-        // Allow custom callbacks
-        if (onModalHide != null) {
-          onModalHide(onModalHideArgs);
-        }
+      $element.on('hide.bs.modal', function(event) {
+        var $ele = $(event.delegateTarget);
+        var modal = $ele.data(MODAL_DATA_KEY);
+        modal.onHide();
 
         // Remove the modal from the DOM and from our stack
         $(this).remove();
@@ -125,12 +162,14 @@ var tallybook = tallybook || {};
           modals.last().css('z-index', '1050');
         }
 
-        if (this.currentModal()) {
-          this.currentModal().find('.submit-button').show();
-          this.currentModal().find('img.ajax-loader').hide();
+        var topModal = this.currentModal;
+        if (topModal) {
+          var $topEle = topModal.element();
+          $topEle.find('.submit-button').show();
+          $topEle.find('img.ajax-loader').hide();
         }
       });
-
+      $data.updateMaxHeight();
     }
   };
   Modal.makeModal = Modal.manager.makeModal;

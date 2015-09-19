@@ -95,4 +95,4 @@ var tallybook = tallybook || {};
   };
 
   host.tabholder = TabHolder;
-})($, tallybook);
+})(jQuery, tallybook);

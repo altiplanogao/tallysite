@@ -7,6 +7,8 @@ var tallybook = tallybook || {};
   var ActionGroup = host.entity.actionGroup;
   var TabHolder = host.tabholder;
 
+  var ENTITY_FORM_KEY = 'tallybook.entity.form';
+
   var MAIN_TEMPLATE = '.template.form-template';
 
   var FormSymbols ={
@@ -112,8 +114,13 @@ var tallybook = tallybook || {};
   EntityForm.prototype = {
     element : function(){return this.$container},
     initialized : host.elementValueAccess.defineGetSet('initialized', false),
-    dataContent: function(){
-      return this.$container.find('.data-content p').data("content");
+    dataContent : function(/*optional*/val){
+      var $ele = this.$container.find('.data-content p');
+      if(val === undefined){
+        return $ele.data('content');
+      }else{
+        $ele.data('content', val);
+      }
     },
     createGroupContent : function(groupInfo, fields, entity){
       var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupInfo.name});
@@ -139,10 +146,14 @@ var tallybook = tallybook || {};
       $div.html($groups);
       return $div;
     },
-    buildUpForm : function(fillData){
+    fill : function(rawData){
       if(this.initialized()){return;}
       var _this = this;
-      var rawData = this.dataContent();
+      if(rawData === undefined){
+        rawData = this.dataContent();
+      }else{
+        this.dataContent(rawData);
+      }
       var data = this.entityData.processData(rawData);
       var entity = data.entity.data;
       var formInfo = this.entityData.formInfo(data);
@@ -190,11 +201,19 @@ var tallybook = tallybook || {};
     $template.removeClass('entity-form-container-template').addClass('entity-form-container');
     return function () {return $template.clone();}
   })()
+
+  EntityForm.getEntityForm = function ($container) {
+    var existingForm = $container.data(ENTITY_FORM_KEY);
+    if(!existingForm){
+      existingForm = new EntityForm($container);
+      $container.data(ENTITY_FORM_KEY, existingForm);
+    }
+    return existingForm;
+  }
   EntityForm.initOnDocReady = function ($doc) {
-    var $ctrls = $doc.find(FormSymbols.ENTITY_FORM).each(function () {
-      var $container = $(this);
-      var fm = new EntityForm($container);
-      fm.buildUpForm(true);
+    var $ctrls = $doc.find(FormSymbols.ENTITY_FORM).each(function (i, item) {
+      var fm = EntityForm.getEntityForm($(item));
+      fm.fill();
     });
   }
 

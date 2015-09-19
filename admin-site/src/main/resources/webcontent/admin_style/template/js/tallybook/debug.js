@@ -12,5 +12,5 @@ var tallybook = tallybook || {};
     }
 
     host.debug = Debugger;
-})($, tallybook);
+})(jQuery, tallybook);
 
