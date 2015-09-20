@@ -14,9 +14,15 @@ var tallybook = tallybook || {};
 
   var ModalDefaultOptions = {
     preShow:function(){},
-    preShowData:function(data){},
-    preHide:function(){}
+    preHide:function(){},
+    preSetUrlContent:function(content, _modal){return $(content);},
+    setUrlContent:function(content, _modal){
+      _modal.element().find('.modal-body').empty().append(content);
+    },
+    postSetUrlContent:function(content, _modal){
+    }
   };
+
 
   function Modal(options){
     this.$ele = null;
@@ -24,73 +30,78 @@ var tallybook = tallybook || {};
   };
   Modal.prototype={
     _template : (function () {
-      var modal = 
+      var $ele = $(
       '<div class="modal fade" role="dialog" style="display: block;"> \
-      <div class="modal-dialog">\
-      <div class="modal-content">\
+      <div class="modal-dialog"><div class="modal-content">\
         <div class="modal-header">\
           <button type="button" class="close" data-dismiss="modal">×</button>\
-          <h4 class="modal-title"></h4>\
+          <div class="modal-title"><h4 class="title"></h4><div class="title-tools"></div></div>\
         </div>\
         <div class="modal-body"></div>\
         <div class="modal-footer">\
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
         </div>\
-      </div>\
-      </div>\
-      </div>';
-      var $ele = $(modal);
-
+      </div></div>\
+      </div>');
       return function () {
         return $ele.clone();
-      }
-    })(),
+      }})(),
     element:function(){return this.$ele;},
     updateMaxHeight:function(){
       var $ele = this.$ele;
-      var availableHeight = $(window).height()
+      var availableHeight = $(window).height() * 0.9
         - $ele.find('.modal-header').outerHeight()
-        - $ele.find('.modal-footer').outerHeight()
-        - ($(window).height() * .1);
+        - $ele.find('.modal-footer').outerHeight();
       
       $ele.find('.modal-body').css('max-height', availableHeight);
     },
-    setContentAsBlank : function () {
+    _makeEmptyContent : function () {
       if(this.$ele != null){this.$ele.data(MODAL_DATA_KEY, null);}
       this.$ele = this._template();this.$ele.data(MODAL_DATA_KEY, this);
       return this;
     },
+    setupContextIfNot:function(){
+      if(this.$ele == null)this._makeEmptyContent();
+      return this;
+    },
+    setTitle:function(title){
+      var $ele = this.$ele;
+      $ele.find('.modal-title .title').text(title);
+    },
     setContentAsLoading : function () {
+      this.setupContextIfNot();
       var $ele = this.$ele;
       $ele.addClass('loading');
-      $ele.find('.modal-title').text(host.messages.loading);
-      $ele.find('.modal-body').append($('<i>', { 'class' : 'icon-spin icon-spinner' }));
+      $ele.find('.modal-title .title').text(host.messages.loading);
+      $ele.find('.modal-body').empty().append($('<i>', { 'class' : 'fa fa-spin fa-spinner' }));
       $ele.find('.modal-body').css({'text-align': 'center', 'font-size': '24px', 'padding-bottom': '15px'});
       //  this.$ele.
       return this;
     },
     isLoading : function(){this.$ele.hasClass('loading-modal');},
     setContentByLink : function (link) {
+      this.setupContextIfNot();
       var $ele = this.$ele;
+      var _modal = this;
+
+      host.ajax.get({url : link, headers : {RequestInModal:'true'}}, function(data){
+        _modal.doSetUrlContent(data);
+      });
       $ele.removeClass('loading');
       return this;
     },
-    setContentAsMessage : function(header, message){
+    setContentByMessage : function(header, message){
+      this.setupContextIfNot();
       var $ele = this.$ele;
-
-      $ele.find('.modal-header h3').text(header);
+      $ele.find('.modal-header .title').text(header);
       $ele.find('.modal-body').text(message);
       $ele.find('.modal-body').css('padding-bottom', '20px');
     },
-    showLink : function (link) {
-      $.ajax({
-        url:link,
-        headers :{RequestInModal:'true'}
-      }, function (data) {
-        var $data = $(data);
-
-      });
-      var $ele = this.template();
+    doSetUrlContent: function (content) {
+      var _options = this.options
+      content = _options.preSetUrlContent(content, this);
+      _options.setUrlContent(content, this);
+      _options.postSetUrlContent(content, this);
     },
     onShow:function(){
       // Allow custom callbacks
@@ -105,8 +116,10 @@ var tallybook = tallybook || {};
   };
   Modal.manager={
     modals : [],
-    makeModal : function (options) {
-      var modal = new Modal(options).setContentAsBlank().setContentAsLoading();
+    makeModal : function (options, modalType) {
+      if(modalType === undefined)
+        modalType = Modal;
+      var modal = new modalType(options).setContentAsLoading();
       return modal;
     },
     currentModal : function () {
@@ -124,9 +137,10 @@ var tallybook = tallybook || {};
 
       $('body').append($data.element());
       $data.onShow();
-      this.takeOverModal($data);
+      this._doShowModal($data);
+      $data.updateMaxHeight();
     },
-    takeOverModal : function($data){
+    _doShowModal : function($data){
       var modals = this.modals, $element = $data.element();
       $element.modal({
         backdrop : (modals.length < 1),
@@ -147,8 +161,9 @@ var tallybook = tallybook || {};
       }
       // Save our new modal into our stack
       modals.push($data);
+
       // Bind a callback for the modal hidden event...
-      $element.on('hide.bs.modal', function(event) {
+      $element.on('hidden.bs.modal', function(event) {
         var $ele = $(event.delegateTarget);
         var modal = $ele.data(MODAL_DATA_KEY);
         modal.onHide();
@@ -169,7 +184,6 @@ var tallybook = tallybook || {};
           $topEle.find('img.ajax-loader').hide();
         }
       });
-      $data.updateMaxHeight();
     }
   };
   Modal.makeModal = Modal.manager.makeModal;

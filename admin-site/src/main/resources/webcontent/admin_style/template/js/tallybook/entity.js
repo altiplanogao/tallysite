@@ -443,11 +443,9 @@ var tallybook = tallybook || {};
           case 'update':
             var url = $el.data('action-url'), isModal = $el.data('edit-in-modal');
             if(isModal){
-                  console.log('todo: preShowData datahandling');
-              var modal = host.modal.makeModal({preShowData:function(data){
-                  console.log('todo: preShowData datahandling');
-              }});
+              var modal = host.modal.makeModal({}, host.entity.modal);
               host.modal.manager.showModal(modal);
+              modal.setContentByLink(url);
             }else{
               window.location.href = url;
             }
@@ -1518,6 +1516,7 @@ var tallybook = tallybook || {};
     this.$grpEle = $(grpEle);
   }
   ActionGroup.prototype={
+    element: function(){return this.$grpEle; },
     /**
      * display the specified actions, and hide others; update the action-url
      * @param actions : array of action names
@@ -1589,16 +1588,77 @@ var tallybook = tallybook || {};
       actionGrp.find('.action-control[data-action][data-edit-in-modal]').each(function(i, btn){
         var $btn = $(btn); $btn.attr('data-edit-in-modal', (!!isModal)?'true':'false');
       })
+    },
+    dropActionControl : function(action){
+      var actionGrp = this.$grpEle;
+      actionGrp.find('.action-control').remove('[data-action='+action+']');
+      return this;
+    },
+    dropActionControlExcept : function(except){
+      var actionGrp = this.$grpEle;
+      actionGrp.find('.action-control').remove(':not([data-action='+except+'])');
+      return this;
+    },
+    hasAction:function(action){
+      var actionGrp = this.$grpEle;
+      return !!(actionGrp.find('.action-control[data-action='+action+']').is(':visible'));
+    },
+    toggle : function(val){
+      this.$grpEle.toggle(val);
     }
   };
-  ActionGroup.findEntityActionGroup = function ($doc) {
-    var $grpEle = $('.entity-action-group .action-group', $doc);
-    return new ActionGroup($grpEle);
+  ActionGroup.replaceMainActionGroup = function(actionGroup){
+    if(actionGroup){
+      actionGroup.toggle(false);
+      var mainAgEle = actionGroup.element().clone();
+      var mainAg = new ActionGroup(mainAgEle);mainAg.toggle(true);
+      $('.entity-main-action-group').empty().append(mainAgEle);
+    }
   }
+  ActionGroup.findEntityActionGroup = function ($ele) {
+    var $grpEle = $('.action-group', $ele);
+    return new ActionGroup($grpEle);
+  };
+
+  var EntityModalOptions = {
+    postSetUrlContent:function(content, _modal){
+      var mform = host.entity.form.findFirstFromPage(content);
+      mform.fill();
+      _modal.setTitle(mform.fullAction(true));
+      var actions = mform.dataContent().actions;
+      this.initializeActions(mform, _modal, actions);
+    },
+    initializeActions : function(form, _modal, actions){
+      var actionGrp = form.element().find('.action-group');
+      if(actionGrp.length > 0){
+          var agHead = new ActionGroup(actionGrp.clone()).dropActionControl('save');
+          var agFoot = new ActionGroup(actionGrp.clone()).dropActionControlExcept('save');
+
+          var $ele = _modal.element();
+          var _modalTitleTools = $ele.find('.modal-header .title-tools');
+          _modalTitleTools.append(agHead.element());
+          if(actions.indexOf('save') >= 0){
+              var $modalFoot = $ele.find('.modal-footer');
+              $modalFoot.empty().append(agFoot.element());
+          }
+          actionGrp.remove();
+      }
+    }
+  }
+  var Modal = host.modal;
+  function EntityModal(options){
+    var newOptions = $.extend({}, EntityModalOptions, options);
+    var getargs = Array.prototype.slice.call(arguments);getargs[0] = newOptions;
+    Modal.apply(this, getargs);
+  }
+  EntityModal.prototype = Object.create(Modal.prototype, {
+    constructor:{value:EntityModal}
+  });
 
   host.entity = {
     actionGroup : ActionGroup,
     grid: GridControl,
-    initOnDocReady: onDocReady
+    initOnDocReady: onDocReady,
+    modal: EntityModal
   };
 })(jQuery, tallybook);

@@ -6,6 +6,7 @@ var tallybook = tallybook || {};
 
   var ActionGroup = host.entity.actionGroup;
   var TabHolder = host.tabholder;
+  var ElementValueAccess = host.elementValueAccess;
 
   var ENTITY_FORM_KEY = 'tallybook.entity.form';
 
@@ -105,15 +106,23 @@ var tallybook = tallybook || {};
     this.form = form;
   }
   EntityDataAccess.prototype={
+    element : function(){return this.form;},
+    currentAction : ElementValueAccess.defineGetSet('current-action', null),
+    currentFriendlyAction : ElementValueAccess.defineGetSet('current-friendy-action', null)
   }
 
-  function EntityForm ($formContainer){
-    this.$container = $formContainer;
-    this.$tabholder = $formContainer.find(FormSymbols.TAB_HOLDER);
+  function EntityForm ($container){
+    this.$container = $container;
+    this.$tabholder = $container.find(FormSymbols.TAB_HOLDER);
+    this.dataAccess = new EntityDataAccess($container);
+    this.data = null;
   }
   EntityForm.prototype = {
     element : function(){return this.$container},
     initialized : host.elementValueAccess.defineGetSet('initialized', false),
+    isMain : function () {
+      return this.$container.data('form-scope') == 'main';
+    },
     dataContent : function(/*optional*/val){
       var $ele = this.$container.find('.data-content p');
       if(val === undefined){
@@ -155,6 +164,7 @@ var tallybook = tallybook || {};
         this.dataContent(rawData);
       }
       var data = this.entityData.processData(rawData);
+      this.data = data;
       var entity = data.entity.data;
       var formInfo = this.entityData.formInfo(data);
       var tabHolder = new TabHolder(this.$tabholder);
@@ -163,10 +173,17 @@ var tallybook = tallybook || {};
         tabHolder.addTab(tab.name, tab.friendlyName, $div);
       });
       tabHolder.activeByIndexOrName(0);
-      var ag = ActionGroup.findEntityActionGroup(document);
-      ag.switchAllActions(false);
-      ag.switchElementActionUrl(data.baseUrl);
-      ag.switchAction(data.actions, true);
+
+      var insideAg = ActionGroup.findEntityActionGroup(this.$container);
+      if(insideAg != null){
+        insideAg.switchAllActions(false);
+        insideAg.switchElementActionUrl(data.baseUrl);
+        insideAg.switchAction(data.actions, true);
+      }
+
+      if(this.isMain()){
+        ActionGroup.replaceMainActionGroup(insideAg);
+      }
       this.initialized(true);
     },
     entityData :{
@@ -176,13 +193,24 @@ var tallybook = tallybook || {};
       formInfo : function(data){
         return data.info.details['form'];
       }
+    },
+    action : function(friendly){
+      return friendly ? this.dataAccess.currentFriendlyAction() : this.dataAccess.currentAction();
+    },
+    fullAction : function(friendly){
+      var act = friendly ? this.dataAccess.currentFriendlyAction() : this.dataAccess.currentAction();
+      var data = this.data;
+      if(data){
+        act = act + ' ' + this.entityData.formInfo(data).friendlyName;
+      }
+      return act;
     }
   }
 
   EntityForm.findFromPage= function($page){
     var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
     var fms = $ctrls.map(function(index, ctrl, array){
-      var fm = new EntityForm($(ctrl));
+      var fm = EntityForm.getEntityForm($(ctrl));
       return fm;
     });
     return fms;
@@ -190,7 +218,7 @@ var tallybook = tallybook || {};
   EntityForm.findFirstFromPage= function($page){
     var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
     if($ctrls.length >= 1){
-      var fm = new EntityForm($($ctrls[0]));
+      var fm = EntityForm.getEntityForm($($ctrls[0]));
       return fm;
     }
     return null;

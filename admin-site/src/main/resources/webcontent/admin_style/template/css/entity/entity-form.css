@@ -1,33 +1,40 @@
-
+.entity-form-container{
+    font-size:13px;
+}
+.entity-form-container .form-control {
+    padding: 3px 8px;
+    height: 28px;
+}
 .entity-form-container .tab-content {
-    padding: 10px 3px;
+    padding: 10px 3px 0;
     
 }
 
 .entity-form-container fieldset.entity-group {
-    border: 1px solid #B8B8B8;
+    border: 1px solid #ccc;
 
     border-radius: 3px;
-    padding: 10px;
+    padding: 5px 10px 10px;
     background-color: hsl(0, 0%, 98%);
+    text-align: start;
 }
 
-.entity-form-container fieldset.entity-group > legend{
+.entity-form-container .entity-group > legend{
     width: initial;
 
-    font-size: medium;
+    font-size: 13px;
     border: 1px solid;
     padding: 0 10px;
     /* margin-left: 10px; */
     background-color: #FAFAFA;      
-    border-color: #B8B8B8;
+    border-color: #ccc;
     border-radius: 3px;
     margin-bottom: auto;
     /* font-weight: bold; */
 }
 
 .entity-form-container div.field-box{
-    margin: 5px 0 15px;
+    margin: 5px 0 12px;
 }
 .entity-form-container div.field-box:last-child{
     margin-bottom: 0;

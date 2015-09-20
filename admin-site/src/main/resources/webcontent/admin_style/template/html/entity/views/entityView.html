@@ -2,7 +2,7 @@
 
 
   <div th:include="components/entity-form :: full_entity_form"
-       th:with="data=${readResult}"/>
+       th:with="data=${readResult}, scope=${scope}"/>
 
 </section>
 

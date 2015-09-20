@@ -2,6 +2,7 @@
 @import url('entity-form.css');
 @import url('entity-grid.css');
 @import url('entity-filter.css');
+@import url('entity-modal.css');
 
 section#contentContainer div.entity-listgrid-action-row{
     margin-bottom: 15px;

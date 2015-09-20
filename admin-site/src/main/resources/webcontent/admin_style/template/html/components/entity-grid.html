@@ -18,7 +18,7 @@
   <comment th:remove="all">
     <!--entity grid, use parameter:-->
     <!-- isTemplate=true,false -->
-    <!-- gridScope="main","normal"-->
+    <!-- scope="main","normal"-->
     <!-- alignType="window","none" -->
     <!-- alignOffset="50","0" />-->
     <!-- data : EntityQueryResponse -->
@@ -26,7 +26,7 @@
   </comment>
   <div class="entity-grid-autofill"
        th:classappend="${isTemplate}?'entity-grid-container-template':'entity-grid-container'"
-       th:attr="data-grid-scope=${gridScope}?:'normal',
+       th:attr="data-grid-scope=${scope}?:'normal',
         data-align-type=${alignType}?:'none',
         data-align-offset=${alignOffset}?:'0'"
        data-recordranges=""
