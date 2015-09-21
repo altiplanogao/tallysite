@@ -3,14 +3,16 @@
     <!--entity form, use parameter:-->
     <!-- isTemplate=true,false -->
     <!-- scope="main","normal"-->
+    <!-- formAction="url" -->
     <!--data: EntityInstanceResponse-->
   </comment>
   <div th:classappend="${isTemplate}?'entity-form-container-template':'entity-form-container'"
-      th:attr="data-form-scope=${scope}?:'normal'" th:attrappend="data-current-action=${currentAction},
+       th:attr="data-form-scope=${scope}?:'normal'"
+       th:attrappend="data-current-action=${currentAction},
           data-current-friendy-action=#{${'actions.' + currentAction}}">
     <div class="data-content"><p th:attr="data-content=${data}?:''"></p></div>
     <form method="POST" class="twelve columns custom "
-          th:action="@{${currentUrl}}">
+          th:action="@{${formAction}}">
       <div class="tab-holder"></div>
       <div th:include="components/entity-actions"></div>
     </form>

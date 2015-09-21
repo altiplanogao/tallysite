@@ -1615,9 +1615,14 @@ var tallybook = tallybook || {};
       $('.entity-main-action-group').empty().append(mainAgEle);
     }
   }
-  ActionGroup.findEntityActionGroup = function ($ele) {
+  ActionGroup.findChildActionGroup = function ($ele) {
     var $grpEle = $('.action-group', $ele);
     return new ActionGroup($grpEle);
+  };
+  ActionGroup.findParentActionGroup = function ($ele) {
+    var $grpEle = $ele.closest('.action-group');
+    if($grpEle.length == 1)
+      return new ActionGroup($grpEle);
   };
 
   var EntityModalOptions = {

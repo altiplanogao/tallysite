@@ -13,7 +13,7 @@ var tallybook = tallybook || {};
   var MAIN_TEMPLATE = '.template.form-template';
 
   var FormSymbols ={
-    ENTITY_FORM : 'div.entity-form-container',
+    ENTITY_FORM : '.entity-form-container',
     TAB_HOLDER : 'div.tab-holder'
   };
 
@@ -114,11 +114,13 @@ var tallybook = tallybook || {};
   function EntityForm ($container){
     this.$container = $container;
     this.$tabholder = $container.find(FormSymbols.TAB_HOLDER);
+    this.$form = $container.find('form');
     this.dataAccess = new EntityDataAccess($container);
     this.data = null;
   }
   EntityForm.prototype = {
     element : function(){return this.$container},
+    form : function(){return this.$form;},
     initialized : host.elementValueAccess.defineGetSet('initialized', false),
     isMain : function () {
       return this.$container.data('form-scope') == 'main';
@@ -174,7 +176,7 @@ var tallybook = tallybook || {};
       });
       tabHolder.activeByIndexOrName(0);
 
-      var insideAg = ActionGroup.findEntityActionGroup(this.$container);
+      var insideAg = ActionGroup.findChildActionGroup(this.$container);
       if(insideAg != null){
         insideAg.switchAllActions(false);
         insideAg.switchElementActionUrl(data.baseUrl);
@@ -231,6 +233,8 @@ var tallybook = tallybook || {};
   })()
 
   EntityForm.getEntityForm = function ($container) {
+    if(!$container.is(FormSymbols.ENTITY_FORM))
+      return null;
     var existingForm = $container.data(ENTITY_FORM_KEY);
     if(!existingForm){
       existingForm = new EntityForm($container);
@@ -238,10 +242,54 @@ var tallybook = tallybook || {};
     }
     return existingForm;
   }
+  EntityForm.getEntityFormFromAny = function(anyEle){
+    var $anyEle = $(anyEle);
+    var $container = null;
+    if($anyEle.is(FormSymbols.ENTITY_FORM)){
+      $container = $anyEle;
+    }else{
+      var $candi = $anyEle.closest(FormSymbols.ENTITY_FORM);
+      if($candi.length == 0){
+        $candi = $anyEle.closest('.modal').find(FormSymbols.ENTITY_FORM);
+      }
+      if($candi.length == 0){
+        var $mainCandi = $anyEle.closest('#contentContainer').find(FormSymbols.ENTITY_FORM);
+        if($mainCandi.length == 1){
+          $candi = $mainCandi;
+        }
+      }
+      if($candi.length == 1){
+        $container = $candi;
+      }
+    }
+    if($container) return EntityForm.getEntityForm($container);
+  }
   EntityForm.initOnDocReady = function ($doc) {
     var $ctrls = $doc.find(FormSymbols.ENTITY_FORM).each(function (i, item) {
       var fm = EntityForm.getEntityForm($(item));
       fm.fill();
+    });
+
+    $('body').on('click',  '.submit-entity', function(event){
+      var $bt = $(this);
+      var entityForm = EntityForm.getEntityFormFromAny($bt);
+      if(entityForm){
+        entityForm.form().submit();
+        var ag = ActionGroup.findParentActionGroup($bt);
+        ag.switchSaveAction(true);
+      }
+    });
+
+    $('body').on('submit', FormSymbols.ENTITY_FORM + ' form', function(event){
+      var $form = $(this);
+      var data = $form.serialize();
+      host.ajax({
+        url:this.action,
+        type: 'POST',
+        data : data
+      }, function(data){
+
+      });
     });
   }
 

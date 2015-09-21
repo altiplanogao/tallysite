@@ -20,15 +20,16 @@ var tallybook = tallybook || {};
     }
     if (mOpts.type.toUpperCase() == 'POST') {
       var csrfTokenKey = 'csrfToken';
+      var param = host.url.param;
       if(typeof mOpts.data == 'string'){
-        var data = host.param.stringToData(mOpts.data);
-        host.param.addValue(data, csrfTokenKey,getCsrfToken());
-        mOpts.data = host.param.dataToString(data);
+        var data = param.stringToData(mOpts.data);
+        param.addValue(data, csrfTokenKey,getCsrfToken());
+        mOpts.data = param.dataToString(data);
       }else if (typeof mOpts.data == 'object'){
-        host.param.addValue(mOpts.data, csrfTokenKey,getCsrfToken());
+        param.addValue(mOpts.data, csrfTokenKey,getCsrfToken());
       }else if(!mOpts.data){
         mOpts.data = {};
-        host.param.addValue(mOpts.data, csrfTokenKey,getCsrfToken());
+        param.addValue(mOpts.data, csrfTokenKey,getCsrfToken());
       }
     }
 
