@@ -13,6 +13,7 @@
     <div class="data-content"><p th:attr="data-content=${data}?:''"></p></div>
     <form method="POST" class="twelve columns custom "
           th:action="@{${formAction}}">
+      <div class="entity-context" style="display: none;"></div>
       <div class="tab-holder"></div>
       <div th:include="components/entity-actions"></div>
     </form>

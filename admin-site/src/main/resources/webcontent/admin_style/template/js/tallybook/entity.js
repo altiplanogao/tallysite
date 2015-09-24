@@ -218,7 +218,7 @@ var tallybook = tallybook || {};
         }),
         new CellTemplateEntry('phone', 'phone', function (entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entity[fieldname]; if(fieldvalue == null) fieldvalue = '';
           var segLen = 4;
           var formatedPhone = '';
           if (fieldvalue.length <= segLen) {

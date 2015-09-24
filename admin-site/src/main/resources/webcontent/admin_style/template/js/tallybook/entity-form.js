@@ -25,12 +25,13 @@ var tallybook = tallybook || {};
     this.initializer = initializer;
     this.valuehandler = valuehandler;
   }
+  var fieldNameInForm = function(fieldName){return 'entity[' + fieldName + ']';};
   var ElementTemplates = {
     handlers : { // keys are element-types
       string : new ElementHandler(
         function(element, fieldInfo){
           var fieldName = fieldInfo.name;
-          var input = $('input', element).attr('name', fieldName);
+          var input = $('input', element).attr('name', fieldNameInForm(fieldName));
         },
         {
           get : function(element) {return element.find('input').val();},
@@ -39,7 +40,7 @@ var tallybook = tallybook || {};
       ),
       enum : new ElementHandler(
         function(element, fieldInfo){
-          var optionsContainer = $('select.options', element).attr('name', fieldInfo.name);
+          var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
           var options = fieldInfo.facets.Enum.options;
           var friendlyNames = fieldInfo.facets.Enum.friendlyNames;
           var opElems = options.map(function(t){
@@ -115,6 +116,7 @@ var tallybook = tallybook || {};
     this.$container = $container;
     this.$tabholder = $container.find(FormSymbols.TAB_HOLDER);
     this.$form = $container.find('form');
+    this.$entityCxt = this.$form.find('.entity-context');
     this.dataAccess = new EntityDataAccess($container);
     this.data = null;
   }
@@ -139,10 +141,11 @@ var tallybook = tallybook || {};
       $group.append($groupTitle);
       var fieldEles = groupInfo.fields.map(function(fieldName){
         var field = fields[fieldName];
-        if(field.formVisible){
           var fieldEle = ElementTemplates.createElementByFieldInfo(field, entity);
+        if(!field.formVisible){
+          fieldEle.hide();
+        }
           return fieldEle;
-        }else{return '';}
       });
       $group.append(fieldEles);
       return $group;
@@ -157,6 +160,13 @@ var tallybook = tallybook || {};
       $div.html($groups);
       return $div;
     },
+    _fillEntityContext : function (data){
+      //<input type="hidden" id="ceilingEntityClassname" name="ceilingEntityClassname" value="org.broadleafcommerce.core.catalog.domain.ProductOption">
+      var $entityCeilingType = $('<input>', {type:'hidden', name:'entityCeilingType', value:data.entityCeilingType});
+      var $entityType = $('<input>', {type:'hidden', name:'entityType', value:data.entityType});
+      
+      this.$entityCxt.append($entityCeilingType).append($entityType);
+    },
     fill : function(rawData){
       if(this.initialized()){return;}
       var _this = this;
@@ -167,6 +177,7 @@ var tallybook = tallybook || {};
       }
       var data = this.entityData.processData(rawData);
       this.data = data;
+      this._fillEntityContext(data);
       var entity = data.entity.data;
       var formInfo = this.entityData.formInfo(data);
       var tabHolder = new TabHolder(this.$tabholder);
