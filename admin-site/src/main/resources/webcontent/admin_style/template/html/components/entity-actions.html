@@ -1,9 +1,18 @@
+
 <div class="action-group" style="display:none;" th:fragment="entity-actions">
-  <button type="button" class="btn btn-default action-control" data-action="add" data-edit-in-modal="true" data-action-url=""><span class="fa fa-plus" aria-hidden="true"></span> New</button>
-  <button type="button" class="btn btn-default action-control" data-action="reorder" data-action-url=""><span class="fa fa-bars" aria-hidden="true"></span> Reorder</button>
-  <button type="button" class="btn btn-default action-control entity-action" th:disabled="true" data-action="update" data-edit-in-modal="true" data-action-url="" ><span class="fa fa-pencil-square-o" aria-hidden="true"></span> Edit</button>
-  <button type="button" class="btn btn-default action-control entity-action" th:disabled="true" data-action="delete" data-action-url="" ><span class="fa fa-times" aria-hidden="true"></span> Delete</button>
-  <div class="action-control entity-action submit-entity" th:disabled="true" data-action="save" data-action-url="">
+  <!-- editSuccessRedirect=true,false (default: true) -->
+  <button type="button" class="btn btn-default action-control"
+          data-action="add" data-edit-in-modal="true" data-action-url=""
+          th:attrappend="data-edit-success-redirect=${editSuccessRedirect}?:'true'"><span class="fa fa-plus" aria-hidden="true"></span> New</button>
+  <button type="button" class="btn btn-default action-control"
+          data-action="reorder" data-action-url=""><span class="fa fa-bars" aria-hidden="true"></span> Reorder</button>
+  <button type="button" class="btn btn-default action-control entity-action" th:disabled="true"
+          data-action="update" data-edit-in-modal="true" data-action-url=""
+          th:attrappend="data-edit-success-redirect=${editSuccessRedirect}?:'true'"><span class="fa fa-pencil-square-o" aria-hidden="true"></span> Edit</button>
+  <button type="button" class="btn btn-default action-control entity-action" th:disabled="true"
+          data-action="delete" data-action-url="" ><span class="fa fa-times" aria-hidden="true"></span> Delete</button>
+  <div class="action-control entity-action submit-entity" th:disabled="true"
+          data-action="save" data-action-url="">
     <button type="button" class="btn btn-default" ><span class="fa fa-floppy-o" aria-hidden="true"></span> Save</button>
     <span class="spinner"  style="display:none;"><i class="fa fa-spin fa-circle-o-notch"></i></span>
   </div>

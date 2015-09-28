@@ -7,6 +7,7 @@ var tallybook = tallybook || {};
   var ActionGroup = host.entity.actionGroup;
   var TabHolder = host.tabholder;
   var ElementValueAccess = host.elementValueAccess;
+  var ModalStack = host.modal.stack;
 
   var ENTITY_FORM_KEY = 'tallybook.entity.form';
 
@@ -119,6 +120,7 @@ var tallybook = tallybook || {};
     this.$entityCxt = this.$form.find('.entity-context');
     this.dataAccess = new EntityDataAccess($container);
     this.data = null;
+    this.submitHandlers = {};
   }
   EntityForm.prototype = {
     element : function(){return this.$container},
@@ -217,6 +219,9 @@ var tallybook = tallybook || {};
         act = act + ' ' + this.entityData.formInfo(data).friendlyName;
       }
       return act;
+    },
+    setSubmitHandler : function (handlers) {
+      this.submitHandlers = $.extend({}, handlers);
     }
   }
 
@@ -280,6 +285,38 @@ var tallybook = tallybook || {};
       var fm = EntityForm.getEntityForm($(item));
       fm.fill();
     });
+    $('body').on('click',  '.entity-action[data-action=delete]', function(event){
+      var delConfirmModal = host.modal.makeModal();
+      var $el = $(this);
+      var entityForm = EntityForm.getEntityFormFromAny($el);
+      if(entityForm) {
+        var formdata = entityForm.form().serialize();
+        ModalStack.showModal(delConfirmModal);
+        delConfirmModal.setContentAsDialog({
+          header: host.messages.delete,
+          message: host.messages.deleteConfirm,
+          callback: function () {
+            delConfirmModal.hide();
+            var doDelModal = host.modal.makeModal();
+            ModalStack.showModal(doDelModal);
+            var _url = $el.data('action-url') + '/delete';
+            doDelModal.setContentAsProcessing({
+              url: _url,
+              data: formdata,
+              type: 'POST',
+              header: host.messages.delete,
+              message: host.messages.deleting,
+              success: function (data, textStatus, jqXHR, opts) {
+                doDelModal.hide();
+              },
+              error: function () {
+                console.log('todo: Handle deleting error');
+              }
+            });
+          }
+        });
+      }
+    });
 
     $('body').on('click',  '.submit-entity', function(event){
       var $bt = $(this);
@@ -293,14 +330,24 @@ var tallybook = tallybook || {};
 
     $('body').on('submit', FormSymbols.ENTITY_FORM + ' form', function(event){
       var $form = $(this);
+      var entityForm = EntityForm.getEntityFormFromAny($form);
       var data = $form.serialize();
+
       host.ajax({
         url:this.action,
         type: 'POST',
         data : data
-      }, function(data){
-
+      }, {
+        success: function(){
+          var handler = entityForm.submitHandlers.success;
+          if(handler)handler.apply(entityForm, arguments);
+        },
+        error : function(){
+          var handler = entityForm.submitHandlers.error;
+          if(handler)handler.apply(entityForm, arguments);
+        }
       });
+      event.preventDefault();
     });
   }
 

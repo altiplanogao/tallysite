@@ -47,8 +47,10 @@
           </span>
         </div>
       </div>
-      <div class="col-sm-8 action-group-container" th:include="components/entity-actions">
-      </div>
+      <div class="col-sm-8 action-group-container"
+           th:include="components/entity-actions"
+           th:with="editSuccessRedirect=false"></div>
+      <form method="POST" class="post-agent" th:action="null"></form>
     </div>
     <div class="header">
       <table class="table table-condensed table-hover">

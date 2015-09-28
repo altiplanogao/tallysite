@@ -12,6 +12,7 @@ var tallybook = tallybook || {};
   var RangeArrayHelper = Range.rangeArrayHelper;
   var AJAX = host.ajax;
   var ElementValueAccess = host.elementValueAccess;
+  var ModalStack = host.modal.stack;
 
   //const
   var lockDebounce = 200;
@@ -375,6 +376,10 @@ var tallybook = tallybook || {};
         var actionGrp = $ele.find('.action-group');
         (new ActionGroup(actionGrp)).setup(actions, linksObj);
       },
+      getCsrf : function(){
+        var $ele = this.element().find('form.post-agent input[name=_csrf]');
+        return $ele.val();
+      },
       switchElementActionUrl: function (dataUrl) {
         var $ele = this.element();
         (new ActionGroup($ele.find('.action-group'))).switchElementActionUrl(dataUrl);
@@ -441,14 +446,68 @@ var tallybook = tallybook || {};
         switch(action){
           case 'add':
           case 'update':
-            var url = $el.data('action-url'), isModal = $el.data('edit-in-modal');
+            var url = $el.data('action-url'),
+              isModal = $el.data('edit-in-modal'),
+              editSuccessRedirect=$el.data('edit-success-redirect');
             if(isModal){
               var modal = host.modal.makeModal({}, host.entity.modal);
-              host.modal.manager.showModal(modal);
-              modal.setContentByLink(url);
+              ModalStack.showModal(modal);
+              modal.setContentByLink(url);//set mod
+              modal.setFormSubmitHandlers({
+                success : function(data, textStatus, jqXHR, opts){
+                  if(typeof data == "object"){
+                    var operation = data.operation;
+                    if(operation == 'redirect'){
+                      var url = data.url;
+                      if(!editSuccessRedirect){
+                        //window.location.replace(url);
+                        opts.skipAjaxDefaultHandler = true;
+                        modal.element().modal('hide');
+                        grid.reload();
+                      }
+                    }
+                  }
+                }
+              });
             }else{
               window.location.href = url;
             }
+            break;
+          case 'delete':
+            var delConfirmModal = host.modal.makeModal();
+            ModalStack.showModal(delConfirmModal);
+            delConfirmModal.setContentAsDialog({
+              header:host.messages.delete,
+              message: host.messages.deleteConfirm,
+              callback : function(){
+                delConfirmModal.hide();
+                var doDelModal = host.modal.makeModal();
+                ModalStack.showModal(doDelModal);
+                var _url = $el.data('action-url') + '/delete';
+                var postEntityData = {
+                  _csrf : grid.toolbar.getCsrf(),
+                  entityType : grid.data.entityType(),
+                  entityCeilingType : grid.data.entityCeilingType()
+                };
+                doDelModal.setContentAsProcessing({
+                  url : _url,
+                  data : postEntityData,
+                  type : 'POST',
+                  header:host.messages.delete,
+                  message: host.messages.deleting,
+                  success:function(data, textStatus, jqXHR, opts){
+                    doDelModal.hide();
+                    grid.reload();
+                    opts.skipAjaxDefaultHandler = true;
+                    grid.selectRowByIndex(-1);
+                  },
+                  error:function(){
+                    console.log('todo: Handle deleting error');
+                  }});
+              }     
+            });
+
+            break;
         }
       }
     };
@@ -976,6 +1035,8 @@ var tallybook = tallybook || {};
     }),
     initialized : ElementValueAccess.defineGetSet('initialized', false),
     baseUrl: ElementValueAccess.defineGetSet('baseurl','/'),
+    entityCeilingType :ElementValueAccess.defineGetSet('entity-ceiling-type',''),
+    entityType :ElementValueAccess.defineGetSet('entity-type',''),
     parameter : ElementValueAccess.defineGetSet('parameter',''),
     criteriaParameter : ElementValueAccess.defineGetSet('criteria-parameter',''),
     pageSize : ElementValueAccess.defineGetSet('pagesize',''),
@@ -1021,8 +1082,9 @@ var tallybook = tallybook || {};
   };
 
   var ENTITY_RELOAD_EVENT = 'entity-reload';
-  function LoadEventData (val){
+  function LoadEventData (val, withOffset){
     this._trigger = LoadEventData.source.NONE;
+    this._withOffset = (!!withOffset) || false;
     this.trigger(val);
   };
   LoadEventData.prototype={
@@ -1032,6 +1094,11 @@ var tallybook = tallybook || {};
     },
     triggerFrom : function(source){
       return this._trigger == source;
+    },
+    withOffset : function(val){
+      if(val === undefined)
+        return this._withOffset;
+      this._withOffset = val;
     }
   }
   LoadEventData.source={
@@ -1148,6 +1215,7 @@ var tallybook = tallybook || {};
     doLoadByEvent : function(e, loadEvent){
       //build parameters
       var griddata = this.data;
+      griddata.entityType('');
       var params = griddata.parameter();
       if(loadEvent.triggerFrom(LoadEventData.source.UI)){
         var cparams = griddata.gatherCriteriaParameter();
@@ -1211,6 +1279,8 @@ var tallybook = tallybook || {};
       }
 
       griddata.recordRanges('set', range)
+        .entityCeilingType(data.entityCeilingType)
+        .entityType(data.entityType)
         .totalRecords(entities.totalCount)
         .pageSize(entities.pageSize)
         .baseUrl(entities.baseUrl);
@@ -1290,6 +1360,16 @@ var tallybook = tallybook || {};
     // ********************** *
     // LOAD FUNCTIONS         *
     // ********************** *
+    reload : function(){
+      var griddata = this.data;
+      griddata.pageSize('').totalRecords('');
+      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER));
+    },
+    reloadWithOffset : function(){
+      var griddata = this.data;
+      griddata.pageSize('').totalRecords('');
+      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER, true));
+    },
     loadByUrl : function(url, parameter){
       var griddata = this.data;
 
@@ -1422,6 +1502,28 @@ var tallybook = tallybook || {};
     rebindEvents : function(){
       this.unbindEvents();
       this.bindEvents();
+    },
+
+    // ********************** *
+    // OTHER FUNCTIONS       *
+    // ********************** *
+    selectRowByIndex : function(index){
+      var grid = this;
+      var dataaccess = grid.data;
+      var $tbody = grid.body.$tbody;
+      var oldindex = dataaccess.selectedIndex();
+      var newindex = index;
+      if (newindex == oldindex) {newindex = -1;}
+
+      $tbody.find('tr[data-entity-index=' + oldindex + '].data-row').removeClass('selected');
+      var $row = $tbody.find('tr[data-entity-index=' + newindex + '].data-row').addClass('selected');
+
+      var selected = $row.is('.selected');
+      dataaccess.selectedIndex(newindex);
+      var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
+
+      var gridEle = GridControl.findContainerElement($row);
+      grid.getToolbar().switchElementActionUrl(dataUrl)
     }
   };
   /**
@@ -1446,27 +1548,20 @@ var tallybook = tallybook || {};
     rowClickHandler: function (e) {
       var $el = $(this),
         $row = $el.closest('tr.data-row'),
-        $tbody = $row.closest('tbody'),
         grid = e.data;
-      var dataaccess = (new GridDataAccess($row));
+      var dataaccess = grid.data;
+      var newindex = -1;
       if ($row.length == 0) {
-        dataaccess.selectedIndex(-1);
-        return;
+        newindex = -1;
+      }else{
+        var oldindex = dataaccess.selectedIndex();
+        var theRowIndex = $row.attr('data-entity-index');
+        if (theRowIndex == oldindex) {newindex = -1;}
+        else{
+            newindex = theRowIndex;
+        }
       }
-
-      var oldindex = dataaccess.selectedIndex();
-      var newindex = $row.attr('data-entity-index');
-      if (newindex == oldindex) {newindex = -1;}
-
-      var $oldRow = (oldindex == -1) ? null : $tbody.find('tr[data-entity-index=' + oldindex + '].data-row');
-      if (!!$oldRow)$oldRow.removeClass('selected');
-
-      var selected = $row.toggleClass('selected', (newindex != -1)).is('.selected');
-      dataaccess.selectedIndex(newindex);
-      var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
-
-      var gridEle = GridControl.findContainerElement($row);
-      grid.getToolbar().switchElementActionUrl(dataUrl)
+      grid.selectRowByIndex(newindex);
     }
   };
   GridControl.updateColumnWidth = function (headColRow, bodyColRow, newWidths, totalWidth) {
@@ -1542,7 +1637,7 @@ var tallybook = tallybook || {};
       var actionGrp = this.$grpEle;
       actionGrp.find('.action-control.entity-action').each(function(i,ctrl){
         var $ctrl = $(ctrl);
-        $ctrl.attr('data-action-url', entityUrl);
+        $ctrl.attr('data-action-url', entityUrl).data('action-url', entityUrl);
         ctrl.disabled = (!entityUrl);
       });
     },
@@ -1587,7 +1682,12 @@ var tallybook = tallybook || {};
       var actionGrp = this.$grpEle;
       actionGrp.find('.action-control[data-action][data-edit-in-modal]').each(function(i, btn){
         var $btn = $(btn); $btn.attr('data-edit-in-modal', (!!isModal)?'true':'false');
-      })
+      });
+    },
+    updateEditSuccessRedirect : function(redirect, action){
+      var actionGrp = this.$grpEle;
+      actionGrp.find('.action-control[data-action='+action+'][data-edit-success-redirect]')
+        .attr('data-edit-success-redirect', (!!redirect)?'true':'false');
     },
     dropActionControl : function(action){
       var actionGrp = this.$grpEle;
@@ -1629,11 +1729,23 @@ var tallybook = tallybook || {};
     postSetUrlContent:function(content, _modal){
       var mform = host.entity.form.findFirstFromPage(content);
       mform.fill();
-      _modal.setTitle(mform.fullAction(true));
+      mform.setSubmitHandler(_modal.formSubmitHandlers);
+      _modal._doSetTitle(mform.fullAction(true));
       var actions = mform.dataContent().actions;
-      this.initializeActions(mform, _modal, actions);
+      this._initializeActions(mform, _modal, actions);
     },
-    initializeActions : function(form, _modal, actions){
+    _initializeActions : function(form, _modal, actions){
+      var actionGrp = form.element().find('.action-group');
+      if(actionGrp.length > 0){
+          var agFoot = new ActionGroup(actionGrp.clone());
+
+          var $ele = _modal.element();
+              var $modalFoot = $ele.find('.modal-footer');
+              $modalFoot.empty().append(agFoot.element());
+          actionGrp.remove();
+      }
+    },
+    _initializeActionsBk : function(form, _modal, actions){
       var actionGrp = form.element().find('.action-group');
       if(actionGrp.length > 0){
           var agHead = new ActionGroup(actionGrp.clone()).dropActionControl('save');
@@ -1649,21 +1761,24 @@ var tallybook = tallybook || {};
           actionGrp.remove();
       }
     }
+
   }
   var Modal = host.modal;
   function EntityModal(options){
     var newOptions = $.extend({}, EntityModalOptions, options);
     var getargs = Array.prototype.slice.call(arguments);getargs[0] = newOptions;
     Modal.apply(this, getargs);
+    this.formSubmitHandlers = {};
   }
   EntityModal.prototype = Object.create(Modal.prototype, {
-    constructor:{value:EntityModal}
+    constructor:{value:EntityModal},
+    setFormSubmitHandlers:{value:function(handlers){this.formSubmitHandlers = handlers;}}
   });
 
   host.entity = {
     actionGroup : ActionGroup,
     grid: GridControl,
-    initOnDocReady: onDocReady,
-    modal: EntityModal
+    modal: EntityModal,
+    initOnDocReady: onDocReady
   };
 })(jQuery, tallybook);

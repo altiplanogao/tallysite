@@ -3,7 +3,7 @@ var tallybook = tallybook || {};
 
 (function ($, host) {
   function getCsrfToken() {
-    var csrfTokenInput = $('input[name="csrfToken"]');
+    var csrfTokenInput = $('input[name="_csrf"]');
     if (csrfTokenInput.length == 0) {
       return null;
     }
@@ -11,42 +11,58 @@ var tallybook = tallybook || {};
     return csrfTokenInput.val();
   }
 
-  function ajax(options, callback){
-    var mOpts = $.extend({}, options, $.isPlainObject(callback)?callback:null);
-    if($.isFunction(callback)) {mOpts.success = callback;}
+  var AJAX_DEFAULT_OPTIONS={
+    handleRedirect : true,
+    skipAjaxDefaultHandler : false
+  }
 
-    if(mOpts.type==null){
-      mOpts.type='GET';
-    }
-    if (mOpts.type.toUpperCase() == 'POST') {
-      var csrfTokenKey = 'csrfToken';
-      var param = host.url.param;
-      if(typeof mOpts.data == 'string'){
-        var data = param.stringToData(mOpts.data);
-        param.addValue(data, csrfTokenKey,getCsrfToken());
-        mOpts.data = param.dataToString(data);
-      }else if (typeof mOpts.data == 'object'){
-        param.addValue(mOpts.data, csrfTokenKey,getCsrfToken());
-      }else if(!mOpts.data){
-        mOpts.data = {};
-        param.addValue(mOpts.data, csrfTokenKey,getCsrfToken());
+  function preSuccessHandler(data, textStatus, jqXHR, opts){
+
+  }
+  function postSuccessHandler(data, textStatus, jqXHR, opts){
+    if(opts.skipAjaxDefaultHandler)
+      return;
+
+    if(typeof data == "object"){
+      var operation = data.operation;
+      if(opts.handleRedirect){
+        if(operation == 'redirect'){
+          window.location.replace(data.url);
+        }
       }
     }
+  }
+  function preErrorHandler(jqXHR, textStatus, errorThrown, opts){
+
+  }
+  function postErrorHandler(jqXHR, textStatus, errorThrown, opts){
+
+  }
+
+  function ajax(options, callback){
+    var mOpts = $.extend({}, AJAX_DEFAULT_OPTIONS, options, $.isPlainObject(callback)?callback:null);
+    if($.isFunction(callback)) {mOpts.success = callback;}
+
+    mOpts.type = mOpts.type || 'GET';
+    mOpts.error = mOpts.error || function(){};
 
     if(!mOpts.success.enhanced){
       var oldSuccess = mOpts.success;
       var newSuccess = function(data, textStatus, jqXHR){
-        oldSuccess(data, textStatus, jqXHR);
+        preSuccessHandler(data, textStatus, jqXHR, mOpts);
+        oldSuccess(data, textStatus, jqXHR, mOpts);
+        postSuccessHandler(data, textStatus, jqXHR, mOpts);
       };
       newSuccess.enhanced = true;
       mOpts.success = newSuccess;
     }
-    mOpts.error = mOpts.error ? mOpts.error : function(){};
 
     if(!mOpts.error.enhanced){
       var oldError = mOpts.error;
       var newError = function(jqXHR, textStatus, errorThrown){
-        oldError(jqXHR, textStatus, errorThrown);
+        preErrorHandler(jqXHR, textStatus, errorThrown, mOpts);
+        oldError(jqXHR, textStatus, errorThrown, mOpts);
+        postErrorHandler(jqXHR, textStatus, errorThrown, mOpts);
       }
       newError.enhanced = true;
       mOpts.error = newError;
