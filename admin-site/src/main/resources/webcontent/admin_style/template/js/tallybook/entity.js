@@ -444,7 +444,7 @@ var tallybook = tallybook || {};
       invokeActionHandler: function(e){
         var grid = e.data.grid, $el = $(this), action=$el.data('action');
         switch(action){
-          case 'add':
+          case 'create':
           case 'update':
             var url = $el.data('action-url'),
               isModal = $el.data('edit-in-modal'),
