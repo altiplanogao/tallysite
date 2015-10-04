@@ -112,7 +112,7 @@ public class MvcViewConfigurer {
         viewResolver.setLayoutMap(
             new MapBuilder<String, String>()
                 .append("login/", "login/layout/loginLayout")
-                .append("entity/content/modalView", "NULL")
+                .append("entity/content/simpleView", "NULL")
         );
         return viewResolver;
     }

@@ -455,6 +455,7 @@ var tallybook = tallybook || {};
               modal.setContentByLink(url);//set mod
               modal.setFormSubmitHandlers({
                 success : function(data, textStatus, jqXHR, opts){
+                    var entityForm = this;
                   if(typeof data == "object"){
                     var operation = data.operation;
                     if(operation == 'redirect'){
@@ -476,7 +477,7 @@ var tallybook = tallybook || {};
           case 'delete':
             var delConfirmModal = host.modal.makeModal();
             ModalStack.showModal(delConfirmModal);
-            delConfirmModal.setContentAsDialog({
+            delConfirmModal.setContentAsInteractiveDialog({
               header:host.messages.delete,
               message: host.messages.deleteConfirm,
               callback : function(){
@@ -497,9 +498,24 @@ var tallybook = tallybook || {};
                   message: host.messages.deleting,
                   success:function(data, textStatus, jqXHR, opts){
                     doDelModal.hide();
-                    grid.reload();
-                    opts.skipAjaxDefaultHandler = true;
-                    grid.selectRowByIndex(-1);
+                    if(typeof data == "object"){
+                      var operation = data.operation;
+                      if(operation == 'redirect'){
+                        grid.reload();
+                        opts.skipAjaxDefaultHandler = true;
+                        grid.selectRowByIndex(-1);
+                      }else{
+                        var errors = (data.data)? data.data.errors : null;
+                        if(errors) errors = errors.global;
+                        var delErrorModal = host.modal.makeModal();
+                        ModalStack.showModal(delErrorModal);
+                        delErrorModal.setContentAsMessage({
+                            header:host.messages.error,
+                            message: errors
+                        });
+                        grid.reload();
+                      }
+                    }
                   },
                   error:function(){
                     console.log('todo: Handle deleting error');
@@ -1657,6 +1673,8 @@ var tallybook = tallybook || {};
      * @param on : whether to show or hide
      */
     switchAction : function(actions, on){
+      if(!actions)
+        return;
       var actionGrp = this.$grpEle;
       actionGrp.find('.action-control[data-action]').each(function(i,ctrl){
         var $ctrl = $(ctrl); var action = $ctrl.data('action');
@@ -1713,6 +1731,8 @@ var tallybook = tallybook || {};
       var mainAgEle = actionGroup.element().clone();
       var mainAg = new ActionGroup(mainAgEle);mainAg.toggle(true);
       $('.entity-main-action-group').empty().append(mainAgEle);
+    }else{
+      $('.entity-main-action-group').empty();
     }
   }
   ActionGroup.findChildActionGroup = function ($ele) {
@@ -1728,40 +1748,11 @@ var tallybook = tallybook || {};
   var EntityModalOptions = {
     postSetUrlContent:function(content, _modal){
       var mform = host.entity.form.findFirstFromPage(content);
+      mform.inModal(_modal);
       mform.fill();
       mform.setSubmitHandler(_modal.formSubmitHandlers);
       _modal._doSetTitle(mform.fullAction(true));
-      var actions = mform.dataContent().actions;
-      this._initializeActions(mform, _modal, actions);
-    },
-    _initializeActions : function(form, _modal, actions){
-      var actionGrp = form.element().find('.action-group');
-      if(actionGrp.length > 0){
-          var agFoot = new ActionGroup(actionGrp.clone());
-
-          var $ele = _modal.element();
-              var $modalFoot = $ele.find('.modal-footer');
-              $modalFoot.empty().append(agFoot.element());
-          actionGrp.remove();
-      }
-    },
-    _initializeActionsBk : function(form, _modal, actions){
-      var actionGrp = form.element().find('.action-group');
-      if(actionGrp.length > 0){
-          var agHead = new ActionGroup(actionGrp.clone()).dropActionControl('save');
-          var agFoot = new ActionGroup(actionGrp.clone()).dropActionControlExcept('save');
-
-          var $ele = _modal.element();
-          var _modalTitleTools = $ele.find('.modal-header .title-tools');
-          _modalTitleTools.append(agHead.element());
-          if(actions.indexOf('save') >= 0){
-              var $modalFoot = $ele.find('.modal-footer');
-              $modalFoot.empty().append(agFoot.element());
-          }
-          actionGrp.remove();
-      }
     }
-
   }
   var Modal = host.modal;
   function EntityModal(options){
@@ -1772,7 +1763,9 @@ var tallybook = tallybook || {};
   }
   EntityModal.prototype = Object.create(Modal.prototype, {
     constructor:{value:EntityModal},
-    setFormSubmitHandlers:{value:function(handlers){this.formSubmitHandlers = handlers;}}
+    setFormSubmitHandlers:{value:function(handlers){
+      this.formSubmitHandlers = handlers;
+    }}
   });
 
   host.entity = {

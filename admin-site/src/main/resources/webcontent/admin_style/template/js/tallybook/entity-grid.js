@@ -247,6 +247,7 @@ var tallybook = tallybook || {};
             var data = response.data;
             var $newTbody = grid.fillTbody(data, undefined);
             $paging.injectRecords($tbody, $newTbody, data.entities.range);
+            grid.data.totalRecords(data.entities.totalCount);
           },
           ondataloaded: function (/*ondataloaded*/) {
             grid.triggerLoad();

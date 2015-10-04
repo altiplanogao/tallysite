@@ -102,14 +102,16 @@
     },
     _doSetBodyMessage: function (msg, emptyBody){
       var $ele = this.$ele;
+      var $body = $ele.find('.modal-body');
       if(emptyBody)
-        $ele.find('.modal-body').empty();
-      var $msg = $ele.find('.modal-body .message');
-      if($msg.length == 0){
-        $msg = $('<div class="message">');
-        $ele.find('.modal-body').append($msg);
-      }
-      $msg.text(msg);
+        $body.empty();
+      var msgs = $.isArray(msg) ? msg : [msg];
+      var $fmsgs = msgs.map(function(item, i){
+        $msg = $('<div class="message">').text(item);
+        return $msg;
+      });
+      $body.find('.message').remove();
+      $body.append($fmsgs);
     },
     _doSetBodyProgress:function(visible){
       var $ele = this.$ele;
@@ -152,13 +154,19 @@
       var $ele = this.$ele;
       var _modal = this;
 
-      host.ajax.get({url : link, headers : {RequestInModal:'true'}}, function(data){
+      host.ajax.get({url : link, headers : {RequestInSimpleView:'true'}}, function(data){
         _modal._doSetUrlContent(data);
       });
       $ele.removeClass('loading');
       return this;
     },
-    setContentAsDialog : function(options){
+    setContentAsMessage : function(options) {
+      this._setupContextIfNot();
+      this._doSetTitle(options.header);
+      this._doSetBodyMessage(options.message, true);
+      this.updateButtonsVisibility(false, false, true);
+    },
+    setContentAsInteractiveDialog : function(options){
       this._setupContextIfNot();
       options = $.extend({}, ModalDialogDefaultOptions, options);
       var $ele = this.$ele;

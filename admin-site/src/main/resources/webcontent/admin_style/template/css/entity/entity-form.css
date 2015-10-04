@@ -1,6 +1,14 @@
 .entity-form-container{
     font-size:13px;
 }
+.entity-form-container .entity-errors{
+
+}
+.entity-form-container .entity-error{
+    display: block;
+
+}
+
 .entity-form-container .form-control {
     padding: 3px 8px;
     height: 28px;
@@ -41,6 +49,19 @@
     margin-bottom: 0;
 }
 
-.entity-form-container div.field-box div.field-label{
+.entity-form-container div.field-box div.field-label-group{
     font-weight: bold;
+}
+
+.entity-form-container .field-label-group .error{
+    font-weight: lighter;
+    display: block;
+}
+
+.entity-form-container .field-label-group .field-label{
+    margin-right: 10px;
+}
+
+.entity-form-container .field-label-group .field-label.required:after{
+    content: "*";
 }
