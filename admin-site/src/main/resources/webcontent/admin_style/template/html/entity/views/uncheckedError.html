@@ -1,7 +1,7 @@
 <section th:fragment="content">
   <ul>
     <li th:each="error : ${errors}">
-      <span>${error}</span>
+      <span th:text="${error}">Error</span>
     </li>
   </ul>
 

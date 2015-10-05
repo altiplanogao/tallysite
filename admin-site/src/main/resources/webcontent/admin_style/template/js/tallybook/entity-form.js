@@ -190,11 +190,13 @@ var tallybook = tallybook || {};
         if($errors.length == 0){
           $errors = $('<div class="entity-errors form-group has-error">').prependTo(this.$form);
         }
+        var hasError = false;
         var $globalErrors = data.errors.global.map(function(item, i){
+          hasError = true;
           return $('<span class="entity-error control-label">').text(item);
         });
 
-        $errors.empty().append($globalErrors);
+        $errors.empty().append($globalErrors).toggle(hasError);
       }
 
       //<input type="hidden" id="ceilingEntityClassname" name="ceilingEntityClassname" value="org.broadleafcommerce.core.catalog.domain.ProductOption">
