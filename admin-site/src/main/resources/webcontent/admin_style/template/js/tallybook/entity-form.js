@@ -22,25 +22,27 @@ var tallybook = tallybook || {};
   //  data-form-field-type : string, integer-range, decimal range, foreign-key
   //  data-support-field-types : string, email, phone, boolean
   //}
-  var FieldHandler = function(initializer, valuehandler){
-    this.initializer = initializer;
-    this.valuehandler = valuehandler;
+  var FieldHandler = {
+    initializer : function (element, fieldInfo) {},
+    get : function (element) {return '';},
+    set : function(element, val){}
   }
   var fieldNameInForm = function(fieldName){return 'entity[' + fieldName + ']';};
   var FieldTemplates = {
     handlers : { // keys are element-types
-      string : new FieldHandler(
-        function(element, fieldInfo){
+      string : {
+        initializer: function (element, fieldInfo) {
           var fieldName = fieldInfo.name;
           var input = $('input', element).attr('name', fieldNameInForm(fieldName));
         },
-        {
-          get : function(element) {return element.find('input').val();},
-          set : function(element, val){return  element.find('input').val(val);}
-        }
-      ),
-      enum : new FieldHandler(
-        function(element, fieldInfo){
+        get: function (element) {
+          return element.find('input').val();
+        },
+        set: function (element, val) {
+          return element.find('input').val(val);
+        }},
+      enum : {
+        initializer : function(element, fieldInfo){
           var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
           var options = fieldInfo.facets.Enum.options;
           var friendlyNames = fieldInfo.facets.Enum.friendlyNames;
@@ -50,17 +52,31 @@ var tallybook = tallybook || {};
           });
           optionsContainer.empty().wrapInner(opElems);
         },
-        {
-          get : function(element) {
-            var optionsContainer = $('select.options', element);
-            return optionsContainer.val();
-          },
-          set : function(element, val){
-            var optionsContainer = $('select.options', element);
-            return  optionsContainer.val(val);
-          }
-        }
-      )
+        get : function(element) {
+          var optionsContainer = $('select.options', element);
+          return optionsContainer.val();
+        },
+        set : function(element, val){
+          var optionsContainer = $('select.options', element);
+          return  optionsContainer.val(val);
+        }},
+      html : {
+        initializer:function(element, fieldInfo){
+          var $editor = $('.html-editor', element).summernote({
+            height : 150,
+            minHeight: 150,             // set minimum height of editor
+            maxHeight: 300             // set maximum height of editor
+          });
+        },
+        get:function(element){
+          return $('.html-editor', element).code();
+        },
+        set:function(element, val){
+          $('.html-editor', element).code(val);
+        }}
+    },
+    getHandlerByFormFieldType: function (formFieldType) {
+      return this.handlers[formFieldType];
     },
     /**
      * Get the element template by field type
@@ -112,10 +128,10 @@ var tallybook = tallybook || {};
       element.find('label').text(fieldInfo.friendlyName).toggleClass('required', fieldBasicFacet.required);
       var eleType = element.data('form-field-type');
 
-      var handler = FieldTemplates.handlers[eleType];
+      var handler = FieldTemplates.getHandlerByFormFieldType(eleType);
       if(handler){
         handler.initializer && handler.initializer(element, fieldInfo);
-        handler.valuehandler && handler.valuehandler.set(element, entity[fieldName]);
+        handler.set && handler.set(element, entity[fieldName]);
       }
       return element;
     }
@@ -169,7 +185,7 @@ var tallybook = tallybook || {};
         if(!field.formVisible){
           fieldEle.hide();
         }
-          return fieldEle;
+        return fieldEle;
       });
       $group.append(fieldEles);
       return $group;
@@ -294,6 +310,25 @@ var tallybook = tallybook || {};
     },
     setSubmitHandler : function (handlers) {
       this.submitHandlers = $.extend({}, handlers);
+    },
+    serialize : function(){
+      var paramsObj = {};
+      var $gInputs = this.$form.find('input:not(.entity-box input)');
+      $gInputs.map(function(i, item){
+        paramsObj[item.name] = item.value;
+      });
+      var $fieldBoxes = this.$form.find('.entity-box .field-box');
+      $fieldBoxes.map(function(i, item){
+        var $item = $(item);
+        var formFieldType = $item.data('form-field-type');
+        var fieldName = $item.data('field-name');
+        var fieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
+        paramsObj['entity['+fieldName+']'] = fieldHandler.get($item);
+      });
+
+      var ref = this.$form.serialize();
+      var toRet = $.param(paramsObj);
+      return toRet;
     }
   }
 
@@ -405,7 +440,7 @@ var tallybook = tallybook || {};
     $('body').on('submit', FormSymbols.ENTITY_FORM + ' form', function(event){
       var $form = $(this);
       var entityForm = EntityForm.getEntityFormFromAny($form);
-      var data = $form.serialize();
+      var data = entityForm.serialize();
 
       host.ajax({
         url:this.action,
