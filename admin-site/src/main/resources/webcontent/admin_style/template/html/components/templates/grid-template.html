@@ -174,13 +174,16 @@
               data-support-field-types="boolean">
             <li>
               <div class="filter-fields" data-action="">
-                <div class="option-filter-control">
-                  <button class="filter-button btn btn-info" th:inline="text">
-                    <i class="fa fa-filter"></i>
-                  </button>
-                  <a class="reset" href="#">Reset</a>
-                  <span class="option"><input type="radio" name="radio-name-placeholder"/>Yes</span>
-                  <span class="option"><input type="radio" name="radio-name-placeholder"/>No</span>
+                <div class="option-filter-control" th:inline="text">
+                  <span class="option"><input type="radio" name="radio-name-placeholder" value="true"/>[[#{general.boolean.yes}]]</span>
+                  <span class="option"><input type="radio" name="radio-name-placeholder" value="false"/>[[#{general.boolean.no}]]</span>
+                  <hr/>
+                  <div class="bottom-control">
+                    <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
+                    <button class="filter-button btn btn-info">
+                      <i class="fa fa-filter"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </li>
@@ -202,9 +205,9 @@
                     -->
                   </div>
                   <hr/>
-                  <div class="bottom-control">
-                    <a class="filter-reset-button" href="#">Reset</a>
-                    <button class="filter-button btn btn-info" th:inline="text">
+                  <div class="bottom-control"  th:inline="text">
+                    <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
+                    <button class="filter-button btn btn-info">
                       <i class="fa fa-filter"></i>
                     </button>
                   </div>

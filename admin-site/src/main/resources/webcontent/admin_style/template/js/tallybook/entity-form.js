@@ -60,6 +60,32 @@ var tallybook = tallybook || {};
           var optionsContainer = $('select.options', element);
           return  optionsContainer.val(val);
         }},
+      boolean : {
+        initializer : function (element, fieldInfo) {
+          var fieldName = fieldInfo.name;
+          var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
+        },
+        get : function (element) {
+          var valStr = element.find('input[type=radio]:checked').val();
+          if(!!valStr){
+            return ('true' == valStr.toLowerCase());
+          }else{
+            return null;
+          }
+        },
+        set : function(element, val){
+          var trueRadio = element.find('input[type=radio][value=true]');
+          var falseRadio = element.find('input[type=radio][value=false]');
+          if(val === undefined || val === null){
+            trueRadio[0].checked=false;
+            falseRadio[0].checked=false;
+          }else{
+            val = !!val;
+            trueRadio[0].checked=val;
+            falseRadio[0].checked=!val;
+          }
+        }
+      },
       html : {
         initializer:function(element, fieldInfo){
           var $editor = $('.html-editor', element).summernote({
