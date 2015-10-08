@@ -6,7 +6,6 @@
 }
 .entity-form-container .entity-error{
     display: block;
-
 }
 
 .entity-form-container .form-control {
@@ -15,7 +14,6 @@
 }
 .entity-form-container .tab-content {
     padding: 8px 3px 0;
-    
 }
 
 .entity-form-container fieldset.entity-group {
@@ -51,6 +49,15 @@
 
 .entity-form-container div.field-box div.field-label-group{
     font-weight: bold;
+}
+
+.entity-form-container div.field-box .radio-options{
+    padding-left: 20px;
+}
+
+.entity-form-container div.field-box .radio-options .option{
+    font-weight: normal;
+    margin-right: 10px;
 }
 
 .entity-form-container .field-label-group .error{

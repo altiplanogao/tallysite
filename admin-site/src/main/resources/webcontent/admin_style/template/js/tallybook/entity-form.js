@@ -64,6 +64,10 @@ var tallybook = tallybook || {};
         initializer : function (element, fieldInfo) {
           var fieldName = fieldInfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
+
+          var trOpts = fieldInfo.facets.Boolean.options;
+          element.find('input[type=radio][value=true]+span').text(trOpts.t);
+          element.find('input[type=radio][value=false]+span').text(trOpts.f);
         },
         get : function (element) {
           var valStr = element.find('input[type=radio]:checked').val();
@@ -151,7 +155,7 @@ var tallybook = tallybook || {};
         });
         $fieldLabel.append(errorSpans);
       }
-      element.find('label').text(fieldInfo.friendlyName).toggleClass('required', fieldBasicFacet.required);
+      element.find('label.field-label').text(fieldInfo.friendlyName).toggleClass('required', fieldBasicFacet.required);
       var eleType = element.data('form-field-type');
 
       var handler = FieldTemplates.getHandlerByFormFieldType(eleType);

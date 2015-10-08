@@ -175,8 +175,14 @@
             <li>
               <div class="filter-fields" data-action="">
                 <div class="option-filter-control" th:inline="text">
-                  <span class="option"><input type="radio" name="radio-name-placeholder" value="true"/>[[#{general.boolean.yes}]]</span>
-                  <span class="option"><input type="radio" name="radio-name-placeholder" value="false"/>[[#{general.boolean.no}]]</span>
+                  <label class="option">
+                    <input type="radio" name="radio-name-placeholder" value="true"/>
+                    <span>[[#{general.boolean.true}]]</span>
+                  </label>
+                  <label class="option">
+                    <input type="radio" name="radio-name-placeholder" value="false"/>
+                    <span>[[#{general.boolean.false}]]</span>
+                  </label>
                   <hr/>
                   <div class="bottom-control">
                     <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
@@ -201,7 +207,8 @@
                 <div class="option-filter-control">
                   <div class="options">
                     <!--
-                    <span class="option"><input type="checkbox" name="xxx" value="xxx"/>AAA</span>
+                    <label class="option"><input type="checkbox" name="gender" value="male">
+                      <span>Male</span></label>
                     -->
                   </div>
                   <hr/>

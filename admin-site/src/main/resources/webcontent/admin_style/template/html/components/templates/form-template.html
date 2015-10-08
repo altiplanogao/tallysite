@@ -75,9 +75,15 @@
       <td>Boolean</td>
       <td>
         <div class="field-box form-group" data-form-field-type="boolean" data-support-field-types="boolean">
-          <div class="options" th:inline="text">
-            <span class="option"><input type="radio" name="radio-name-placeholder" value="true"/>[[#{general.boolean.yes}]]</span>
-            <span class="option"><input type="radio" name="radio-name-placeholder" value="false"/>[[#{general.boolean.no}]]</span>
+          <div class="radio-options" th:inline="text">
+            <label class="option">
+              <input type="radio" name="radio-name-placeholder" value="true"/>
+              <span>[[#{general.boolean.true}]]</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="radio-name-placeholder" value="false"/>
+              <span>[[#{general.boolean.false}]]</span>
+            </label>
           </div>
         </div>
       </td>

@@ -81,15 +81,17 @@ var tallybook = tallybook || {};
             var optionsVals = fieldInfo.facets.Enum.options;
             var optionsNames = fieldInfo.facets.Enum.friendlyNames;
             optionsVals.forEach(function(opv){
-//<span class="option"><input type="checkbox"/>BBB</span>
+//<label class="option"><input type="checkbox" name="gender" value="male"><span>Male</span></label>
               var opName = optionsNames[opv];
               var opipt = $('<input>', { 'type':"checkbox", 'name': fieldInfo.name, 'value': opv});
-              var op = $('<span>',{ 'class':"option"}).html(opipt).append(opName);
+              var opspan = $('<span>').text(opName);
+              var op = $('<label>',{ 'class':"option"}).append(opipt).append(opspan);
               $options.append(op);
+
             });
           },
           get: function (entityFilter) {
-            var $options = $('div.options span.option input[type=checkbox]', entityFilter);
+            var $options = $('.options .option input[type=checkbox]', entityFilter);
             var checkedVals = [];
             $options.filter(function(index, item){return item.checked;})
               .each(function(index, item){checkedVals.push($(item).attr('value'));});
@@ -100,7 +102,7 @@ var tallybook = tallybook || {};
             if(val){
               selectedVals = val.split(',');
             }
-            var $options = $('div.options span.option input[type=checkbox]', entityFilter);
+            var $options = $('.options .option input[type=checkbox]', entityFilter);
             $options.each(function(index, item){
               var $item = $(item);
               var val = $item.attr('value');
@@ -111,8 +113,8 @@ var tallybook = tallybook || {};
           initializer : function (filter, fieldInfo){
             var trOpts = fieldInfo.facets.Boolean.options;
             filter.find('input[type=radio]').attr({'name' : fieldInfo.name});
-            filter.find('input[type=radio][value=true]').text(trOpts.t);
-            filter.find('input[type=radio][value=false]').text(trOpts.f);
+            filter.find('input[type=radio][value=true]+span').text(trOpts.t);
+            filter.find('input[type=radio][value=false]+span').text(trOpts.f);
           },
           //get: ui value -> string; set: string -> ui value
           get: function (entityFilter){

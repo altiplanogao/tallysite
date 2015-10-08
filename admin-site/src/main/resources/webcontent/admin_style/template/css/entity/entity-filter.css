@@ -172,7 +172,9 @@
     vertical-align: bottom;
 }
 
-.entity-filter.option-filter span.option{
-    display: block;;
+.entity-filter.option-filter .option{
+    display: block;
+}
+.entity-filter.option-filter .option span{
     font-weight: initial;
 }
