@@ -109,7 +109,10 @@ var tallybook = tallybook || {};
           }},
         boolean : {
           initializer : function (filter, fieldInfo){
+            var trOpts = fieldInfo.facets.Boolean.options;
             filter.find('input[type=radio]').attr({'name' : fieldInfo.name});
+            filter.find('input[type=radio][value=true]').text(trOpts.t);
+            filter.find('input[type=radio][value=false]').text(trOpts.f);
           },
           //get: ui value -> string; set: string -> ui value
           get: function (entityFilter){
