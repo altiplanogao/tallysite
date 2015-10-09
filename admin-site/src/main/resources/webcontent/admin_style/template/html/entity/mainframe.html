@@ -106,20 +106,20 @@
   <section id="sideMenuContainer" th:fragment="entity_side_nav">
     <nav class="nav" id="sideMenu">
       <ul class="nav-menu accordion" data-accordion="" th:if="${menu} != null">
-        <li class="menu-group accordion-navigation" th:each="entryGroup : ${menu.entryGroups}" th:inline="text"
-            th:classappend="${current.isMenuGroupMatch(entryGroup)}? 'active'">
+        <li class="menu-group accordion-navigation" th:each="entryGroup : ${menu.topEntries}" th:inline="text"
+            th:classappend="${current.isMatchPath(entryGroup.key)}? 'active'">
           <div class="menu-group-title">
             <h5>
               <i class="glyphicon" th:classappend="${entryGroup.icon}"></i>
-              [[#{${entryGroup.key}}]]
+              [[#{${entryGroup.name}}]]
             </h5>
           </div>
           <div class="menu-group-content content">
             <ul>
               <li th:each="entry : ${entryGroup.entries}"
-                  th:classappend="${current.isMenuEntryMatch(entry)}? 'active'">
-                <a th:href="${entry.url}">
-                  [[#{${entry.key}}]]</a>
+                  th:classappend="${current.isMatchPath(entryGroup.key, entry.key)}? 'active'">
+                <a th:href="${entry.url}"  th:unless="${#strings.isEmpty(entry.url)}">
+                  [[#{${entry.name}}]]</a>
               </li>
             </ul>
           </div>
@@ -152,11 +152,11 @@
        class="entity-content-breadcrumbs">
     <div class="breadcrumb-section">
       <ol class="breadcrumb">
-        <li th:if="${current.menuGroup}">[[#{${current.menuGroup.key}}]]</li>
-        <li><a href="#" th:href="@{${current.menuEntry.url}}" th:if="${current.menuEntry}">
-          [[#{${current.menuEntry.key}}]]</a>
+        <li th:each="entry : ${current.menuEntries}">
+          <a href="#" th:href="@{${entry.url}}" th:unless="${#strings.isEmpty(entry.url)}">[[#{${entry.name}}]]</a>
+          <span th:if="${#strings.isEmpty(entry.url)}">[[#{${entry.name}}]]</span>
         </li>
-        <li th:if="${entityForm}">[[$entityForm.mainEntityName]]</li>
+        <li th:if="${entityName}"><span th:text="${entityName}"/></li>
       </ol>
     </div>
     <div  class="actions-section entity-main-action-group">

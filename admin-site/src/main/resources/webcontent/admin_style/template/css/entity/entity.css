@@ -29,6 +29,11 @@ section#contentContainer ol.breadcrumb {
     display: inline-block;
 }
 
+section#contentContainer ol.breadcrumb li:last-child > span{
+    text-transform: capitalize;
+    
+}
+
 .action-group{
     text-align: right;
     /* padding-right: 6px; */

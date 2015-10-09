@@ -18,7 +18,7 @@ IT IS NOT RECOMMENDED TO USE JETTY IN A PRODUCTION ENVIRONMENT.
     <New id="userDS" class="org.eclipse.jetty.plus.jndi.Resource">
         <Arg>jdbc/tallyuserJndiDb</Arg>
         <Arg>
-            <New class="org.apache.commons.dbcp.BasicDataSource">
+            <New class="org.apache.commons.dbcp2.BasicDataSource">
                 <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
                 <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallyuser?useUnicode=true&amp;characterEncoding=utf8</Set>
                 <Set name="username">devsa</Set>
@@ -30,7 +30,7 @@ IT IS NOT RECOMMENDED TO USE JETTY IN A PRODUCTION ENVIRONMENT.
     <New id="adminDS" class="org.eclipse.jetty.plus.jndi.Resource">
         <Arg>jdbc/tallyadminJndiDb</Arg>
         <Arg>
-            <New class="org.apache.commons.dbcp.BasicDataSource">
+            <New class="org.apache.commons.dbcp2.BasicDataSource">
                 <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
                 <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallyadmin?useUnicode=true&amp;characterEncoding=utf8</Set>
                 <Set name="username">devsa</Set>
@@ -42,7 +42,7 @@ IT IS NOT RECOMMENDED TO USE JETTY IN A PRODUCTION ENVIRONMENT.
     <New id="businessDS" class="org.eclipse.jetty.plus.jndi.Resource">
         <Arg>jdbc/tallybusinessJndiDb</Arg>
         <Arg>
-            <New class="org.apache.commons.dbcp.BasicDataSource">
+            <New class="org.apache.commons.dbcp2.BasicDataSource">
                 <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
                 <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallybusiness?useUnicode=true&amp;characterEncoding=utf8</Set>
                 <Set name="username">devsa</Set>
@@ -54,7 +54,7 @@ IT IS NOT RECOMMENDED TO USE JETTY IN A PRODUCTION ENVIRONMENT.
     <New id="managementDS" class="org.eclipse.jetty.plus.jndi.Resource">
         <Arg>jdbc/tallymanagementJndiDb</Arg>
         <Arg>
-            <New class="org.apache.commons.dbcp.BasicDataSource">
+            <New class="org.apache.commons.dbcp2.BasicDataSource">
                 <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
                 <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallymanagement?useUnicode=true&amp;characterEncoding=utf8</Set>
                 <Set name="username">devsa</Set>

@@ -3,9 +3,8 @@ package com.taoswork.tallybook.adminsite.web.controller;
 import com.taoswork.tallybook.admincore.menu.AdminMenuService;
 import com.taoswork.tallybook.admincore.security.AdminSecurityService;
 import com.taoswork.tallybook.business.dataservice.tallyadmin.TallyAdminDataService;
-import com.taoswork.tallybook.general.solution.menu.Menu;
-import com.taoswork.tallybook.general.solution.menu.MenuEntry;
-import com.taoswork.tallybook.general.solution.menu.MenuEntryGroup;
+import com.taoswork.tallybook.general.solution.menu.IMenu;
+import com.taoswork.tallybook.general.solution.menu.IMenuEntry;
 import com.taoswork.tallybook.general.web.control.BaseController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,13 +42,10 @@ public class AdminLoginController extends BaseController {
 
     @RequestMapping(value = {"/", "/loginSuccess"}, method = RequestMethod.GET)
     public String loginSuccess(){
-        Menu menu = adminNavigationService.buildMenu(adminSecurityService.getPersistentAdminEmployee());
-        MenuEntryGroup firstGroup = menu.getFirstGroup();
+        IMenu menu = adminNavigationService.buildMenu(adminSecurityService.getPersistentAdminEmployee());
+        IMenuEntry firstGroup = menu.getFirstLeafEntry();
         if(null != firstGroup){
-            MenuEntry defaultEntry = firstGroup.getDefaultEntry();
-            if(null != defaultEntry){
-                return "redirect:" + defaultEntry.getUrl();
-            }
+            return "redirect:" + firstGroup.getUrl();
         }
         return "noAccess";
     }
