@@ -41,10 +41,10 @@ public class AdminLoginController extends BaseController {
     }
 
     @RequestMapping(value = {"/", "/loginSuccess"}, method = RequestMethod.GET)
-    public String loginSuccess(){
+    public String loginSuccess() {
         IMenu menu = adminNavigationService.buildMenu(adminSecurityService.getPersistentAdminEmployee());
         IMenuEntry firstGroup = menu.getFirstLeafEntry();
-        if(null != firstGroup){
+        if (null != firstGroup) {
             return "redirect:" + firstGroup.getUrl();
         }
         return "noAccess";

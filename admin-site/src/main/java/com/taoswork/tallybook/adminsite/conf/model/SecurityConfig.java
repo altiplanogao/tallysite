@@ -50,7 +50,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     AuthenticationSuccessHandler successHandler(){
-        return new AdminUserAuthenticationSuccessHandler();
+        AdminUserAuthenticationSuccessHandler successH = new AdminUserAuthenticationSuccessHandler();
+
+        successH.setDefaultTargetUrl("/loginSuccess");
+        successH.setAlwaysUseDefaultTargetUrl(false);
+
+        return successH;
     }
 
     @Bean
