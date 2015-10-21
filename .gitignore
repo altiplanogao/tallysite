@@ -1,10 +1,11 @@
 target/
-/.settings/
-/.idea/
+.settings/
+.idea/
 .classpath
 .project
 *.iml
 rebel.xml
+derby.log
 *.log
 
 pom.xml.tag

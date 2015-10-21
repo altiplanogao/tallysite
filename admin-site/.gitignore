@@ -1,8 +1,0 @@
-/target/
-/.settings/
-/.idea/
-/.log/
-.classpath
-.project
-*.iml
-rebel.xml
