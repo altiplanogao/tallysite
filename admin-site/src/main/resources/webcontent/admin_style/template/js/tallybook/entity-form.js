@@ -145,7 +145,7 @@ var tallybook = tallybook || {};
         fieldErrors = errors.fields[fieldName];
       }
       var fieldBasicFacet = (fieldInfo.facets && fieldInfo.facets.Basic) || {};
-      var element = FieldTemplates._getFieldTemplate(fieldType).attr('data-field-name', fieldName);
+      var element = FieldTemplates._getFieldTemplate(fieldType).attr({'data-field-name': fieldName,'data-field-type': fieldType});
       var $fieldLabel = element.find('.field-label-group');
       if(fieldErrors){
         element.addClass('has-error');
@@ -155,7 +155,7 @@ var tallybook = tallybook || {};
         });
         $fieldLabel.append(errorSpans);
       }
-      element.find('label.field-label').text(fieldInfo.friendlyName).toggleClass('required', fieldBasicFacet.required);
+      element.find('label.field-label').text(fieldInfo.friendlyName).toggleClass('required', !!fieldInfo.required);
       var eleType = element.data('form-field-type');
 
       var handler = FieldTemplates.getHandlerByFormFieldType(eleType);
