@@ -44,7 +44,7 @@
          th:with="isTemplate=true, scope='normal'"/>
   </div>
 
-  <table class="entity-field-template-table">
+  <table class="entity-field-template-table"  th:inline="text">
     <thead>
     <tr>
       <th style="width: 20%;">Field Type</th>
@@ -75,7 +75,7 @@
       <td>Boolean</td>
       <td>
         <div class="field-box form-group" data-form-field-type="boolean" data-support-field-types="boolean">
-          <div class="radio-options" th:inline="text">
+          <div class="radio-options">
             <label class="option">
               <input type="radio" name="radio-name-placeholder" value="true"/>
               <span>[[#{general.boolean.true}]]</span>
@@ -93,6 +93,27 @@
       <td>
         <div class="field-box form-group" data-form-field-type="html" data-support-field-types="html,html_basic">
           <div class="html-editor"></div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Foreign Key</td>
+      <td>
+        <div class="field-box form-group" data-form-field-type="foreign_key" data-support-field-types="foreign_key">
+          <div class="foreign-key-value-container">
+            <span class="display-value-none-selected">[[#{general.NoValueSelected}]]</span>
+            <span class="display-value read-only" style="display: none;"></span>
+            <button class="btn btn-default btn-sm to-one-lookup tiny radius secondary button hover-cursor" type="button"
+                    data-select-url="">
+              <!--/admin/org.broadleafcommerce.core.catalog.domain.ProductImpl/defaultCategory/select?requestingEntityId=1-->
+              <i class="fa fa-search"></i>[[#{general.lookup}]]
+            </button>
+            <span class="external-link-container">
+               <a class="modal-view" data-foreign-key-link="" href="">
+                 <i class="fa fa-external-link"></i>
+               </a>
+            </span>
+          </div>
         </div>
       </td>
     </tr>

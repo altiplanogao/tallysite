@@ -38,7 +38,6 @@ var tallybook = tallybook || {};
     GRID_BODY__TABLE: ".body table",
     GRID_BODY__THEAD_ROW: "table thead tr",
     GRID_SPINNER__ITEM: 'i.spinner-item'
-
   };
 
   var FilterTemplates = (function(){
@@ -193,8 +192,9 @@ var tallybook = tallybook || {};
   })();
 
   var CellTemplates = {
-    CellCreationContext : function(idField, baseUrl){
+    CellCreationContext : function(idField, entityUrl, baseUrl){
       this.idField = idField;
+      this.entityUrl = entityUrl;
       this.baseUrl = baseUrl;
     },
     /**
@@ -227,7 +227,7 @@ var tallybook = tallybook || {};
         new CellTemplateEntry('name', 'name', function(entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
           var fieldvalue = entity[fieldname];
-          var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
+          var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.entityUrl);
           var $content = $('<a>', {'href': url}).text(fieldvalue);
           return $content;
         }),
@@ -371,7 +371,7 @@ var tallybook = tallybook || {};
         return $cells;
       },
       _makeRowContainer: function (gridinfo, entity, entityIndex, cellCreationContext) {
-        var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.baseUrl);
+        var url = EntityDataHandler.makeUrl(cellCreationContext.idField, entity, cellCreationContext.entityUrl);
         var $row = $('<tr>', {
           'class' : "data-row",
           'data-id': entity[gridinfo.idField],
@@ -485,7 +485,7 @@ var tallybook = tallybook || {};
               isModal = $el.data('edit-in-modal'),
               editSuccessRedirect=$el.data('edit-success-redirect');
             if(isModal){
-              var modal = host.modal.makeModal({}, host.entity.modal);
+              var modal = host.modal.makeModal({}, host.entity.formModal);
               ModalStack.showModal(modal);
               modal.setContentByLink(url);//set mod
               modal.setFormSubmitHandlers({
@@ -638,8 +638,7 @@ var tallybook = tallybook || {};
       }
     };
     BodyControl.makeRowsAndAppend = function (gridinfo, entities, $tbody) {
-      var baseUrl = entities.baseUrl;
-      var cellCreationContext = new CellTemplates.CellCreationContext(gridinfo.idField, baseUrl);
+      var cellCreationContext = new CellTemplates.CellCreationContext(gridinfo.idField, entities.entityUrl, entities.baseUrl);
       var $rows = entities.records.map(function (entity, index, array) {
         var entityIndex = entities.startIndex + index;
         var row = new RowCreator();
@@ -1042,7 +1041,7 @@ var tallybook = tallybook || {};
       var entities = data.entities;
       var range = {lo: entities.startIndex, hi: entities.startIndex + entities.records.length};
       entities.range = range;
-      entities.baseUrl = data.baseUrl;
+      entities.entityUrl = data.entityUrl;
 
       var linksObj = {};
       data.links.forEach(function(t,i){
@@ -1070,8 +1069,8 @@ var tallybook = tallybook || {};
       });
       return gridInfo;
     },
-    makeUrl: function (idField, entity, baseUrl) {
-      return baseUrl + '/' + entity[idField];
+    makeUrl: function (idField, entity, entityUrl) {
+      return entityUrl + '/' + entity[idField];
     }
   };
 
@@ -1085,7 +1084,8 @@ var tallybook = tallybook || {};
       return RangeArrayHelper.merge(array);
     }),
     initialized : ElementValueAccess.defineGetSet('initialized', false),
-    baseUrl: ElementValueAccess.defineGetSet('baseurl','/'),
+    entityUrl: ElementValueAccess.defineGetSet('entity-url','/'),
+    baseUrl: ElementValueAccess.defineGetSet('base-url','/'),
     entityCeilingType :ElementValueAccess.defineGetSet('entity-ceiling-type',''),
     entityType :ElementValueAccess.defineGetSet('entity-type',''),
     parameter : ElementValueAccess.defineGetSet('parameter',''),
@@ -1334,7 +1334,8 @@ var tallybook = tallybook || {};
         .entityType(data.entityType)
         .totalRecords(entities.totalCount)
         .pageSize(entities.pageSize)
-        .baseUrl(entities.baseUrl);
+        .entityUrl(data.entityUrl)
+        .baseUrl(data.baseUrl);
     },
     splitUrlParameter : function(url){
       var paramStr = host.url.getParameter(url);
@@ -1780,33 +1781,9 @@ var tallybook = tallybook || {};
       return new ActionGroup($grpEle);
   };
 
-  var EntityModalOptions = {
-    postSetUrlContent:function(content, _modal){
-      var mform = host.entity.form.findFirstFromPage(content);
-      mform.inModal(_modal);
-      mform.fill();
-      mform.setSubmitHandler(_modal.formSubmitHandlers);
-      _modal._doSetTitle(mform.fullAction(true));
-    }
-  }
-  var Modal = host.modal;
-  function EntityModal(options){
-    var newOptions = $.extend({}, EntityModalOptions, options);
-    var getargs = Array.prototype.slice.call(arguments);getargs[0] = newOptions;
-    Modal.apply(this, getargs);
-    this.formSubmitHandlers = {};
-  }
-  EntityModal.prototype = Object.create(Modal.prototype, {
-    constructor:{value:EntityModal},
-    setFormSubmitHandlers:{value:function(handlers){
-      this.formSubmitHandlers = handlers;
-    }}
-  });
-
   host.entity = {
     actionGroup : ActionGroup,
     grid: GridControl,
-    modal: EntityModal,
     initOnDocReady: onDocReady
   };
 })(jQuery, tallybook);

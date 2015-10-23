@@ -88,8 +88,7 @@ var tallybook = tallybook || {};
             trueRadio[0].checked=val;
             falseRadio[0].checked=!val;
           }
-        }
-      },
+        }},
       html : {
         initializer:function(element, fieldInfo){
           var $editor = $('.html-editor', element).summernote({
@@ -103,7 +102,25 @@ var tallybook = tallybook || {};
         },
         set:function(element, val){
           $('.html-editor', element).code(val);
-        }}
+        }},
+      foreign_key : {
+        initializer:function(element, fieldInfo, formData){
+          var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
+          element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
+        },
+        get:function(element){
+          return $('.html-editor', element).code();
+        },
+        set:function(element, val){
+          var hasVal = !!val;
+          var varStr = "";
+          if(hasVal){
+          }
+          element.find('.display-value-none-selected').toggle(!hasVal);
+          element.find('.display-value').toggle(hasVal).text(varStr);
+          element.find('.external-link-container').toggle(hasVal);
+        }
+      }
     },
     getHandlerByFormFieldType: function (formFieldType) {
       return this.handlers[formFieldType];
@@ -137,7 +154,7 @@ var tallybook = tallybook || {};
      * @param entity
      * @returns the html element
      */
-    createElementByFieldInfo: function (fieldInfo, entity, errors) {
+    createElementByFieldInfo: function (fieldInfo, entity, errors, formData) {
       var fieldType = fieldInfo.fieldType.toLowerCase();
       var fieldName = fieldInfo.name;
       var fieldErrors = null;
@@ -160,7 +177,7 @@ var tallybook = tallybook || {};
 
       var handler = FieldTemplates.getHandlerByFormFieldType(eleType);
       if(handler){
-        handler.initializer && handler.initializer(element, fieldInfo);
+        handler.initializer && handler.initializer(element, fieldInfo, formData);
         handler.set && handler.set(element, entity[fieldName]);
       }
       return element;
@@ -172,6 +189,8 @@ var tallybook = tallybook || {};
   }
   EntityDataAccess.prototype={
     element : function(){return this.form;},
+    entityUrl: ElementValueAccess.defineGetSet('entity-url','/'),
+    entityRecordUrl: ElementValueAccess.defineGetSet('entity-record-url','/'),
     currentAction : ElementValueAccess.defineGetSet('current-action', null),
     currentFriendlyAction : ElementValueAccess.defineGetSet('current-friendy-action', null)
   }
@@ -205,13 +224,13 @@ var tallybook = tallybook || {};
         $ele.data('content', val);
       }
     },
-    createGroupContent : function(groupInfo, fields, entity, errors){
+    createGroupContent : function(groupInfo, fields, entity, errors, formData){
       var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupInfo.name});
       var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
       $group.append($groupTitle);
       var fieldEles = groupInfo.fields.map(function(fieldName){
         var field = fields[fieldName];
-        var fieldEle = FieldTemplates.createElementByFieldInfo(field, entity, errors);
+        var fieldEle = FieldTemplates.createElementByFieldInfo(field, entity, errors, formData);
         if(!field.formVisible){
           fieldEle.hide();
         }
@@ -220,11 +239,11 @@ var tallybook = tallybook || {};
       $group.append(fieldEles);
       return $group;
     },
-    createTabContent : function (tabInfo, fields, entity, errors){
+    createTabContent : function (tabInfo, fields, entity, errors, formData){
       var _this = this;
       var $div = $('<div>', {'class':'entity-tab', 'data-tab-name': tabInfo.name});
       var $groups = tabInfo.groups.map(function(group, index, array){
-        var $group = _this.createGroupContent(group, fields, entity, errors);
+        var $group = _this.createGroupContent(group, fields, entity, errors, formData);
         return $group;
       });
       $div.html($groups);
@@ -271,13 +290,14 @@ var tallybook = tallybook || {};
       var data = this.entityData.processData(rawData);
       this.data = data;
       this._fillEntityContext(data);
+      this.dataAccess.entityUrl(data.entityUrl).entityRecordUrl(data.baseUrl);
       if(data.entity){
         var entity = data.entity.data;
         var errors = data.errors;
         var formInfo = this.entityData.formInfo(data);
         var tabHolder = new TabHolder(this.$tabholder);
         formInfo.tabs.forEach(function(tab, index, array){
-          var $div = _this.createTabContent(tab, formInfo.fields, entity, errors);
+          var $div = _this.createTabContent(tab, formInfo.fields, entity, errors, data);
           tabHolder.addTab(tab.name, tab.friendlyName, $div);
         });
         tabHolder.activeByIndexOrName(0);
@@ -359,6 +379,37 @@ var tallybook = tallybook || {};
       var ref = this.$form.serialize();
       var toRet = $.param(paramsObj);
       return toRet;
+    },
+    handleDelete : function () {
+      var _thisEntityForm = this;
+      var formdata = _thisEntityForm.form().serialize();
+      var delConfirmModal = host.modal.makeModal();
+      ModalStack.showModal(delConfirmModal);
+      delConfirmModal.setContentAsInteractiveDialog({
+        header: host.messages.delete,
+        message: host.messages.deleteConfirm,
+        callback: function () {
+          delConfirmModal.hide();
+          var doDelModal = host.modal.makeModal();
+          ModalStack.showModal(doDelModal);
+          var _url = $el.data('action-url') + '/delete';
+          doDelModal.setContentAsProcessing({
+            url: _url,
+            data: formdata,
+            type: 'POST',
+            header: host.messages.delete,
+            message: host.messages.deleting,
+            success: function (data, textStatus, jqXHR, opts) {
+              console.log('todo: Handle deleting error');
+              _thisEntityForm.defaultSubmitHandler(data);
+              doDelModal.hide();
+            },
+            error: function (data) {
+              console.log('todo: Handle deleting error');
+    }
+          });
+  }
+      });
     }
   }
 
@@ -467,6 +518,17 @@ var tallybook = tallybook || {};
       }
     });
 
+    $('body').on('click', '.to-one-lookup', function(event){
+      var $bt = $(this);
+      var entityForm = EntityForm.getEntityFormFromAny($bt);
+      if(entityForm){
+        var url = $bt.attr('data-select-url');
+        var doSelectModal = host.modal.makeModal({}, host.entity.gridModal);
+        ModalStack.showModal(doSelectModal);
+        doSelectModal.setContentByLink(url);
+      }
+    });
+
     $('body').on('submit', FormSymbols.ENTITY_FORM + ' form', function(event){
       var $form = $(this);
       var entityForm = EntityForm.getEntityFormFromAny($form);
@@ -497,7 +559,31 @@ var tallybook = tallybook || {};
     });
   }
 
+  var EntityFormModalOptions = {
+    postSetUrlContent:function(content, _modal){
+      var mform = host.entity.form.findFirstFromPage(content);
+      mform.inModal(_modal);
+      mform.fill();
+      mform.setSubmitHandler(_modal.formSubmitHandlers);
+      _modal._doSetTitle(mform.fullAction(true));
+    }
+  }
+  var Modal = host.modal;
+  function EntityFormModal(options){
+    var newOpts = $.extend({}, EntityFormModalOptions, options);
+    var getargs = Array.prototype.slice.call(arguments);getargs[0] = newOpts;
+    Modal.apply(this, getargs);
+    this.formSubmitHandlers = {};
+  }
+  EntityFormModal.prototype = Object.create(Modal.prototype, {
+    constructor:{value:EntityFormModal},
+    setFormSubmitHandlers:{value:function(handlers){
+      this.formSubmitHandlers = handlers;
+    }}
+  });
+
   host.entity.form = EntityForm;
+  host.entity.formModal = EntityFormModal;
 
 })(jQuery, this, tallybook);
 

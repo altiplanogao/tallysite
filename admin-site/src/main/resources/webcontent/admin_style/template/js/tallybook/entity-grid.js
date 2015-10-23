@@ -170,8 +170,8 @@ var tallybook = tallybook || {};
     }
     return existingGrid;
   }
-  ScrollGrid.findFirstOnPage = function () {
-    var $page = $(document);
+  ScrollGrid.findFirstOnPage = function ($page) {
+    var $page = $page || $(document);
     var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
     if($ctrls.length > 0){
       return new ScrollGrid.getScrollGrid($($ctrls[0]));
@@ -340,7 +340,30 @@ var tallybook = tallybook || {};
     });
   };
 
+  var EntityGridModalOptions = {
+    postSetUrlContent:function(content, _modal){
+      var mform = host.entity.scrollGrid.findFirstOnPage(content);
+//      mform.inModal(_modal);
+      mform.fill();
+      //mform.setSubmitHandler(_modal.formSubmitHandlers);
+      //_modal._doSetTitle(mform.fullAction(true));
+    }
+  }
+  var Modal = host.modal;
+  function EntityGridModal(options){
+    var newOpts = $.extend({}, EntityGridModalOptions);
+    var getargs = Array.prototype.slice.call(arguments);getargs[0] = newOpts;
+    Modal.apply(this, getargs);
+  }
+  EntityGridModal.prototype = Object.create(Modal.prototype, {
+    constructor:{value:EntityGridModal},
+    setFormSubmitHandlers:{value:function(handlers){
+      this.formSubmitHandlers = handlers;
+    }}
+  });
+
   host.entity.scrollGrid = ScrollGrid;
+  host.entity.gridModal = EntityGridModal;
 
 })(jQuery, this, tallybook);
 

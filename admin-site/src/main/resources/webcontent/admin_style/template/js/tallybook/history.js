@@ -189,43 +189,34 @@ var tallybook = tallybook || {};
         getPath : function(url){
             return websanovaJsUrl('path', url);
         },
-        getBaseUrl:function(baseUrl) {
-            if (baseUrl == null) {
-                baseUrl = window.location.href;
-            }
-
-            var urlAndParams = baseUrl.split('?');
-            baseUrl = urlAndParams[0];
-            return baseUrl;
+        getBaseUrl:function(url) {
+            url = url || window.location.href;
+            var urlAndParams = url.split('?');
+            return urlAndParams[0];
         },
-        getParameter:function(baseUrl) {
-            if (baseUrl == null) {
-                baseUrl = window.location.href;
-            }
-
-            return websanovaJsUrl('?', baseUrl);
+        getParameter:function(url) {
+            url = url || window.location.href;
+            return websanovaJsUrl('?', url);
         },
-        getParametersObject : function(baseUrl) {
-            return this.param.stringToData(this.getParameter(baseUrl));
+        getParametersObject : function(url) {
+            return this.param.stringToData(this.getParameter(url));
         },
 
-        getUrlWithParameter : function(param, value, state, baseUrl) {
-            return this._getUrlWithParameter(param, value, null , state, baseUrl);
+        getUrlWithParameter : function(param, value, state, url) {
+            return this._getUrlWithParameter(param, value, null , state, url);
         },
-        getUrlWithParameterObj : function(paramObj, state, baseUrl) {
-            return this._getUrlWithParameter(null, null, paramObj , state, baseUrl);
+        getUrlWithParameterObj : function(paramObj, state, url) {
+            return this._getUrlWithParameter(null, null, paramObj , state, url);
         },
-        getUrlWithParameterString : function(paramStr, state, baseUrl) {
+        getUrlWithParameterString : function(paramStr, state, url) {
             var paramObj = this.param.stringToData(paramStr);
-            return this.getUrlWithParameterObj(paramObj , state, baseUrl);
+            return this.getUrlWithParameterObj(paramObj , state, url);
         },
-        _getUrlWithParameter : function(param, value, paramObj, state, baseUrl) {
-            if (baseUrl == null) {
-                baseUrl = window.location.href;
-            }
+        _getUrlWithParameter : function(param, value, paramObj, state, url) {
+            url = url || window.location.href;
 
-            var urlAndParams = baseUrl.split('?');
-            baseUrl = urlAndParams[0];
+            var urlAndParams = url.split('?');
+            var baseUrl = urlAndParams[0];
             var urlParams = urlAndParams[1];
 
             // Parse the current url parameters into an object
