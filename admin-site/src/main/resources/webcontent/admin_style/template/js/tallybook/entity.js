@@ -40,6 +40,8 @@ var tallybook = tallybook || {};
     GRID_SPINNER__ITEM: 'i.spinner-item'
   };
 
+  var SelectedIndexChangedEvent = "selectedIndexChanged";
+
   var FilterTemplates = (function(){
     /**
      * Filter definition, define the initializer of filter, and how to access its value
@@ -385,6 +387,7 @@ var tallybook = tallybook || {};
         var $row = this._makeRowContainer(gridinfo, entity, entityIndex, cellCreationContext);
         var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
         $row.html($cells);
+        $row.data('entity', entity);
         this.$tr = $row;
         return this;
       }
@@ -1572,6 +1575,7 @@ var tallybook = tallybook || {};
 
       var selected = $row.is('.selected');
       dataaccess.selectedIndex(newindex);
+      this.element().trigger(SelectedIndexChangedEvent, [oldindex, newindex, $row.data('entity')]);
       var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
 
       var gridEle = GridControl.findContainerElement($row);

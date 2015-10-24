@@ -173,9 +173,9 @@ var tallybook = tallybook || {};
         $fieldLabel.append(errorSpans);
       }
       element.find('label.field-label').text(fieldInfo.friendlyName).toggleClass('required', !!fieldInfo.required);
-      var eleType = element.data('form-field-type');
+      var formFieldType = element.data('form-field-type');
 
-      var handler = FieldTemplates.getHandlerByFormFieldType(eleType);
+      var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
         handler.initializer && handler.initializer(element, fieldInfo, formData);
         handler.set && handler.set(element, entity[fieldName]);
@@ -412,6 +412,14 @@ var tallybook = tallybook || {};
       });
     }
   }
+  //EntityForm.static = {
+  //  getClosestFieldElement : function (anyEle) {
+  //    var fieldBox = anyEle.closest('.field-box');
+  //    //var formFieldType = fieldBox.attr('data-form-field-type');
+  //    //var formFieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
+  //    return fieldBox;
+  //  }
+  //}
 
   EntityForm.findFromPage= function($page){
     var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
@@ -524,6 +532,14 @@ var tallybook = tallybook || {};
       if(entityForm){
         var url = $bt.attr('data-select-url');
         var doSelectModal = host.modal.makeModal({}, host.entity.gridModal);
+        doSelectModal.setSelectReturn(true);
+        doSelectModal.addOnHideCallback(function(modal){
+          var entity = modal.selectedEntity();
+          var fieldBox = $bt.closest('.field-box');
+          var formFieldType = fieldBox.attr('data-form-field-type');
+          var formFieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
+          formFieldHandler.set(fieldBox, entity);
+        })
         ModalStack.showModal(doSelectModal);
         doSelectModal.setContentByLink(url);
       }

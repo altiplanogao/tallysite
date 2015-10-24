@@ -42,6 +42,7 @@
     this.$ele = null;
     this.options = $.extend({},ModalDefaultOptions,options);
     this.positiveHandler = null;
+    this.onHideCallbacks = [];
   };
   Modal.prototype={
     _template : (function () {
@@ -67,17 +68,17 @@
     _makeEmptyContent : function () {
       if(this.$ele != null){
         this.$ele.data(MODAL_DATA_KEY, null);
-        this.$ele.off('click', 'button.btn', this._buttonHandlerDelegator);
+        this.$ele.off('click', 'button.btn', this._buttonHandlerDelegate);
       }
       this.$ele = this._template();this.$ele.data(MODAL_DATA_KEY, this);
-      this.$ele.on('click', 'button.btn', this, this._buttonHandlerDelegator);
+      this.$ele.on('click', 'button.btn', this, this._buttonHandlerDelegate);
       return this;
     },
     _setupContextIfNot:function(){
       if(this.$ele == null)this._makeEmptyContent();
       return this;
     },
-    _buttonHandlerDelegator : function(event){
+    _buttonHandlerDelegate : function(event){
       var $ele = $(this);
       var _modal = event.data;
       Modal.prototype._buttonHandler.apply(_modal, arguments);
@@ -200,12 +201,24 @@
         }};
       host.ajax(ajaxOptions);
     },
+    addOnHideCallback: function (func, argsObj) {
+      this.onHideCallbacks.push({callback:func, args: argsObj});
+    },
+    clearOnHideCallbacks:function(){
+      this.onHideCallbacks = [];
+    },
     onShow:function(){
       // Allow custom callbacks
       this.options.preShow();
 
     },
     onHide:function(){
+      var _this = this;
+      this.onHideCallbacks.forEach(function(item, i, array){
+        var cb = item.callback;
+        var args = item.args;
+        if(cb){cb(_this, args);}
+      });
       // Allow custom callbacks
       this.options.preHide();
 
