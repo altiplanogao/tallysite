@@ -636,8 +636,10 @@ var tallybook = tallybook || {};
     event.preventDefault();
   })
 
-  host.entity.form = EntityForm;
-  host.entity.formModal = EntityFormModal;
+  host.entity = $.extend({}, host.entity, {
+    form : EntityForm,
+    formModal : EntityFormModal
+  });
 
 })(jQuery, this, tallybook);
 
