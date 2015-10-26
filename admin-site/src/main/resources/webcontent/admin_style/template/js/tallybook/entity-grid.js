@@ -52,7 +52,7 @@ var tallybook = tallybook || {};
         var template = $(GridSymbols.GRID_MAIN_TEMPLATE + ' .column-header-template').clone().removeClass('column-header-template');
         return function () {return template.clone();};
       })(),
-      makeElement : function(fieldInfo){
+      makeElement : function(fieldInfo, gridinfo){
         if (fieldInfo) {
           var $col = this._makeColumnHeader();
           $col.find('.col-name').text(fieldInfo.friendlyName);
@@ -76,7 +76,7 @@ var tallybook = tallybook || {};
               filterValEle.data("multi-value", true);
             }
 
-            var filter = FilterHandlerManager.createFilterByFieldInfo(fieldInfo);
+            var filter = FilterHandlerManager.createFilterByFieldInfo(fieldInfo, gridinfo);
             $col.find('.entity-filter').replaceWith(filter);
           } else {
             iconFilter.hide();
@@ -330,7 +330,7 @@ var tallybook = tallybook || {};
         var visibles = [];
         var visibleTotal = 0;
         var $cols = gridinfo.fields.map(function (fieldInfo, index, array) {
-          var $col = new ColumnCreator().makeElement(fieldInfo);
+          var $col = new ColumnCreator().makeElement(fieldInfo, gridinfo);
           var visi = (fieldInfo.gridVisible ? 1 : 0);
           visibles.push(visi);
           visibleTotal += visi;
@@ -760,7 +760,8 @@ var tallybook = tallybook || {};
   var EntityDataHandler = {
     processGridData: function (data) {
       var entities = data.entities;
-      var range = {lo: entities.startIndex, hi: entities.startIndex + entities.records.length};
+      var recordsLength = 0; if(entities.records!= null){recordsLength = entities.records.length;}
+      var range = {lo: entities.startIndex, hi: entities.startIndex + recordsLength};
       entities.range = range;
       entities.entityUrl = data.entityUrl;
 
@@ -772,6 +773,7 @@ var tallybook = tallybook || {};
 
       var entityInfos = data.info;
       var gridinfo = this.processGridInfo(entityInfos);
+      gridinfo.entityUrl = data.entityUrl;
 
       return data;
     },

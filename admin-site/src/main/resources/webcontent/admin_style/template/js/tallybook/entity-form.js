@@ -23,24 +23,58 @@ var tallybook = tallybook || {};
   //  data-support-field-types : string, email, phone, boolean
   //}
   var EmptyFieldHandler = {
-    initializer : function (element, fieldInfo) {},
-    getAsString : function(element) {
-      var rawGet = this.get(element);
-      if($.isPlainObject(rawGet)){
-        return JSON.stringify(rawGet);
-      }
-      return rawGet;
-    },
+    initializer : function (element, fieldInfo, formData) {},
     get : function (element) {return '';},
     set : function(element, val){}
-  }
+  };
+
   function FieldHandler(handler){
-    return $.extend({}, EmptyFieldHandler, handler);
-  }
+    this.innerhandler = $.extend({}, EmptyFieldHandler, handler);
+  };
+  FieldHandler.prototype= {
+    constructor : FieldHandler,
+    initializer : function (element, fieldInfo, formData) {return this.innerhandler.initializer(element, fieldInfo, formData);},
+    get : function (element) {return this.innerhandler.get(element);},
+    set : function(element, val){return this.innerhandler.set(element, val);},
+    limitDepth: function (obj, /*zero based*/currentDepth, depthLimit) {
+      if (currentDepth > depthLimit) return null;
+      var objc = {};
+      for (var p in obj) {
+        var v = obj[p];
+        if ($.isPlainObject(v)) {
+          var vc = this.limitDepth(v, currentDepth + 1, depthLimit);
+          objc[p] = vc;
+        } else if ($.isArray(v)) {
+          if (currentDepth + 1 >= depthLimit) {
+            objc[p] = null;
+          } else {
+            var vc = [];
+            v.forEach(function (i, t) {
+              var vci = this.limitDepth(t, currentDepth + 1, depthLimit);
+              vc.push(vci);
+            });
+            return vc;
+          }
+        } else {
+          objc[p] = v;
+        }
+      }
+      return objc;
+    },
+    getAsString: function (element) {
+      var rawGet = this.get(element);
+      if ($.isPlainObject(rawGet)) {
+        var depth1Obj = this.limitDepth(rawGet, 0, 1);
+        return JSON.stringify(depth1Obj);
+      }
+      return rawGet;
+    }
+  };
+
   var fieldNameInForm = function(fieldName){return 'entity[' + fieldName + ']';};
   var FieldTemplates = {
     handlers : { // keys are element-types
-      string : FieldHandler({
+      string : new FieldHandler({
         initializer: function (element, fieldInfo) {
           var fieldName = fieldInfo.name;
           var input = $('input', element).attr('name', fieldNameInForm(fieldName));
@@ -51,7 +85,7 @@ var tallybook = tallybook || {};
         set: function (element, val) {
           return element.find('input').val(val);
         }}),
-      enum : FieldHandler({
+      enum : new FieldHandler({
         initializer : function(element, fieldInfo){
           var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
           var options = fieldInfo.options;
@@ -70,7 +104,7 @@ var tallybook = tallybook || {};
           var optionsContainer = $('select.options', element);
           return  optionsContainer.val(val);
         }}),
-      boolean : FieldHandler({
+      boolean : new FieldHandler({
         initializer : function (element, fieldInfo) {
           var fieldName = fieldInfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
@@ -99,7 +133,7 @@ var tallybook = tallybook || {};
             falseRadio[0].checked=!val;
           }
         }}),
-      html : FieldHandler({
+      html : new FieldHandler({
         initializer:function(element, fieldInfo){
           var $editor = $('.html-editor', element).summernote({
             height : 150,
@@ -113,7 +147,7 @@ var tallybook = tallybook || {};
         set:function(element, val){
           $('.html-editor', element).code(val);
         }}),
-      foreign_key : FieldHandler({
+      foreign_key : new FieldHandler({
         initializer:function(element, fieldInfo, formData){
           var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);

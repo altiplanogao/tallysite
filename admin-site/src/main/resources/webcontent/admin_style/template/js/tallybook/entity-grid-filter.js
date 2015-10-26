@@ -6,6 +6,7 @@ var tallybook = tallybook || {};
   var GridSymbols = {
     GRID_MAIN_TEMPLATE: ".template.grid-template"
   }
+  var ModalStack = host.modal.stack;
 
   var FilterEventHandler = {
     inputChangeHandler: function (e) {
@@ -35,6 +36,34 @@ var tallybook = tallybook || {};
       var header = $el.closest('.column-header.dropdown');
       var $filter = header.find('.entity-filter');
       FilterHandlerManager.setValue($filter, '');
+    },
+    toOneEntityBtnHandler : function (e) {
+      var $el = $(e.currentTarget);
+      var header = $el.closest('.column-header.dropdown');
+      var $filter = header.find('.entity-filter');
+      if($filter.size() == 0)
+        return;
+      var url = $el.attr('data-select-url');
+      var fieldFriendlyName = $el.attr('data-field-friendly-name');
+      var doSelectModal = host.modal.makeModal({target: fieldFriendlyName}, host.entity.gridModal);
+      doSelectModal.addOnHideCallback(function(modal){
+        var entity = modal.selectedEntity();
+        if(entity == null)
+          return;
+        var displayField = $el.attr('data-display-field');
+        var idField = $el.attr('data-id-field');
+        var id = entity[idField];
+        var name = entity[displayField];
+        var handler = host.entity.filterHandlerManager.getHandler('foreignkey');
+        handler.addEntity($filter, id, name);
+      })
+      ModalStack.showModal(doSelectModal);
+      doSelectModal.setContentByLink(url);
+    },
+    dropEntityBtnHandler : function (e) {
+      var $el = $(e.currentTarget);
+      var chosen = $el.closest('.chosen-entity');
+      chosen.remove();
     }
   }
 
@@ -137,6 +166,61 @@ var tallybook = tallybook || {};
               val = (val == 'true');
               trueRadio[0].checked=val;
               falseRadio[0].checked=!val;
+            }}}),
+        foreignkey : FilterHandler({
+          initializer : function (filter, fieldInfo, gridinfo){
+            var fieldFriendlyName = fieldInfo.friendlyName;
+            var selectUrl = host.url.connectUrl(gridinfo.entityUrl, fieldInfo.name, 'select');
+            var lookup = filter.find('.lookup-entity');
+            lookup.attr({'data-field-name':fieldInfo.name,
+              'data-field-friendly-name':fieldInfo.friendlyName,
+              'data-display-field':fieldInfo.displayFieldName,
+              'data-id-field':fieldInfo.idFieldName,
+              'data-select-url':selectUrl
+            });
+            filter.attr('data-entity-type', fieldInfo.entityType);
+            lookup.find('.with').text(fieldFriendlyName);
+          },
+          //get: ui value -> string; set: string -> ui value
+          get: function (filter){
+            var $chosens = filter.find('.chosen-entity');
+            if($chosens.length == 0)
+              return '';
+            var chosenArray = [];
+            $chosens.each(function(i,t){
+              var $t = $(t);
+              var id = $t.attr('data-entity-id');
+              var name = $t.find('.entity-name').text();
+              var obj = {id:id, name : name};
+              chosenArray.push(obj);
+            });
+            return JSON.stringify(chosenArray);
+          },
+          set: function ($filter, val){
+            var $chosens = $filter.find('.chosen-entity');
+            $chosens.remove();
+            if(null == val || '' == val)
+              return;
+            var arr = JSON.parse(val);
+            arr.forEach(function(t,i){
+              var id = t.id;
+              var name = t.name;
+              this.addEntity($filter, id, name);
+            });
+          },
+          addEntity:function($filter, id, name){
+            var $chosens = $filter.find('.chosen-entities');
+            var exist = $chosens.find('.chosen-entity[data-entity-id='+id+']').length > 0;
+            if(!exist){
+              var entityType = $filter.attr('data-entity-type');
+              var url = host.url.connectUrl('/',entityType, id); 
+              var newEle = $('<div class="chosen-entity" data-entity-id=""><i class="fa fa-times-circle drop-entity"></i><span class="entity-name"></span></div>');
+              var a = $('<a class="entity-form-modal-view" href=""><i class="fa fa-external-link"></i></a>').attr('href', url);
+              newEle.append(a);
+
+              newEle.attr('data-entity-id', id);
+              newEle.find('.entity-name').text(name);
+              $chosens.append(newEle);
             }
           }})
       },
@@ -160,7 +244,7 @@ var tallybook = tallybook || {};
           return filterTmplt.clone();
         }
       })(),
-      createFilterByFieldInfo : function(fieldInfo){
+      createFilterByFieldInfo : function(fieldInfo, gridinfo){
         var fieldType = fieldInfo.fieldType.toLowerCase();
         var filter = FilterHandlerManager._getFilterTemplate(fieldType);
         var filterType = filter.data('filter-type');
@@ -169,7 +253,7 @@ var tallybook = tallybook || {};
 
         var fHandler = this._handlers[filterType];
         if(fHandler){
-          fHandler.initializer && fHandler.initializer(filter, fieldInfo);
+          fHandler.initializer && fHandler.initializer(filter, fieldInfo, gridinfo);
         }
         return filter;
       },
@@ -194,11 +278,15 @@ var tallybook = tallybook || {};
         $row.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterEventHandler.inputChangeHandler);
         $row.on('click', '.entity-filter span.input-element i.embed-delete', FilterEventHandler.inputDelClickHandler);
         $row.on('click', '.entity-filter .filter-reset-button', FilterEventHandler.resetFilterHandler);
+        $row.on('click', '.entity-filter .lookup-entity', FilterEventHandler.toOneEntityBtnHandler);
+        $row.on('click', '.entity-filter .chosen-entities .drop-entity', FilterEventHandler.dropEntityBtnHandler);
       },
       unbindEventsOnFilterRow : function($row){
         $row.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterEventHandler.inputChangeHandler);
         $row.off('click', '.entity-filter span.input-element i.embed-delete', FilterEventHandler.inputDelClickHandler);
         $row.off('click', '.entity-filter .filter-reset-button', FilterEventHandler.resetFilterHandler);
+        $row.off('click', '.entity-filter .lookup-entity', FilterEventHandler.toOneEntityBtnHandler);
+        $row.off('click', '.entity-filter .chosen-entities .drop-entity', FilterEventHandler.dropEntityBtnHandler);
       }
     }
   })();

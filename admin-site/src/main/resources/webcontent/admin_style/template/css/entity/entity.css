@@ -39,9 +39,12 @@ section#contentContainer ol.breadcrumb li:last-child > span{
     /* padding-right: 6px; */
 }
 .action-group .action-control,
-.action-group .action-control .btn{
+.action-group .action-control .btn {
     display: inline-block;
     padding-bottom: 2px;
     padding-top: 2px;
+}
 
+a.entity-form-modal-view{
+    margin-left: 5px;
 }

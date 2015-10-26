@@ -82,7 +82,7 @@
   </p>
 
   <div th:fragment="filters-template">
-    <table class="entity-filters-table show-filter">
+    <table class="entity-filters-table show-filter" th:inline="text">
       <thead>
       <tr class="filters-table-row">
         <th style="width: 20%;">Filter Type</th>
@@ -100,7 +100,7 @@
               <div class="filter-fields" data-action="">
 
                 <div class="text-filter-control">
-                  <button class="filter-button btn btn-info" th:inline="text">
+                  <button class="filter-button btn btn-info">
                     <i class="fa fa-filter"></i>
                   </button><span class="input-line">
                 <span class="input-element">
@@ -174,7 +174,7 @@
               data-support-field-types="boolean">
             <li>
               <div class="filter-fields" data-action="">
-                <div class="option-filter-control" th:inline="text">
+                <div class="option-filter-control">
                   <label class="option">
                     <input type="radio" name="radio-name-placeholder" value="true"/>
                     <span>[[#{general.boolean.true}]]</span>
@@ -213,6 +213,35 @@
                   </div>
                   <hr/>
                   <div class="bottom-control"  th:inline="text">
+                    <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
+                    <button class="filter-button btn btn-info">
+                      <i class="fa fa-filter"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr class="filters-table-row">
+        <td>foreignKey</td>
+        <td>
+          <ul class="entity-filter foreign-key-filter no-hover"
+              data-filter-type="foreignkey"
+              data-support-field-types="foreign_key, external_foreign_key">
+            <li>
+              <div class="filter-fields" data-action="">
+                <div class="choose-control">
+                  <div class="chosen-entities">
+                  </div>
+
+                  <hr/>
+                  <div class="bottom-control"  >
+                    <button class="btn btn-xs btn-default to-one-lookup lookup-entity" type="button" data-select-url="">
+                      <i class="fa fa-search"></i>
+                      <span class="" th:utext="#{general.lookup.with}"></span>
+                    </button>
                     <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
                     <button class="filter-button btn btn-info">
                       <i class="fa fa-filter"></i>

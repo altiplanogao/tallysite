@@ -178,3 +178,20 @@
 .entity-filter.option-filter .option span{
     font-weight: initial;
 }
+
+.entity-filter .lookup-entity{
+    margin-right: 10px;
+}
+
+.entity-filter .chosen-entity{
+    font-weight: initial;
+}
+
+.entity-filter .chosen-entity .drop-entity{
+    margin-right: 5px;
+    color: rgb(170, 170, 170);
+}
+
+.entity-filter .chosen-entity .drop-entity:active{
+    color: #111111;
+}

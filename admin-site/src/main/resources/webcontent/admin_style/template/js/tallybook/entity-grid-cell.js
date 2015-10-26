@@ -85,6 +85,23 @@ var tallybook = tallybook || {};
           }
           var $content = $('<a>', {'href' : 'tel:' + fieldvalue}).text(formatedPhone);
           return $content;
+        }),
+        new CellTemplateEntry('foreign_key', 'foreign_key', function(entity, fieldInfo, cellCreationContext) {
+          var fieldname = fieldInfo.name;
+          var displayFieldName = fieldInfo.displayFieldName;
+          var idFieldName = fieldInfo.idFieldName;
+          var entityType = fieldInfo.entityType;
+
+          var fieldvalue = entity[fieldname];
+          if(!!fieldvalue){
+            var idVal = fieldvalue[idFieldName];
+            var nameVal = fieldvalue[displayFieldName];
+            var url = host.url.connectUrl('/', entityType, idVal);
+            var $span = $('<span>').text(nameVal);
+            var $a = $('<a>', {class: "entity-form-modal-view", href : url}).append($('<i>', {class:"fa fa-external-link"}));
+            return $span.append($a);
+          }
+          return '';
         })
       ];
       var fieldType2CellType = {};

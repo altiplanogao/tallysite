@@ -246,6 +246,8 @@ var tallybook = tallybook || {};
         connectUrl : function (/* optional paths */) {
             var segs  =Array.prototype.slice.call(arguments);
             var result = segs.reduce(function (prev, cur, index, array) {
+                if(cur == null) cur = '';
+                if(typeof(cur) != 'string') cur = cur.toString();
                 if(cur == null || ('' == cur)){return prev;}
                 if(prev == null || ('' == prev)){return cur;}
                 var slash = (prev.endsWith('/')?1:0) +(cur.startsWith('/')?1:0);
