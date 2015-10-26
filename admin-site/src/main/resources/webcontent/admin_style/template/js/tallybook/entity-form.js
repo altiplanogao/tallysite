@@ -22,15 +22,25 @@ var tallybook = tallybook || {};
   //  data-form-field-type : string, integer-range, decimal range, foreign-key
   //  data-support-field-types : string, email, phone, boolean
   //}
-  var FieldHandler = {
+  var EmptyFieldHandler = {
     initializer : function (element, fieldInfo) {},
+    getAsString : function(element) {
+      var rawGet = this.get(element);
+      if($.isPlainObject(rawGet)){
+        return JSON.stringify(rawGet);
+      }
+      return rawGet;
+    },
     get : function (element) {return '';},
     set : function(element, val){}
+  }
+  function FieldHandler(handler){
+    return $.extend({}, EmptyFieldHandler, handler);
   }
   var fieldNameInForm = function(fieldName){return 'entity[' + fieldName + ']';};
   var FieldTemplates = {
     handlers : { // keys are element-types
-      string : {
+      string : FieldHandler({
         initializer: function (element, fieldInfo) {
           var fieldName = fieldInfo.name;
           var input = $('input', element).attr('name', fieldNameInForm(fieldName));
@@ -40,8 +50,8 @@ var tallybook = tallybook || {};
         },
         set: function (element, val) {
           return element.find('input').val(val);
-        }},
-      enum : {
+        }}),
+      enum : FieldHandler({
         initializer : function(element, fieldInfo){
           var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
           var options = fieldInfo.options;
@@ -59,8 +69,8 @@ var tallybook = tallybook || {};
         set : function(element, val){
           var optionsContainer = $('select.options', element);
           return  optionsContainer.val(val);
-        }},
-      boolean : {
+        }}),
+      boolean : FieldHandler({
         initializer : function (element, fieldInfo) {
           var fieldName = fieldInfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
@@ -88,8 +98,8 @@ var tallybook = tallybook || {};
             trueRadio[0].checked=val;
             falseRadio[0].checked=!val;
           }
-        }},
-      html : {
+        }}),
+      html : FieldHandler({
         initializer:function(element, fieldInfo){
           var $editor = $('.html-editor', element).summernote({
             height : 150,
@@ -102,8 +112,8 @@ var tallybook = tallybook || {};
         },
         set:function(element, val){
           $('.html-editor', element).code(val);
-        }},
-      foreign_key : {
+        }}),
+      foreign_key : FieldHandler({
         initializer:function(element, fieldInfo, formData){
           var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
@@ -113,12 +123,14 @@ var tallybook = tallybook || {};
           .attr('data-display-field', fieldInfo.displayFieldName);
         },
         get:function(element){
-          return $('.html-editor', element).code();
+          var val = element.data('entity');
+          return val;
         },
         set:function(element, val){
           var hasVal = !!val;
           var varStr = "";
           var link="";
+          element.data('entity', val);
           if(hasVal){
             var fkvContainer = element.find('.foreign-key-value-container');
             var entityType = fkvContainer.attr('data-entity-type');
@@ -131,8 +143,7 @@ var tallybook = tallybook || {};
           element.find('.display-value').toggle(hasVal).text(varStr);
           element.find('.external-link-container').toggle(hasVal).find('a')
           .attr('data-foreign-key-link', link).attr('href', link);
-        }
-      }
+        }})
     },
     getHandlerByFormFieldType: function (formFieldType) {
       return this.handlers[formFieldType];
@@ -261,19 +272,26 @@ var tallybook = tallybook || {};
       $div.html($groups);
       return $div;
     },
+    appendGlobalError : function(errorStr, dropExisting){
+      var $errors = this.$form.find('.entity-errors');
+      if($errors.length == 0){
+        $errors = $('<div class="entity-errors form-group has-error">').prependTo(this.$form);
+      }
+      if(dropExisting)$errors.empty();
+      if(errorStr) {
+        var $err = $('<span class="entity-error control-label">').text(errorStr);
+        $errors.append($err);
+      }
+      var errorCnt = $errors.children().length;
+      $errors.toggle(errorCnt > 0);
+    },
     _fillEntityContext : function (data){
+      this.appendGlobalError('', true);
       if(data.errors && data.errors.global){
-        var $errors = this.$form.find('.entity-errors');
-        if($errors.length == 0){
-          $errors = $('<div class="entity-errors form-group has-error">').prependTo(this.$form);
-        }
-        var hasError = false;
+        var _this = this;
         var $globalErrors = data.errors.global.map(function(item, i){
-          hasError = true;
-          return $('<span class="entity-error control-label">').text(item);
+          return _this.appendGlobalError(item);
         });
-
-        $errors.empty().append($globalErrors).toggle(hasError);
       }
 
       //<input type="hidden" id="ceilingEntityClassname" name="ceilingEntityClassname" value="org.broadleafcommerce.core.catalog.domain.ProductOption">
@@ -314,7 +332,12 @@ var tallybook = tallybook || {};
         });
         tabHolder.activeByIndexOrName(0);
       }
-
+      this.setupActionGroup();
+      this.initialized(true);
+    },
+    setupActionGroup : function () {
+      var _this = this;
+      var data = _this.data;
       var insideAg = ActionGroup.findChildActionGroup(this.$container);
       if(insideAg != null){
         insideAg.switchAllActions(false);
@@ -341,7 +364,6 @@ var tallybook = tallybook || {};
           //do nothing, just display the inside action group
         }
       }
-      this.initialized(true);
     },
     entityData :{
       processData : function(rawData){
@@ -380,12 +402,14 @@ var tallybook = tallybook || {};
         paramsObj[item.name] = item.value;
       });
       var $fieldBoxes = this.$form.find('.entity-box .field-box');
-      $fieldBoxes.map(function(i, item){
+      $fieldBoxes.each(function(i, item){
         var $item = $(item);
         var formFieldType = $item.data('form-field-type');
         var fieldName = $item.data('field-name');
         var fieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
-        paramsObj['entity['+fieldName+']'] = fieldHandler.get($item);
+        var pk = 'entity['+fieldName+']';
+        var pv = fieldHandler.getAsString($item);
+        paramsObj[pk] = pv;
       });
 
       var ref = this.$form.serialize();
@@ -571,7 +595,8 @@ var tallybook = tallybook || {};
           if(handler){
             handler.apply(entityForm, arguments);
           }else{
-            console.log('todo: Submit error not handled');
+            entityForm.setupActionGroup();
+            entityForm.appendGlobalError(errorThrown, true);
           }
         }
       });
