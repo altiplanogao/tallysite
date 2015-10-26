@@ -79,8 +79,8 @@ var tallybook = tallybook || {};
         enumeration : {
           initializer : function (filter, fieldInfo) {
             var $options = $('div.options', filter);
-            var optionsVals = fieldInfo.facets.Enum.options;
-            var optionsNames = fieldInfo.facets.Enum.friendlyNames;
+            var optionsVals = fieldInfo.options;
+            var optionsNames = fieldInfo.optionsFriendly;
             optionsVals.forEach(function(opv){
 //<label class="option"><input type="checkbox" name="gender" value="male"><span>Male</span></label>
               var opName = optionsNames[opv];
@@ -112,7 +112,7 @@ var tallybook = tallybook || {};
           }},
         boolean : {
           initializer : function (filter, fieldInfo){
-            var trOpts = fieldInfo.facets.Boolean.options;
+            var trOpts = fieldInfo.options;
             filter.find('input[type=radio]').attr({'name' : fieldInfo.name});
             filter.find('input[type=radio][value=true]+span').text(trOpts.t);
             filter.find('input[type=radio][value=false]+span').text(trOpts.f);
@@ -240,15 +240,15 @@ var tallybook = tallybook || {};
           return $content;
         }),
         new CellTemplateEntry('enumeration', 'enumeration', function(entity, fieldInfo, cellCreationContext){
-          var options = fieldInfo.facets.Enum.options;
-          var optionNames = fieldInfo.facets.Enum.friendlyNames;
+          var options = fieldInfo.options;
+          var optionNames = fieldInfo.optionsFriendly;
           var fieldname = fieldInfo.name;
           var fieldvalue = entity[fieldname];
           return optionNames[fieldvalue];
         }),
         new CellTemplateEntry('boolean', 'boolean', function(entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
-          var options = fieldInfo.facets.Boolean.options;
+          var options = fieldInfo.options;
           var fieldvalue = entity[fieldname];
           if(fieldvalue === "" || fieldvalue === null || fieldvalue === undefined)
             return '';

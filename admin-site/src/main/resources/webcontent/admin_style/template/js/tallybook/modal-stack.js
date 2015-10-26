@@ -155,10 +155,36 @@
       var $ele = this.$ele;
       var _modal = this;
 
-      host.ajax.get({url : link, headers : {RequestInSimpleView:'true'}}, function(data){
-        _modal._doSetUrlContent(data);
+      $ele.addClass('loading');
+      host.ajax.get({
+        timeout : 120000,
+        url : link,
+        headers : {RequestInSimpleView:'true'},
+        success: function(data, textStatus, jqXHR){
+          _modal._doSetUrlContent(data);
+          $ele.removeClass('loading');
+        },
+        error : function(jqXHR, textStatus, errorThrown){
+          var msg = textStatus;
+          var status = jqXHR.status;
+          var readyState = jqXHR.readyState;
+          var state = jqXHR.state();
+          if(readyState == 0 && status == 0){
+            if(textStatus == 'timeout'){
+              msg = host.messages.error_network_timeout;
+            }else{
+              msg = host.messages.error_network;
+            }
+          }
+
+          _modal.setContentAsMessage({
+            header:host.messages.error,
+            message:msg
+          });
+          $ele.removeClass('loading');
+        }
       });
-      $ele.removeClass('loading');
+//      $ele.removeClass('loading');
       return this;
     },
     setContentAsMessage : function(options) {
@@ -196,8 +222,8 @@
         success:function(data, textStatus, jqXHR, opts){
           if(options.success) options.success(data, textStatus, jqXHR, opts);
         },
-        error : function(){
-          if(options.error) options.error();
+        error : function(jqXHR, textStatus, errorThrown){
+          if(options.error) options.error(jqXHR, textStatus, errorThrown);
         }};
       host.ajax(ajaxOptions);
     },

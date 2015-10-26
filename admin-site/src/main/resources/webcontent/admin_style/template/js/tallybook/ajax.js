@@ -17,6 +17,11 @@ var tallybook = tallybook || {};
   }
 
   function preSuccessHandler(data, textStatus, jqXHR, opts){
+    if('true' == jqXHR.getResponseHeader('loginpage')){
+      location.reload();
+      opts.skipAjaxDefaultHandler = true;
+      return;
+    }
 
   }
   function postSuccessHandler(data, textStatus, jqXHR, opts){
@@ -50,8 +55,12 @@ var tallybook = tallybook || {};
       var oldSuccess = mOpts.success;
       var newSuccess = function(data, textStatus, jqXHR){
         preSuccessHandler(data, textStatus, jqXHR, mOpts);
-        oldSuccess(data, textStatus, jqXHR, mOpts);
-        postSuccessHandler(data, textStatus, jqXHR, mOpts);
+        if(!mOpts.skipAjaxDefaultHandler){
+          oldSuccess(data, textStatus, jqXHR, mOpts);
+        }
+        if(!mOpts.skipAjaxDefaultHandler){
+          postSuccessHandler(data, textStatus, jqXHR, mOpts);
+        }
       };
       newSuccess.enhanced = true;
       mOpts.success = newSuccess;
@@ -61,8 +70,12 @@ var tallybook = tallybook || {};
       var oldError = mOpts.error;
       var newError = function(jqXHR, textStatus, errorThrown){
         preErrorHandler(jqXHR, textStatus, errorThrown, mOpts);
-        oldError(jqXHR, textStatus, errorThrown, mOpts);
-        postErrorHandler(jqXHR, textStatus, errorThrown, mOpts);
+        if(!mOpts.skipAjaxDefaultHandler){
+          oldError(jqXHR, textStatus, errorThrown, mOpts);
+        }
+        if(!mOpts.skipAjaxDefaultHandler){
+          postErrorHandler(jqXHR, textStatus, errorThrown, mOpts);
+        }
       }
       newError.enhanced = true;
       mOpts.error = newError;

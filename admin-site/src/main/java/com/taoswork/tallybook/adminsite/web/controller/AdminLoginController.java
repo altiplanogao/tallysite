@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Gao Yuan on 2015/4/22.
@@ -36,7 +38,8 @@ public class AdminLoginController extends BaseController {
     protected static String resetPasswordView  = "login/resetPassword";
 
     @RequestMapping(value={"/login"}, method=RequestMethod.GET)
-    public String baseLogin() {
+    public String baseLogin(HttpServletRequest request, HttpServletResponse response) {
+        response.addHeader("loginpage", "true");
         return loginView;
     }
 

@@ -341,32 +341,33 @@ var tallybook = tallybook || {};
   };
 
   var EntityGridModalOptions = {
+    model:'select',
+    //target:'xxxx',
     postSetUrlContent:function(content, _modal){
       var sgrid = host.entity.scrollGrid.findFirstOnPage(content);
       sgrid.fill();
       sgrid.element().on('selectedIndexChanged', function(event, oldidx, newidx, entity){
         _modal._selectedEntity = entity;
         if(entity){
-          if(_modal.selectReturn){
+          if(_modal.options.model == 'select'){
             _modal.hide();
           }
         }
       });
-      //mform.setSubmitHandler(_modal.formSubmitHandlers);
-      //_modal._doSetTitle(mform.fullAction(true));
+      _modal._doSetTitle(host.messages.select + ' ' + _modal.options.target);
     }
   }
   var Modal = host.modal;
   function EntityGridModal(options){
-    var newOpts = $.extend({}, EntityGridModalOptions);
+    var newOpts = $.extend({}, EntityGridModalOptions, options);
     var getargs = Array.prototype.slice.call(arguments);getargs[0] = newOpts;
     Modal.apply(this, getargs);
     this._selectedEntity = null;
   }
   EntityGridModal.prototype = Object.create(Modal.prototype, {
     constructor:{value:EntityGridModal},
-    setSelectReturn : {value:function(val){this.selectReturn = !!val;}},
-    selectedEntity : {value:function(){return this._selectedEntity;}},
+    selectedEntity : {value:function(){
+      return this._selectedEntity;}},
     setFormSubmitHandlers:{value:function(handlers){
       this.formSubmitHandlers = handlers;
     }}

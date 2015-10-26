@@ -44,8 +44,8 @@ var tallybook = tallybook || {};
       enum : {
         initializer : function(element, fieldInfo){
           var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
-          var options = fieldInfo.facets.Enum.options;
-          var friendlyNames = fieldInfo.facets.Enum.friendlyNames;
+          var options = fieldInfo.options;
+          var friendlyNames = fieldInfo.optionsFriendly;
           var opElems = options.map(function(t){
             var $opE = $('<option>', {'value' : t} ).text(friendlyNames[t]);
             return $opE;
@@ -65,7 +65,7 @@ var tallybook = tallybook || {};
           var fieldName = fieldInfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
 
-          var trOpts = fieldInfo.facets.Boolean.options;
+          var trOpts = fieldInfo.options;
           element.find('input[type=radio][value=true]+span').text(trOpts.t);
           element.find('input[type=radio][value=false]+span').text(trOpts.f);
         },
@@ -107,6 +107,10 @@ var tallybook = tallybook || {};
         initializer:function(element, fieldInfo, formData){
           var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
+          var fkvContainer = element.find('.foreign-key-value-container');
+          fkvContainer.attr('data-entity-type',fieldInfo.entityType)
+          .attr('data-id-field', fieldInfo.idFieldName)
+          .attr('data-display-field', fieldInfo.displayFieldName);
         },
         get:function(element){
           return $('.html-editor', element).code();
@@ -114,11 +118,19 @@ var tallybook = tallybook || {};
         set:function(element, val){
           var hasVal = !!val;
           var varStr = "";
+          var link="";
           if(hasVal){
+            var fkvContainer = element.find('.foreign-key-value-container');
+            var entityType = fkvContainer.attr('data-entity-type');
+            var displayField = fkvContainer.attr('data-display-field');
+            var idField = fkvContainer.attr('data-id-field');
+            varStr = val[displayField];
+            link='/' + host.url.connectUrl(entityType, '' + val[idField]);
           }
           element.find('.display-value-none-selected').toggle(!hasVal);
           element.find('.display-value').toggle(hasVal).text(varStr);
-          element.find('.external-link-container').toggle(hasVal);
+          element.find('.external-link-container').toggle(hasVal).find('a')
+          .attr('data-foreign-key-link', link).attr('href', link);
         }
       }
     },
@@ -406,20 +418,12 @@ var tallybook = tallybook || {};
             },
             error: function (data) {
               console.log('todo: Handle deleting error');
-    }
+            }
           });
-  }
+        }
       });
     }
   }
-  //EntityForm.static = {
-  //  getClosestFieldElement : function (anyEle) {
-  //    var fieldBox = anyEle.closest('.field-box');
-  //    //var formFieldType = fieldBox.attr('data-form-field-type');
-  //    //var formFieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
-  //    return fieldBox;
-  //  }
-  //}
 
   EntityForm.findFromPage= function($page){
     var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
@@ -516,23 +520,13 @@ var tallybook = tallybook || {};
       }
     });
 
-    $('body').on('click',  '.submit-entity', function(event){
-      var $bt = $(this);
-      var entityForm = EntityForm.getEntityFormFromAny($bt);
-      if(entityForm){
-        entityForm.form().submit();
-        var ag = ActionGroup.findParentActionGroup($bt);
-        ag.switchSaveAction(true);
-      }
-    });
-
     $('body').on('click', '.to-one-lookup', function(event){
       var $bt = $(this);
       var entityForm = EntityForm.getEntityFormFromAny($bt);
       if(entityForm){
+        var fieldName = $bt.closest('.field-box').find('.field-label').text();
         var url = $bt.attr('data-select-url');
-        var doSelectModal = host.modal.makeModal({}, host.entity.gridModal);
-        doSelectModal.setSelectReturn(true);
+        var doSelectModal = host.modal.makeModal({target: fieldName}, host.entity.gridModal);
         doSelectModal.addOnHideCallback(function(modal){
           var entity = modal.selectedEntity();
           var fieldBox = $bt.closest('.field-box');
@@ -542,6 +536,16 @@ var tallybook = tallybook || {};
         })
         ModalStack.showModal(doSelectModal);
         doSelectModal.setContentByLink(url);
+      }
+    });
+
+    $('body').on('click',  '.submit-entity', function(event){
+      var $bt = $(this);
+      var entityForm = EntityForm.getEntityFormFromAny($bt);
+      if(entityForm){
+        entityForm.form().submit();
+        var ag = ActionGroup.findParentActionGroup($bt);
+        ag.switchSaveAction(true);
       }
     });
 
@@ -597,6 +601,15 @@ var tallybook = tallybook || {};
       this.formSubmitHandlers = handlers;
     }}
   });
+
+  $('body').on('click', 'a.entity-form-modal-view', function (event) {
+    var a = event.currentTarget;
+    var url = a.href;
+    var modal = host.modal.makeModal({}, host.entity.formModal);
+    ModalStack.showModal(modal);
+    modal.setContentByLink(url);//set mod
+    event.preventDefault();
+  })
 
   host.entity.form = EntityForm;
   host.entity.formModal = EntityFormModal;
