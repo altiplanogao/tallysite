@@ -71,12 +71,8 @@ var tallybook = tallybook || {};
           if (fieldInfo.gridVisible && fieldInfo.supportFilter) {
             var filterValEle = $col.find('.filter-value');
             filterValEle.attr('name', fieldInfo.name);
-            if(fieldInfo.fieldType == "ENUMERATION"){
-              filterValEle.attr("data-multi-value", "true");
-              filterValEle.data("multi-value", true);
-            }
 
-            var filter = FilterHandlerManager.createFilterByFieldInfo(fieldInfo, gridinfo);
+            var filter = FilterHandlerManager.createFilterByFieldInfo(fieldInfo, gridinfo, filterValEle);
             $col.find('.entity-filter').replaceWith(filter);
           } else {
             iconFilter.hide();
@@ -834,8 +830,12 @@ var tallybook = tallybook || {};
         var val = $item.val();
         if(includeAll || val){
           if($item.data("multi-value")){
-            var vals = val.split(',');
+            //var vals = val.split(',');
+            var vals = JSON.parse(val);
             vals.forEach(function(singleVal, index, array){
+              if($.isPlainObject(singleVal)){
+                singleVal = JSON.stringify(singleVal);
+              }
               var $tmpInput = $('<input>', {'name': $item.attr('name'), 'value' : singleVal});
               inputsWithVal.push($tmpInput[0]);
             });
@@ -968,7 +968,7 @@ var tallybook = tallybook || {};
         var sortkeyname = 'sort_' + keyname;
         var filterVal = paramObj[keyname];
         if(filterValEle.data('multi-value') && (!!filterVal)){
-          filterVal = filterVal.join(',');
+          filterVal = JSON.stringify(filterVal);
         }
 
         handlers.SortHandler.orders.setOrder($item, paramObj[sortkeyname]);

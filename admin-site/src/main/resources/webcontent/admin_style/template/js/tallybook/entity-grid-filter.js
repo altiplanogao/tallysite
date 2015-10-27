@@ -107,7 +107,10 @@ var tallybook = tallybook || {};
             return entityFilter.find('.filter-input').val(val);
           }}),
         enumeration : FilterHandler({
-          initializer : function (filter, fieldInfo) {
+          initializer : function (filter, fieldInfo, gridInfo, valElem) {
+              valElem.attr("data-multi-value", "true");
+              valElem.data("multi-value", true);
+
             var $options = $('div.options', filter);
             var optionsVals = fieldInfo.options;
             var optionsNames = fieldInfo.optionsFriendly;
@@ -126,12 +129,12 @@ var tallybook = tallybook || {};
             var checkedVals = [];
             $options.filter(function(index, item){return item.checked;})
               .each(function(index, item){checkedVals.push($(item).attr('value'));});
-            return checkedVals.join(',');
+            return JSON.stringify(checkedVals);
           },
           set: function (entityFilter, val) {
             var selectedVals = [];
             if(val){
-              selectedVals = val.split(',');
+              selectedVals = JSON.parse(val);
             }
             var $options = $('.options .option input[type=checkbox]', entityFilter);
             $options.each(function(index, item){
@@ -168,7 +171,10 @@ var tallybook = tallybook || {};
               falseRadio[0].checked=!val;
             }}}),
         foreignkey : FilterHandler({
-          initializer : function (filter, fieldInfo, gridinfo){
+          initializer : function (filter, fieldInfo, gridinfo, valElem){
+            valElem.attr("data-multi-value", "true");
+            valElem.data("multi-value", true);
+
             var fieldFriendlyName = fieldInfo.friendlyName;
             var selectUrl = host.url.connectUrl(gridinfo.entityUrl, fieldInfo.name, 'select');
             var lookup = filter.find('.lookup-entity');
@@ -191,8 +197,7 @@ var tallybook = tallybook || {};
               var $t = $(t);
               var id = $t.attr('data-entity-id');
               var name = $t.find('.entity-name').text();
-              var obj = {id:id, name : name};
-              chosenArray.push(obj);
+              chosenArray.push({id:id, name : name});
             });
             return JSON.stringify(chosenArray);
           },
@@ -201,11 +206,17 @@ var tallybook = tallybook || {};
             $chosens.remove();
             if(null == val || '' == val)
               return;
-            var arr = JSON.parse(val);
-            arr.forEach(function(t,i){
+            var selectedVals = [];
+            if(val){
+              selectedVals = JSON.parse(val);
+            }
+            var _this = this;
+//            var arr = JSON.parse(val);
+            selectedVals.forEach(function(tj,i){
+              var t = JSON.parse(tj);
               var id = t.id;
               var name = t.name;
-              this.addEntity($filter, id, name);
+              _this.addEntity($filter, id, name);
             });
           },
           addEntity:function($filter, id, name){
@@ -244,7 +255,7 @@ var tallybook = tallybook || {};
           return filterTmplt.clone();
         }
       })(),
-      createFilterByFieldInfo : function(fieldInfo, gridinfo){
+      createFilterByFieldInfo : function(fieldInfo, gridinfo, valElem){
         var fieldType = fieldInfo.fieldType.toLowerCase();
         var filter = FilterHandlerManager._getFilterTemplate(fieldType);
         var filterType = filter.data('filter-type');
@@ -253,7 +264,7 @@ var tallybook = tallybook || {};
 
         var fHandler = this._handlers[filterType];
         if(fHandler){
-          fHandler.initializer && fHandler.initializer(filter, fieldInfo, gridinfo);
+          fHandler.initializer && fHandler.initializer(filter, fieldInfo, gridinfo, valElem);
         }
         return filter;
       },
