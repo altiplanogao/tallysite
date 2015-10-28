@@ -13,7 +13,8 @@
     height: 28px;
 }
 .entity-form-container .tab-content {
-    padding: 8px 3px 0;
+    padding: 8px 0px 0;
+    overflow-y: auto;
 }
 
 .entity-form-container fieldset.entity-group {
@@ -23,6 +24,7 @@
     padding: 5px 10px 10px;
     background-color: hsl(0, 0%, 98%);
     text-align: start;
+    margin-bottom: 15px;
 }
 
 .entity-form-container .entity-group > legend{
@@ -70,5 +72,5 @@
 }
 
 .entity-form-container .field-label-group .field-label.required:after{
-    content: "*";
+    content: " *";
 }

@@ -42,7 +42,12 @@ var tallybook = tallybook || {};
       for (var p in obj) {
         var v = obj[p];
         if ($.isPlainObject(v)) {
-          var vc = this.limitDepth(v, currentDepth + 1, depthLimit);
+          var vc = null;
+          if (currentDepth + 1 >= depthLimit) {
+            vc = null;
+          }else{
+            vc = this.limitDepth(v, currentDepth + 1, depthLimit);
+          }
           objc[p] = vc;
         } else if ($.isArray(v)) {
           if (currentDepth + 1 >= depthLimit) {
@@ -218,7 +223,6 @@ var tallybook = tallybook || {};
       if(errors && errors.fields){
         fieldErrors = errors.fields[fieldName];
       }
-      var fieldBasicFacet = (fieldInfo.facets && fieldInfo.facets.Basic) || {};
       var element = FieldTemplates._getFieldTemplate(fieldType).attr({'data-field-name': fieldName,'data-field-type': fieldType});
       var $fieldLabel = element.find('.field-label-group');
       if(fieldErrors){
@@ -235,7 +239,7 @@ var tallybook = tallybook || {};
       var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
         handler.initializer && handler.initializer(element, fieldInfo, formData);
-        handler.set && handler.set(element, entity[fieldName]);
+        handler.set && handler.set(element, host.entity.getProperty(entity, fieldName));
       }
       return element;
     }
@@ -368,6 +372,7 @@ var tallybook = tallybook || {};
       }
       this.setupActionGroup();
       this.initialized(true);
+      this.element().trigger('filled');
     },
     setupActionGroup : function () {
       var _this = this;
@@ -641,8 +646,15 @@ var tallybook = tallybook || {};
   var EntityFormModalOptions = {
     postSetUrlContent:function(content, _modal){
       var mform = host.entity.form.findFirstFromPage(content);
+      var mformEle = mform.element();
+      mformEle.off('filled', EntityFormModal.filledHandler);
+      mformEle.on('filled',_modal, EntityFormModal.filledHandler);
       mform.inModal(_modal);
+      _modal.addOnHideCallback(function () {
+        mformEle.off('filled', EntityFormModal.filledHandler);
+      });
       mform.fill();
+
       mform.setSubmitHandler(_modal.formSubmitHandlers);
       _modal._doSetTitle(mform.fullAction(true));
     }
@@ -660,6 +672,20 @@ var tallybook = tallybook || {};
       this.formSubmitHandlers = handlers;
     }}
   });
+
+  EntityFormModal.filledHandler = function(e){
+    var _modal = e.data;
+    var modalBody = _modal.element().find('.modal-body');
+    var modalBodyHeight = modalBody.height();
+    var contentBody = modalBody.find('.tab-content');
+    var tabHeight = modalBody.find('.tab-holder .nav-tabs').outerHeight();
+    var errorHeight = modalBody.find('.entity-errors').outerHeight();
+    var heightRemain = modalBodyHeight - tabHeight - errorHeight;
+    var contentBodyHeight = contentBody.height();
+    if(contentBodyHeight > heightRemain){
+      contentBody.css('max-height', heightRemain);
+    }
+  }
 
   $('body').on('click', 'a.entity-form-modal-view', function (event) {
     var a = event.currentTarget;
