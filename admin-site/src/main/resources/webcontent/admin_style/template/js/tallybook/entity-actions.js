@@ -138,11 +138,15 @@ var tallybook = tallybook || {};
     return entityUrl + '/' + entity[idField];
   }
 
-  function getProperty(entity, propertyPath){
+  function entityProperty(entity, propertyPath){
     var pieces = propertyPath.split('.');
     var pro = entity;
-    pieces.forEach(function(t,i){
-      if(t){pro = pro[t];}
+    pieces.some(function(t,i){
+      if(t){
+        pro = pro[t];
+        if(pro == null)
+        return true;
+        }
     });
     return pro;
   }
@@ -150,6 +154,6 @@ var tallybook = tallybook || {};
   host.entity = $.extend({}, host.entity, {
     actionGroup : ActionGroup,
     makeUrl : makeUrl,
-    getProperty : getProperty
+    entityProperty : entityProperty
   });
 })(jQuery, tallybook);

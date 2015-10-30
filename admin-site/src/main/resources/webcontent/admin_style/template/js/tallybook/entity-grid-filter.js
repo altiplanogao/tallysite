@@ -7,6 +7,7 @@ var tallybook = tallybook || {};
     GRID_MAIN_TEMPLATE: ".template.grid-template"
   }
   var ModalStack = host.modal.stack;
+  var entityProperty = host.entity.entityProperty;
 
   var FilterEventHandler = {
     inputChangeHandler: function (e) {
@@ -52,8 +53,8 @@ var tallybook = tallybook || {};
           return;
         var displayField = $el.attr('data-display-field');
         var idField = $el.attr('data-id-field');
-        var id = entity[idField];
-        var name = entity[displayField];
+        var id = entityProperty(entity,idField);
+        var name = entityProperty(entity,displayField);
         var handler = host.entity.filterHandlerManager.getHandler('foreignkey');
         handler.addEntity($filter, id, name);
       })
@@ -246,7 +247,7 @@ var tallybook = tallybook || {};
           var $filter = $(fltr);
           var fldtypes = $filter.attr('data-support-field-types').split(',');
           fldtypes.forEach(function (fldtp) {
-            filterMap[fldtp.toLowerCase()] = $filter;
+            filterMap[fldtp.trim().toLowerCase()] = $filter;
           })
         });
         return function (fieldType) {

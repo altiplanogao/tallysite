@@ -180,6 +180,7 @@ var tallybook = tallybook || {};
           }
           element.find('.display-value-none-selected').toggle(!hasVal);
           element.find('.display-value').toggle(hasVal).text(varStr);
+          element.find('.drop-entity').toggle(hasVal);
           element.find('.external-link-container').toggle(hasVal).find('a')
           .attr('data-foreign-key-link', link).attr('href', link);
         }})
@@ -239,7 +240,7 @@ var tallybook = tallybook || {};
       var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
         handler.initializer && handler.initializer(element, fieldInfo, formData);
-        handler.set && handler.set(element, host.entity.getProperty(entity, fieldName));
+        handler.set && handler.set(element, host.entity.entityProperty(entity, fieldName));
       }
       return element;
     }
@@ -372,7 +373,7 @@ var tallybook = tallybook || {};
       }
       this.setupActionGroup();
       this.initialized(true);
-      this.element().trigger('filled');
+      this.element().trigger(EntityForm.event.filled);
     },
     setupActionGroup : function () {
       var _this = this;
@@ -487,6 +488,9 @@ var tallybook = tallybook || {};
       });
     }
   }
+  EntityForm.event={
+    filled:'filled'
+  }
 
   EntityForm.findFromPage= function($page){
     var $ctrls = $page.find(FormSymbols.ENTITY_FORM);
@@ -583,22 +587,27 @@ var tallybook = tallybook || {};
       }
     });
 
-    $('body').on('click', '.to-one-lookup', function(event){
+    $('body').on('click', '.entity-btn', function(event){
       var $bt = $(this);
       var entityForm = EntityForm.getEntityFormFromAny($bt);
       if(entityForm){
-        var fieldName = $bt.closest('.field-box').find('.field-label').text();
-        var url = $bt.attr('data-select-url');
-        var doSelectModal = host.modal.makeModal({target: fieldName}, host.entity.gridModal);
-        doSelectModal.addOnHideCallback(function(modal){
-          var entity = modal.selectedEntity();
-          var fieldBox = $bt.closest('.field-box');
-          var formFieldType = fieldBox.attr('data-form-field-type');
-          var formFieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
-          formFieldHandler.set(fieldBox, entity);
-        })
-        ModalStack.showModal(doSelectModal);
-        doSelectModal.setContentByLink(url);
+        var fieldBox = $bt.closest('.field-box');
+        var formFieldType = fieldBox.attr('data-form-field-type');
+        var formFieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
+        if($bt.hasClass('to-one-lookup')) {
+          var fieldName = $bt.closest('.field-box').find('.field-label').text();
+          var url = $bt.attr('data-select-url');
+          var doSelectModal = host.modal.makeModal({target: fieldName}, host.entity.gridModal);
+          doSelectModal.addOnHideCallback(function (modal) {
+            var entity = modal.selectedEntity();
+            formFieldHandler.set(fieldBox, entity);
+          })
+          ModalStack.showModal(doSelectModal);
+          doSelectModal.setContentByLink(url);
+        }
+        if($bt.hasClass('drop-entity')){
+          formFieldHandler.set(fieldBox, null);
+        }
       }
     });
 
@@ -647,11 +656,11 @@ var tallybook = tallybook || {};
     postSetUrlContent:function(content, _modal){
       var mform = host.entity.form.findFirstFromPage(content);
       var mformEle = mform.element();
-      mformEle.off('filled', EntityFormModal.filledHandler);
-      mformEle.on('filled',_modal, EntityFormModal.filledHandler);
+      mformEle.off(EntityForm.event.filled, EntityFormModal.filledHandler);
+      mformEle.on(EntityForm.event.filled,_modal, EntityFormModal.filledHandler);
       mform.inModal(_modal);
       _modal.addOnHideCallback(function () {
-        mformEle.off('filled', EntityFormModal.filledHandler);
+        mformEle.off(EntityForm.event.filled, EntityFormModal.filledHandler);
       });
       mform.fill();
 

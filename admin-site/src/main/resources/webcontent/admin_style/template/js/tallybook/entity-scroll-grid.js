@@ -21,6 +21,7 @@ var tallybook = tallybook || {};
     this.scrollHolder = null;
     this.enableScroll();
     this.bindEvents();
+    this._inModal = false;
     this.setup();
   };
   ScrollGrid.prototype = Object.create(GridControl.prototype, {
@@ -44,6 +45,10 @@ var tallybook = tallybook || {};
       this.paging = new Paging(this);
       this.scrollenabled = true;
     }},
+    inModal : {value:function(_modal){
+      if(_modal === undefined)return this._inModal;
+      this._inModal = _modal;
+    }},
     disableScroll:{value:function(){
       if(!this.scrollenabled) return;
       var bodyWrapper  = this.body.$body;
@@ -56,23 +61,46 @@ var tallybook = tallybook || {};
     }},
     updateBodyHeight:{value: function () {
       var container = this.$container;
-      var alignType = container.data("align-type");
-      switch (alignType) {
-        case "window":
-        {
-          var $window = $(window);
-          var offset = container.data("align-offset");
-          var bodyWrapper = this.body.$body;
-          var wrapperMaxHeight = $window.innerHeight() - (bodyWrapper.offset().top) - offset;
-          var totalContentHeight = Math.max(this.data.totalRecords() * this.getRowHeight(),bodyWrapper.find("tbody").height());
-          
-          var actualHeight = Math.min(totalContentHeight, wrapperMaxHeight);
-          bodyWrapper.css('max-height', wrapperMaxHeight);
-          bodyWrapper.find('.viewport').css('max-height', wrapperMaxHeight);
-          bodyWrapper.css('height', actualHeight);
-          bodyWrapper.find('.viewport').css('height', actualHeight);
-          break;
+      var bodyWrapper = this.body.$body;
+      var totalContentHeight = Math.max(this.data.totalRecords() * this.getRowHeight(),bodyWrapper.find("tbody").height());
+      var maxAllowed;
+
+      if(bodyWrapper.height() == 0){ //not initialized
+        bodyWrapper.css('max-height', 'none');
+        bodyWrapper.find('.viewport').css('max-height', 'none');
+        bodyWrapper.height(totalContentHeight);
+        bodyWrapper.find('.viewport').height(totalContentHeight);
+      }
+      var _modal = this.inModal();
+      if(_modal){
+        var modalBody = _modal.element().find('.modal-body');
+        var headAndFootHeight = this.element().height() - bodyWrapper.height();
+        var modalBodyHeight = modalBody.height();
+        maxAllowed = modalBodyHeight - headAndFootHeight;
+
+//        return;
+      }else{
+        var alignType = container.data("align-type");
+        switch (alignType) {
+          case "window":
+          {
+            var $window = $(window);
+            var offset = container.data("align-offset");
+            maxAllowed = $window.innerHeight() - (bodyWrapper.offset().top) - offset;
+            break;
+          }
         }
+      }
+
+      var actualHeight = totalContentHeight;
+      if(maxAllowed != null){
+        bodyWrapper.css('max-height', maxAllowed);
+        bodyWrapper.find('.viewport').css('max-height', maxAllowed);
+        actualHeight = Math.min(totalContentHeight, maxAllowed);
+      } 
+      if(actualHeight != null){
+        bodyWrapper.height(actualHeight);
+        bodyWrapper.find('.viewport').height(actualHeight);
       }
     }},
     resize:{value: function () {
@@ -152,7 +180,13 @@ var tallybook = tallybook || {};
 
       this.teardown();
       this.setup();
+
+      var bodyWrapper = this.body.$body;
+      bodyWrapper.height(0);
+      bodyWrapper.find('.viewport').height(0);
+
       this.resize();
+      this.element().trigger(ScrollGrid.event.filled);
     }},
     buildAjaxLoadUrl :{value : function(baseUrl, parameter, range){
       var start = range.lo; start = (start < 0)? null:start;
@@ -162,6 +196,9 @@ var tallybook = tallybook || {};
       return url;
     }}
   });
+  ScrollGrid.event={
+    filled:'scroll.grid.filled'
+  }
   ScrollGrid.getScrollGrid = function($container){
     var existingGrid = $container.data(SCROLL_GRID_CONTROL_KEY);
     if(!existingGrid){
@@ -345,7 +382,16 @@ var tallybook = tallybook || {};
     //target:'xxxx',
     postSetUrlContent:function(content, _modal){
       var sgrid = host.entity.scrollGrid.findFirstOnPage(content);
+      var sgridEle = sgrid.element();
+      sgridEle.off(ScrollGrid.event.filled, EntityGridModal.filledHandler);
+      sgridEle.on(ScrollGrid.event.filled, _modal, EntityGridModal.filledHandler);
+      _modal.scrollGrid = sgrid;
+      sgrid.inModal(_modal);
       sgrid.fill();
+      _modal.addOnHideCallback(function () {
+        sgridEle.off(ScrollGrid.event.filled, EntityGridModal.filledHandler);
+        _modal.scrollGrid = null;
+      });
       sgrid.element().on('selectedIndexChanged', function(event, oldidx, newidx, entity){
         _modal._selectedEntity = entity;
         if(entity){
@@ -372,7 +418,8 @@ var tallybook = tallybook || {};
       this.formSubmitHandlers = handlers;
     }}
   });
-
+  EntityGridModal.filledHandler = function (e) {
+  }
   host.entity = $.extend({}, host.entity,{
     scrollGrid : ScrollGrid,
     gridModal : EntityGridModal

@@ -4,6 +4,8 @@ var tallybook = tallybook || {};
 (function ($, host) {
   'use strict';
 
+  var entityProperty = host.entity.entityProperty;
+
   var CellTemplates = {
     CellCreationContext : function(idField, entityUrl, baseUrl){
       this.idField = idField;
@@ -34,19 +36,19 @@ var tallybook = tallybook || {};
       var cellentries = [
         new CellTemplateEntry('default', 'default', function (entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entityProperty(entity, fieldname);
           return fieldvalue;
         }),
         new CellTemplateEntry('name', 'name', function(entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entityProperty(entity, fieldname);
           var url = host.entity.makeUrl(cellCreationContext.idField, entity, cellCreationContext.entityUrl);
           var $content = $('<a>', {'href': url}).text(fieldvalue);
           return $content;
         }),
         new CellTemplateEntry('email', 'email', function(entity, fieldInfo, cellCreationContext){
           var fieldname = fieldInfo.name;
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entityProperty(entity, fieldname);
           var $content = $('<a>', {'href': 'mailto:' + fieldvalue}).text(fieldvalue);
           return $content;
         }),
@@ -54,20 +56,20 @@ var tallybook = tallybook || {};
           var options = fieldInfo.options;
           var optionNames = fieldInfo.optionsFriendly;
           var fieldname = fieldInfo.name;
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entityProperty(entity, fieldname);
           return optionNames[fieldvalue];
         }),
         new CellTemplateEntry('boolean', 'boolean', function(entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
           var options = fieldInfo.options;
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entityProperty(entity, fieldname);
           if(fieldvalue === "" || fieldvalue === null || fieldvalue === undefined)
             return '';
           return options[fieldvalue?'t':'f'];
         }),
         new CellTemplateEntry('phone', 'phone', function (entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
-          var fieldvalue = entity[fieldname]; if(fieldvalue == null) fieldvalue = '';
+          var fieldvalue = entityProperty(entity, fieldname); if(fieldvalue == null) fieldvalue = '';
           var segLen = 4;
           var formatedPhone = '';
           if (fieldvalue.length <= segLen) {
@@ -92,10 +94,28 @@ var tallybook = tallybook || {};
           var idFieldName = fieldInfo.idFieldName;
           var entityType = fieldInfo.entityType;
 
-          var fieldvalue = entity[fieldname];
+          var fieldvalue = entityProperty(entity, fieldname);
           if(!!fieldvalue){
             var idVal = fieldvalue[idFieldName];
             var nameVal = fieldvalue[displayFieldName];
+            var url = host.url.connectUrl('/', entityType, idVal);
+            var $span = $('<span>').text(nameVal);
+            var $a = $('<a>', {class: "entity-form-modal-view", href : url}).append($('<i>', {class:"fa fa-external-link"}));
+            return $span.append($a);
+          }
+          return '';
+        }),
+        new CellTemplateEntry('external_foreign_key', 'external_foreign_key', function(entity, fieldInfo, cellCreationContext) {
+          var fieldname = fieldInfo.name;
+          var entityFieldName = fieldInfo.entityFieldName;
+          var entityFieldDisplayProperty = fieldInfo.displayFieldName;
+          var entityType = fieldInfo.entityType;
+
+          var fieldvalue = entityProperty(entity, fieldname);
+          if(!!fieldvalue){
+            var refForeignEntity = entity[entityFieldName];
+            var idVal = fieldvalue;
+            var nameVal = refForeignEntity[entityFieldDisplayProperty];
             var url = host.url.connectUrl('/', entityType, idVal);
             var $span = $('<span>').text(nameVal);
             var $a = $('<a>', {class: "entity-form-modal-view", href : url}).append($('<i>', {class:"fa fa-external-link"}));

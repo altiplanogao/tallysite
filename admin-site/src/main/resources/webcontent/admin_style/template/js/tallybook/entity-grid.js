@@ -16,6 +16,7 @@ var tallybook = tallybook || {};
   var ActionGroup = host.entity.actionGroup;
   var CellTemplates = host.entity.gridCellTemplates;
   var FilterHandlerManager = host.entity.filterHandlerManager;
+  var entityProperty = host.entity.entityProperty;
 
   //const
   var lockDebounce = 200;
@@ -97,7 +98,7 @@ var tallybook = tallybook || {};
       },
       _makeCell: function ( field, entity, cellCreationContext) {
         var fieldname = field.name;
-        var fieldvalue = entity[fieldname];
+        var fieldvalue = entityProperty(entity, fieldname);
         var $cell = this._makeCellContainer(fieldname, fieldvalue);
         var content = CellTemplates.createCell(entity, field, cellCreationContext);
         $cell.html(content);
@@ -117,8 +118,8 @@ var tallybook = tallybook || {};
         var url = host.entity.makeUrl(cellCreationContext.idField, entity, cellCreationContext.entityUrl);
         var $row = $('<tr>', {
           'class' : "data-row",
-          'data-id': entity[gridinfo.idField],
-          'data-name': entity[gridinfo.nameField],
+          'data-id': entityProperty(entity, gridinfo.idField),
+          'data-name': entityProperty(entity, gridinfo.nameField),
           'data-entity-index' : entityIndex,
           'data-url' : url
         });

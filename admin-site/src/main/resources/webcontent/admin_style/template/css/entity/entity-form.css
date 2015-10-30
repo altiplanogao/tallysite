@@ -27,6 +27,12 @@
     margin-bottom: 15px;
 }
 
+.entity-form-container fieldset.entity-group:last-child{
+    padding-bottom: 0;
+    
+    margin-bottom: 0;
+}
+
 .entity-form-container .entity-group > legend{
     width: initial;
 
@@ -46,7 +52,7 @@
     margin: 5px 0 12px;
 }
 .entity-form-container div.field-box:last-child{
-    margin-bottom: 0;
+    /* margin-bottom: 0; */
 }
 
 .entity-form-container div.field-box div.field-label-group{
@@ -73,4 +79,13 @@
 
 .entity-form-container .field-label-group .field-label.required:after{
     content: " *";
+}
+
+.field-box .drop-entity{
+    margin-right: 5px;
+    color: rgb(170, 170, 170);
+}
+
+.field-box .drop-entity:active{
+    color: #111111;
 }
