@@ -25,17 +25,20 @@ var tallybook = tallybook || {};
   var EmptyFieldHandler = {
     initializer : function (element, fieldInfo, formData) {},
     get : function (element) {return '';},
-    set : function(element, val){}
+    set : function(element, val, entity){}
   };
 
   function FieldHandler(handler){
-    this.innerhandler = $.extend({}, EmptyFieldHandler, handler);
+    $.extend(this, EmptyFieldHandler, handler);
   };
   FieldHandler.prototype= {
     constructor : FieldHandler,
-    initializer : function (element, fieldInfo, formData) {return this.innerhandler.initializer(element, fieldInfo, formData);},
-    get : function (element) {return this.innerhandler.get(element);},
-    set : function(element, val){return this.innerhandler.set(element, val);},
+    getFieldType:function(element){
+      return element.attr('data-field-type');
+    },
+    initializer : function (element, fieldInfo, formData) {},
+    get : function (element) {return '';},
+    set : function(element, val){},
     limitDepth: function (obj, /*zero based*/currentDepth, depthLimit) {
       if (currentDepth > depthLimit) return null;
       var objc = {};
@@ -152,31 +155,109 @@ var tallybook = tallybook || {};
         set:function(element, val){
           $('.html-editor', element).code(val);
         }}),
+      date : new FieldHandler({
+        initializer:function(element, fieldInfo){
+          //http://trentrichardson.com/examples/timepicker/
+          var fieldName = fieldInfo.name;
+          var model = fieldInfo.model;
+          var method = null;
+          var input = $('input.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
+          var datapickerops = JSON.parse(host.messages['datetimepicker.localization']);
+          var exOpts = {};
+          switch(model){
+            case 'date':
+              method = 'datepicker';
+              break;
+            case 'datetime':
+              method = 'datetimepicker';
+              exOpts={showSecond: true,timeFormat : host.messages['datetimepicker.format.datetime']};
+              break;
+            case 'datetimez' :
+              method = 'datetimepicker';
+              exOpts={showSecond: true,timeFormat : host.messages['datetimepicker.format.datetimez']};
+              break;
+          }
+          if(method){
+            var mergedOpts = $.extend(exOpts, datapickerops);
+            input[method](mergedOpts);
+          }
+          input.attr('data-date-method', method);
+        },
+        get:function(element){
+          var input = $('input.date-input', element);
+          if(!input.val()){
+            return null;
+          }
+          var model = input.attr('data-time-model');
+          var method = input.attr('data-date-method');
+          var date = input.datepicker('getDate');
+
+          return date.getTime();
+        },
+        set:function(element, val){
+          var input = $('input.date-input', element);
+          if(!val){
+            input.val('');
+            return;
+          }
+          var model = input.attr('data-time-model');
+          var method = input.attr('data-date-method');
+          var date = new Date(val);
+          input[method]('setDate', date);
+
+          //$('.date-input', element).code(val);
+        }}),
       foreign_key : new FieldHandler({
+        external : function(element){
+          var ft = this.getFieldType(element);
+          return (ft == 'external_foreign_key');
+        },
+        externalEntityField : function(element, val){
+          if(val === undefined){//get
+            return element.attr('data-external-fk-entity-field');
+          }else{//set
+            return element.attr('data-external-fk-entity-field', val);
+          }
+        },
         initializer:function(element, fieldInfo, formData){
           var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
           var fkvContainer = element.find('.foreign-key-value-container');
-          fkvContainer.attr('data-entity-type',fieldInfo.entityType)
-          .attr('data-id-field', fieldInfo.idFieldName)
-          .attr('data-display-field', fieldInfo.displayFieldName);
+          fkvContainer.attr({'data-entity-type':fieldInfo.entityType,
+          'data-id-field':fieldInfo.idFieldName,
+          'data-display-field': fieldInfo.displayFieldName});
+          var ft = this.getFieldType(element);
+          if(this.external(element)){
+            this.externalEntityField(element,fieldInfo.entityFieldName);
+          }
         },
         get:function(element){
           var val = element.data('entity');
+          if(this.external(element)){
+            var idField = element.find('.foreign-key-value-container').attr('data-id-field');
+            return val[idField];
+          }
           return val;
         },
-        set:function(element, val){
-          var hasVal = !!val;
+        set:function(element, val, entity){
+          var fentity = val;
+          if(!$.isPlainObject(val)){
+            if(this.external(element)){
+              var fef = this.externalEntityField(element);
+              fentity = entity[fef];
+            }
+          }
+          var hasVal = !!fentity;
           var varStr = "";
           var link="";
-          element.data('entity', val);
+          element.data('entity', fentity);
           if(hasVal){
             var fkvContainer = element.find('.foreign-key-value-container');
             var entityType = fkvContainer.attr('data-entity-type');
             var displayField = fkvContainer.attr('data-display-field');
             var idField = fkvContainer.attr('data-id-field');
-            varStr = val[displayField];
-            link='/' + host.url.connectUrl(entityType, '' + val[idField]);
+            varStr = fentity[displayField];
+            link='/' + host.url.connectUrl(entityType, '' + fentity[idField]);
           }
           element.find('.display-value-none-selected').toggle(!hasVal);
           element.find('.display-value').toggle(hasVal).text(varStr);
@@ -240,7 +321,7 @@ var tallybook = tallybook || {};
       var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
         handler.initializer && handler.initializer(element, fieldInfo, formData);
-        handler.set && handler.set(element, host.entity.entityProperty(entity, fieldName));
+        handler.set && handler.set(element, host.entity.entityProperty(entity, fieldName), entity);
       }
       return element;
     }
@@ -334,10 +415,12 @@ var tallybook = tallybook || {};
       }
 
       //<input type="hidden" id="ceilingEntityClassname" name="ceilingEntityClassname" value="org.broadleafcommerce.core.catalog.domain.ProductOption">
+      var timezoneOffset = (new Date()).getTimezoneOffset();
+      var $timezoneOffset = $('<input>', {type:'hidden', name:'timezoneOffset', value:timezoneOffset});
       var $entityCeilingType = $('<input>', {type:'hidden', name:'entityCeilingType', value:data.entityCeilingType});
       var $entityType = $('<input>', {type:'hidden', name:'entityType', value:data.entityType});
       
-      this.$entityCxt.append($entityCeilingType).append($entityType);
+      this.$entityCxt.append($timezoneOffset).append($entityCeilingType).append($entityType);
     },
     reset : function(){
       this.initialized(false);
