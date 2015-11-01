@@ -162,7 +162,7 @@ var tallybook = tallybook || {};
           var model = fieldInfo.model;
           var method = null;
           var input = $('input.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
-          var datapickerops = JSON.parse(host.messages['datetimepicker.localization']);
+          var datapickerops = JSON.parse(host.messages['datepicker.localization']);
           var exOpts = {};
           switch(model){
             case 'date':
@@ -170,11 +170,11 @@ var tallybook = tallybook || {};
               break;
             case 'datetime':
               method = 'datetimepicker';
-              exOpts={showSecond: true,timeFormat : host.messages['datetimepicker.format.datetime']};
+              exOpts={showSecond: true,timeFormat : host.messages['datepicker.format.time']};
               break;
             case 'datetimez' :
               method = 'datetimepicker';
-              exOpts={showSecond: true,timeFormat : host.messages['datetimepicker.format.datetimez']};
+              exOpts={showSecond: true,timeFormat : host.messages['datepicker.format.timez']};
               break;
           }
           if(method){
@@ -244,7 +244,8 @@ var tallybook = tallybook || {};
           if(!$.isPlainObject(val)){
             if(this.external(element)){
               var fef = this.externalEntityField(element);
-              fentity = entity[fef];
+              if(entity != null)
+                fentity = entity[fef];
             }
           }
           var hasVal = !!fentity;

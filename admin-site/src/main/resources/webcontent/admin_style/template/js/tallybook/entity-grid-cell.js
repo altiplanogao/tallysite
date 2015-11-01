@@ -67,6 +67,25 @@ var tallybook = tallybook || {};
             return '';
           return options[fieldvalue?'t':'f'];
         }),
+        new CellTemplateEntry('date', 'date', function(entity, fieldInfo, cellCreationContext) {
+          var fieldname = fieldInfo.name;
+          var fieldvalue = entityProperty(entity, fieldname);
+          if(!fieldvalue) return '';
+          var dateVal = new Date(fieldvalue);
+          var celldisplaymodel = fieldInfo.cellModel;
+          var tStr = [];
+          if(celldisplaymodel.indexOf('date') >= 0){
+            var format = host.messages['datepicker.format.date'];
+            var d = $.datepicker.formatDate(format, dateVal, {});
+            tStr.push(d);
+          }
+          if(celldisplaymodel.indexOf('time') >= 0){
+            var format = host.messages['datepicker.format.time'];
+            var d = $.datepicker.formatTime(format, { hour:dateVal.getHours(), minute:dateVal.getMinutes(), second:dateVal.getSeconds()}, {});
+            tStr.push(d);
+          }
+          return tStr.join(' ');
+        }),
         new CellTemplateEntry('phone', 'phone', function (entity, fieldInfo, cellCreationContext) {
           var fieldname = fieldInfo.name;
           var fieldvalue = entityProperty(entity, fieldname); if(fieldvalue == null) fieldvalue = '';
