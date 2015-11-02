@@ -253,6 +253,52 @@
           </ul>
         </td>
       </tr>
+      <tr>
+      <td>dateRange</td>
+      <td>
+        <ul class="entity-filter string-filter no-hover"
+            data-filter-type="dateRange"
+            data-support-field-types="date">
+          <li>
+            <div class="filter-fields date-inputs" data-action="">
+              <div class="text-filter-control">
+                <button class="filter-button btn btn-info" th:inline="text">
+                  <i class="fa fa-filter"></i>
+                </button>
+                <div class="input-line">
+                  <table class="divide-by-row">
+                    <tbody>
+                    <tr>
+                      <td class="half">
+                <span class="input-element cell">
+                  <i class="fa fa-calendar-o embed-hint"></i>
+                  <input class="filter-input date-input from"
+                         th:placeholder="#{general.date.from}"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span>
+                      </td>
+                      <td class="space"><span>-</span></td>
+                      <td class="half">
+                <span class="input-element cell">
+                  <i class="fa fa-calendar embed-hint"></i>
+                  <input class="filter-input date-input to"
+                         th:placeholder="#{general.date.to}"
+                         type="text"/>
+                  <i class="fa fa-times-circle  embed-delete"></i>
+                </span>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </td>
+      </tr>
+
       </tbody>
     </table>
   </div>

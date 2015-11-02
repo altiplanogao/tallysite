@@ -48,7 +48,8 @@
     <thead>
     <tr>
       <th style="width: 20%;">Field Type</th>
-      <th class="toggle" style="width: 80%;">Layout</th>
+      <th class="toggle" style="width: 40%;">Edit layout</th>
+      <th class="toggle" style="width: 40%;">Readonly layout</th>
     </tr>
     </thead>
     <tbody>
@@ -56,7 +57,12 @@
       <td>Basic</td>
       <td>
         <div class="field-box form-group" data-form-field-type="string" data-support-field-types="basic,string,email,default">
-          <input type="text" class="form-control"/>
+          <input type="text" class="form-control content"/>
+        </div>
+      </td>
+      <td>
+        <div class="readonly-field-box form-group" data-form-field-type="string" data-support-field-types="basic,string,email,default">
+          <span class="content"/>
         </div>
       </td>
     </tr>
@@ -67,6 +73,13 @@
           <div class="date-input-group has-feedback">
             <input type="text" class="date-input form-control"/>
             <span class="fa fa-calendar form-control-feedback" aria-hidden="true"></span>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="readonly-field-box form-group" data-form-field-type="date" data-support-field-types="date">
+          <div class="date-input-group">
+            <span class="date-input"/>
           </div>
         </div>
       </td>

@@ -70,6 +70,9 @@ var tallybook = tallybook || {};
       return objc;
     },
     getAsString: function (element) {
+      if(element.data('readonly')){
+        return element.data('readonly.data');
+      }
       var rawGet = this.get(element);
       if ($.isPlainObject(rawGet)) {
         var depth1Obj = this.limitDepth(rawGet, 0, 1);
@@ -80,21 +83,41 @@ var tallybook = tallybook || {};
   };
 
   var fieldNameInForm = function(fieldName){return 'entity[' + fieldName + ']';};
+  /**
+   build Map
+   */
+  var __buildFieldTemplateMap = function(boxtype){
+    var fieldsTemplatePrefix = MAIN_TEMPLATE + ' table.entity-field-template-table > tbody ';
+    var elementMap = {};
+    var $elements = $(fieldsTemplatePrefix + boxtype);
+    $elements.each(function(index, element){
+      var $ele = $(element);
+      var $fieldLabel = $ele.find('.field-label-group');
+      if($fieldLabel.length == 0){
+        $fieldLabel = $('<div class="field-label-group"><label class="field-label control-label">Label</label></div>');
+        $fieldLabel.prependTo(element);
+      }
+      $ele.attr('data-support-field-types').split(',').forEach(function (fldtp) {
+        elementMap[fldtp.toLowerCase()] = $ele;
+      })
+    });
+    return elementMap;
+  };
   var FieldTemplates = {
     handlers : { // keys are element-types
       string : new FieldHandler({
-        initializer: function (element, fieldInfo) {
+        initializer: function (element, fieldInfo, formData) {
           var fieldName = fieldInfo.name;
-          var input = $('input', element).attr('name', fieldNameInForm(fieldName));
+          var input = $('.content', element).attr('name', fieldNameInForm(fieldName));
         },
         get: function (element) {
-          return element.find('input').val();
+          return element.find('.content').val();
         },
         set: function (element, val) {
-          return element.find('input').val(val);
+          return element.find('.content').val(val);
         }}),
       enum : new FieldHandler({
-        initializer : function(element, fieldInfo){
+        initializer : function(element, fieldInfo, formData){
           var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
           var options = fieldInfo.options;
           var friendlyNames = fieldInfo.optionsFriendly;
@@ -113,7 +136,7 @@ var tallybook = tallybook || {};
           return  optionsContainer.val(val);
         }}),
       boolean : new FieldHandler({
-        initializer : function (element, fieldInfo) {
+        initializer : function (element, fieldInfo, formData) {
           var fieldName = fieldInfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
 
@@ -142,7 +165,7 @@ var tallybook = tallybook || {};
           }
         }}),
       html : new FieldHandler({
-        initializer:function(element, fieldInfo){
+        initializer:function(element, fieldInfo, formData){
           var $editor = $('.html-editor', element).summernote({
             height : 150,
             minHeight: 150,             // set minimum height of editor
@@ -156,12 +179,12 @@ var tallybook = tallybook || {};
           $('.html-editor', element).code(val);
         }}),
       date : new FieldHandler({
-        initializer:function(element, fieldInfo){
+        initializer:function(element, fieldInfo, formData){
           //http://trentrichardson.com/examples/timepicker/
           var fieldName = fieldInfo.name;
           var model = fieldInfo.model;
           var method = null;
-          var input = $('input.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
+          var input = $('.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
           var datapickerops = JSON.parse(host.messages['datepicker.localization']);
           var exOpts = {};
           switch(model){
@@ -179,12 +202,18 @@ var tallybook = tallybook || {};
           }
           if(method){
             var mergedOpts = $.extend(exOpts, datapickerops);
-            input[method](mergedOpts);
+            if(element.data('readonly')){
+              var hiddenInput = $('<input class="hidden-helper" style="">');
+              hiddenInput[method](mergedOpts);
+              element.append(hiddenInput);
+            }else{
+              input[method](mergedOpts);
+            }
           }
           input.attr('data-date-method', method);
         },
         get:function(element){
-          var input = $('input.date-input', element);
+          var input = $('.date-input', element);
           if(!input.val()){
             return null;
           }
@@ -194,8 +223,23 @@ var tallybook = tallybook || {};
 
           return date.getTime();
         },
+        setreadonly:function(element, val){
+          var input = $('.date-input', element);
+          if(!val){
+            input.val('');
+            return;
+          }
+          var hiddenInput = $('.hidden-helper', element);
+          var model = input.attr('data-time-model');
+          var method = input.attr('data-date-method');
+          var date = new Date(val);
+          hiddenInput[method]('setDate', date);
+          var iv = hiddenInput.val();
+          hiddenInput.remove();
+          input.text(iv);
+        },
         set:function(element, val){
-          var input = $('input.date-input', element);
+          var input = $('.date-input', element);
           if(!val){
             input.val('');
             return;
@@ -275,21 +319,11 @@ var tallybook = tallybook || {};
      * @param fieldType : the field type of the template
      */
     _getFieldTemplate : (function () {
-      var elementMap = {};
-      var $elements = $(MAIN_TEMPLATE + ' table.entity-field-template-table > tbody div.field-box');
-      $elements.each(function(index, element){
-        var $ele = $(element);
-        var $fieldLabel = $ele.find('.field-label-group');
-        if($fieldLabel.length == 0){
-          $fieldLabel = $('<div class="field-label-group"><label class="field-label control-label">Label</label></div>');
-          $fieldLabel.prependTo(element);
-        }
-        $ele.attr('data-support-field-types').split(',').forEach(function (fldtp) {
-          elementMap[fldtp.toLowerCase()] = $ele;
-        })
-      });
-      return function (fieldType) {
-        var $ele = elementMap[fieldType] || elementMap['default'];
+      var elementMap = __buildFieldTemplateMap('.field-box');
+      var readonlyElementMap = __buildFieldTemplateMap('.readonly-field-box');
+      return function (fieldType, readonly) {
+        var eleMap = (!!readonly) ? readonlyElementMap : elementMap;
+        var $ele = eleMap[fieldType] || eleMap['default'];
         return $ele.clone();
       }
     })(),
@@ -300,13 +334,16 @@ var tallybook = tallybook || {};
      * @returns the html element
      */
     createElementByFieldInfo: function (fieldInfo, entity, errors, formData) {
+      var readonly = !fieldInfo.editable;
       var fieldType = fieldInfo.fieldType.toLowerCase();
       var fieldName = fieldInfo.name;
       var fieldErrors = null;
       if(errors && errors.fields){
         fieldErrors = errors.fields[fieldName];
       }
-      var element = FieldTemplates._getFieldTemplate(fieldType).attr({'data-field-name': fieldName,'data-field-type': fieldType});
+      var element = FieldTemplates._getFieldTemplate(fieldType, readonly).attr({'data-field-name': fieldName,'data-field-type': fieldType});
+      element.data('readonly', readonly);
+
       var $fieldLabel = element.find('.field-label-group');
       if(fieldErrors){
         element.addClass('has-error');
@@ -321,8 +358,16 @@ var tallybook = tallybook || {};
 
       var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
-        handler.initializer && handler.initializer(element, fieldInfo, formData);
-        handler.set && handler.set(element, host.entity.entityProperty(entity, fieldName), entity);
+        handler.initializer(element, fieldInfo, formData);
+        var propVal = host.entity.entityProperty(entity, fieldName);
+        if(readonly){
+          element.data('readonly.data', propVal);
+          if(handler.setreadonly){
+            handler.setreadonly(element, propVal, entity);
+            return element;
+          }
+        }
+        handler.set(element, propVal, entity);
       }
       return element;
     }

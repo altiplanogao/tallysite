@@ -925,8 +925,8 @@ var tallybook = tallybook || {};
       return this.$container.data('grid-scope') == 'main';
     },
     alignHeaderAndBody: function () {
-      var hTable = this.header.element().find('table');
-      var bTable = this.body.element().find('table');
+      var hTable = this.header.element().find('.header-table');
+      var bTable = this.body.element().find('.body-table');
       var bTabelWidth = bTable.parent().width();
       hTable.outerWidth(bTabelWidth);
       bTable.outerWidth(bTabelWidth);
@@ -1265,6 +1265,13 @@ var tallybook = tallybook || {};
       var $ele = this.element();
       $ele.on(ENTITY_RELOAD_EVENT, this, GridControl.eh.reloadEventHandler);
       $ele.on('click', 'tr.data-row', this, GridControl.eh.rowClickHandler);
+//       $ele.on('mouseenter', 'td[data-fieldvalue]',this,function(e){
+//         var target = $(e.target);
+//         target.tooltip({html:true,title:target.html(),container:'body',delay: { "show": 1500, "hide": 100 }}).tooltip('show');
+//       });
+//       $ele.on('mouseleave', 'td[data-fieldvalue]',this,function(e){
+//         $(e.target).tooltip('hide').tooltip({disabled:true});
+//       });
 
       this.columnResizer.bindEvents();
       this.filterHandler.bindEvents();

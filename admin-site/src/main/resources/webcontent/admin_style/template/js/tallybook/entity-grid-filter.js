@@ -234,7 +234,65 @@ var tallybook = tallybook || {};
               newEle.find('.entity-name').text(name);
               $chosens.append(newEle);
             }
-          }})
+          }}),
+        dateRange : FilterHandler({
+          initializer : function (filter, fieldInfo){
+            var fromTb = $('.from', filter);
+            var toTb = $('.to', filter);
+
+            $.timepicker.datetimeRange(
+              fromTb,
+              toTb,
+              {
+                minInterval: (1000*60*60), // 1hr
+                dateFormat: 'dd M yy',
+                timeFormat: 'HH:mm',
+                start: {}, // start picker options
+                end: {} // end picker options
+              }
+            );
+          },
+          dateToStr:function(date){
+            if(date){return '' + date.getTime()}
+            return '';},
+          strToDate:function(dateStr){
+            if(dateStr){return new Date(new Number(dateStr))}
+            return null;
+          },
+          //get: ui value -> string; set: string -> ui value
+          get: function (filter){
+            var fromTb = $('.from', filter);
+            var toTb = $('.to', filter);
+            var fromDate = fromTb.datetimepicker('getDate')
+            var toDate = toTb.datetimepicker('getDate')
+            if(fromDate == null && toDate == null)
+              return '';
+            var vals = [];
+            vals.push(this.dateToStr(fromDate));
+            vals.push(this.dateToStr(toDate));
+            return vals.join('|');
+          },
+          set: function (filter, val){
+            if(val === undefined || val === null || '' == val){val = '|';}
+            var dateStrs = val.split('|');
+            var fromDate = this.strToDate(dateStrs[0]);
+            var toDate = this.strToDate(dateStrs[1]);
+
+            var fromTb = $('.from', filter);
+            var toTb = $('.to', filter);
+
+            if(fromDate != null){
+              fromTb.datetimepicker('setDate', fromDate);
+            }else{
+                fromTb.val('');
+            }
+            if(toDate != null){
+                toTb.datetimepicker('setDate', toDate);
+            }else{
+                toTb.val('');
+            }
+
+            }})
       },
       /**
        * Get the filter template by field type
