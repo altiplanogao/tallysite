@@ -520,6 +520,8 @@ var tallybook = tallybook || {};
       outsideClickHandler: function (e) {
         if (e.originalEvent == undefined) return;
         var $target = $(e.originalEvent.target);
+        var checkDatePicker = $target.closest('.ui-datepicker');
+        if(checkDatePicker.length != 0) return;
         if (!($target.parents().is('.column-header.dropdown'))) {
           FilterHandler.closeDropdowns();
         }

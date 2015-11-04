@@ -75,12 +75,12 @@ var tallybook = tallybook || {};
           var celldisplaymodel = fieldInfo.cellModel;
           var tStr = [];
           if(celldisplaymodel.indexOf('date') >= 0){
-            var format = host.messages['datepicker.format.date'];
+            var format = host.messages.datepicker_format_date;
             var d = $.datepicker.formatDate(format, dateVal, {});
             tStr.push(d);
           }
           if(celldisplaymodel.indexOf('time') >= 0){
-            var format = host.messages['datepicker.format.time'];
+            var format = host.messages.datepicker_format_time;
             var d = $.datepicker.formatTime(format, { hour:dateVal.getHours(), minute:dateVal.getMinutes(), second:dateVal.getSeconds()}, {});
             tStr.push(d);
           }

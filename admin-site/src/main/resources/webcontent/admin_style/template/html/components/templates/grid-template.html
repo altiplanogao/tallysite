@@ -127,7 +127,7 @@
             <li>
               <div class="filter-fields" data-action="">
                 <div class="text-filter-control">
-                  <button class="filter-button btn btn-info" th:inline="text">
+                  <button class="filter-button btn btn-info">
                     <i class="fa fa-filter"></i>
                   </button>
                 <span class="input-line">
@@ -160,7 +160,6 @@
                   </table>
                 </span>
                 </div>
-
               </div>
             </li>
           </ul>
@@ -212,7 +211,7 @@
                     -->
                   </div>
                   <hr/>
-                  <div class="bottom-control"  th:inline="text">
+                  <div class="bottom-control">
                     <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
                     <button class="filter-button btn btn-info">
                       <i class="fa fa-filter"></i>
@@ -235,7 +234,6 @@
                 <div class="choose-control">
                   <div class="chosen-entities">
                   </div>
-
                   <hr/>
                   <div class="bottom-control"  >
                     <button class="btn btn-xs btn-default to-one-lookup lookup-entity" type="button" data-select-url="">
@@ -262,9 +260,6 @@
           <li>
             <div class="filter-fields date-inputs" data-action="">
               <div class="text-filter-control">
-                <button class="filter-button btn btn-info" th:inline="text">
-                  <i class="fa fa-filter"></i>
-                </button>
                 <div class="input-line">
                   <table class="divide-by-row">
                     <tbody>
@@ -291,6 +286,13 @@
                     </tr>
                     </tbody>
                   </table>
+                </div>
+                <hr/>
+                <div class="bottom-control">
+                  <a class="filter-reset-button" href="#">[[#{general.reset}]]</a>
+                  <button class="filter-button btn btn-info">
+                    <i class="fa fa-filter"></i>
+                  </button>
                 </div>
               </div>
             </div>

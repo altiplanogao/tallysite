@@ -185,19 +185,19 @@ var tallybook = tallybook || {};
           var model = fieldInfo.model;
           var method = null;
           var input = $('.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
-          var datapickerops = JSON.parse(host.messages['datepicker.localization']);
-          var exOpts = {};
+          var datapickerops = JSON.parse(host.messages.datepicker_localization);
+          var exOpts = {dateFormat: host.messages.datepicker_format_date};
           switch(model){
             case 'date':
               method = 'datepicker';
               break;
             case 'datetime':
               method = 'datetimepicker';
-              exOpts={showSecond: true,timeFormat : host.messages['datepicker.format.time']};
+              $.extend(exOpts, {showSecond: true,timeFormat : host.messages.datepicker_format_time});
               break;
             case 'datetimez' :
               method = 'datetimepicker';
-              exOpts={showSecond: true,timeFormat : host.messages['datepicker.format.timez']};
+              $.extend(exOpts, {showSecond: true,timeFormat : host.messages.datepicker_format_timez});
               break;
           }
           if(method){

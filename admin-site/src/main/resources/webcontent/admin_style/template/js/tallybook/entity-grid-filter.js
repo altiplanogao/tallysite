@@ -237,18 +237,23 @@ var tallybook = tallybook || {};
           }}),
         dateRange : FilterHandler({
           initializer : function (filter, fieldInfo){
+            var datapickerops = $.extend({changeMonth: true,changeYear:true},JSON.parse(host.messages.datepicker_localization));
             var fromTb = $('.from', filter);
             var toTb = $('.to', filter);
+            var fromOps = $.extend({onClose:function(selectedDate){
+              toTb.datepicker('option', 'minDate', selectedDate);} }, datapickerops);
+            var toOps = $.extend({onClose:function(selectedDate){
+              fromTb.datepicker('option', 'maxDate', selectedDate);} }, datapickerops);
 
             $.timepicker.datetimeRange(
               fromTb,
               toTb,
               {
                 minInterval: (1000*60*60), // 1hr
-                dateFormat: 'dd M yy',
-                timeFormat: 'HH:mm',
-                start: {}, // start picker options
-                end: {} // end picker options
+                dateFormat: host.messages.datepicker_format_date,
+                timeFormat: host.messages.datepicker_format_timez,
+                start: fromOps, // start picker options
+                end: toOps // end picker options
               }
             );
           },
@@ -270,11 +275,14 @@ var tallybook = tallybook || {};
             var vals = [];
             vals.push(this.dateToStr(fromDate));
             vals.push(this.dateToStr(toDate));
-            return vals.join('|');
+            return 'R' + vals.join('n') + 'G';
+//            return JSON.stringify(['[' + vals.join(',') + ']']);
           },
           set: function (filter, val){
-            if(val === undefined || val === null || '' == val){val = '|';}
-            var dateStrs = val.split('|');
+            if(val === undefined || val === null || '' == val){val = ['RnG'];}
+            val=val[0];
+            val = val.substr(1,val.length-2);
+            var dateStrs = val.split('n');
             var fromDate = this.strToDate(dateStrs[0]);
             var toDate = this.strToDate(dateStrs[1]);
 
@@ -283,7 +291,7 @@ var tallybook = tallybook || {};
 
             if(fromDate != null){
               fromTb.datetimepicker('setDate', fromDate);
-            }else{
+            } else {
                 fromTb.val('');
             }
             if(toDate != null){
