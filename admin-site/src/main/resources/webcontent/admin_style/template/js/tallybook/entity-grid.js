@@ -147,9 +147,17 @@ var tallybook = tallybook || {};
           searchGrp.show();
           searchGrp.attr('data-search-column', gridinfo.primarySearchField);
           $ele.find('i.embed-delete').hide();
-          $ele.find('input.search-input').attr(
-            {'data-name' : gridinfo.primarySearchField,
-              placeholder : gridinfo.primarySearchFieldFriendly} ).val('');
+          var gridSearchField = gridinfo.primarySearchField;
+          var gridSearchFieldFriendly = null;
+          var has = gridinfo.fields.some(function(t,i){
+            if(t.name == gridSearchField){
+              gridSearchFieldFriendly = t.friendlyName;
+              return true;
+            }
+          });
+            $ele.find('input.search-input').attr(
+              {'data-name' : gridSearchField,
+                placeholder : gridSearchFieldFriendly} ).val('').toggle(has);
         }else{
           searchGrp.hide();
         }
@@ -777,7 +785,7 @@ var tallybook = tallybook || {};
       return data;
     },
     processGridInfo: function (entityInfos) {
-      var gridInfo = entityInfos.details['pageGrid'];
+      var gridInfo = entityInfos.details['grid'];
       gridInfo.fields.map(function (field, index, array) {
         switch (field.fieldType) {
           case 'ID':
@@ -1030,7 +1038,7 @@ var tallybook = tallybook || {};
       var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
-      var gridinfo = entityInfos.details['pageGrid'];
+      var gridinfo = entityInfos.details['grid'];
 
       this.toolbar.init(gridinfo, data.actions, data.linksObj);
 
@@ -1112,7 +1120,7 @@ var tallybook = tallybook || {};
       var entityInfos = data.info;
       var entities = data.entities;
       var range = entities.range;
-      var gridinfo = entityInfos.details['pageGrid'];
+      var gridinfo = entityInfos.details['grid'];
       comp.Body.makeRowsAndAppend(gridinfo, entities, $tbody);
       return $tbody;
     },
