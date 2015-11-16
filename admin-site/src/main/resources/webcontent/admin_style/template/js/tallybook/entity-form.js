@@ -23,9 +23,14 @@ var tallybook = tallybook || {};
   //  data-support-field-types : string, email, phone, boolean
   //}
   var EmptyFieldHandler = {
-    initializer : function (element, fieldInfo, formData) {},
-    get : function (element) {return '';},
-    set : function(element, val, entity){}
+    initializer : function (element, fieldInfo, formData) {
+      element.data('field-info', fieldInfo);
+      return this._doInitialize(element, fieldInfo, formData);
+    },
+    //return typed-value
+    get : function (element) {return this._doGet(element);},
+    //set ui by typed-value
+    set : function(element, val, entity){return this._doSet(element, val, entity);}
   };
 
   function FieldHandler(handler){
@@ -36,9 +41,10 @@ var tallybook = tallybook || {};
     getFieldType:function(element){
       return element.attr('data-field-type');
     },
-    initializer : function (element, fieldInfo, formData) {},
-    get : function (element) {return '';},
-    set : function(element, val){},
+    getFieldInfo:function(element){return element.data('field-info');},
+    _doInitialize : function (element, fieldInfo, formData) {},
+    _doGet : function (element) {return '';},
+    _doSet : function(element, val){},
     limitDepth: function (obj, /*zero based*/currentDepth, depthLimit) {
       if (currentDepth > depthLimit) return null;
       var objc = {};
@@ -106,18 +112,18 @@ var tallybook = tallybook || {};
   var FieldTemplates = {
     handlers : { // keys are element-types
       string : new FieldHandler({
-        initializer: function (element, fieldInfo, formData) {
+        _doInitialize: function (element, fieldInfo, formData) {
           var fieldName = fieldInfo.name;
           var input = $('.content', element).attr('name', fieldNameInForm(fieldName));
         },
-        get: function (element) {
+        _doGet: function (element) {
           return element.find('.content').val();
         },
-        set: function (element, val) {
+        _doSet: function (element, val) {
           return element.find('.content').val(val);
         }}),
       enum : new FieldHandler({
-        initializer : function(element, fieldInfo, formData){
+        _doInitialize : function(element, fieldInfo, formData){
           var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
           var options = fieldInfo.options;
           var friendlyNames = fieldInfo.optionsFriendly;
@@ -127,16 +133,16 @@ var tallybook = tallybook || {};
           });
           optionsContainer.empty().wrapInner(opElems);
         },
-        get : function(element) {
+        _doGet : function(element) {
           var optionsContainer = $('select.options', element);
           return optionsContainer.val();
         },
-        set : function(element, val){
+        _doSet : function(element, val){
           var optionsContainer = $('select.options', element);
           return  optionsContainer.val(val);
         }}),
       boolean : new FieldHandler({
-        initializer : function (element, fieldInfo, formData) {
+        _doInitialize : function (element, fieldInfo, formData) {
           var fieldName = fieldInfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
 
@@ -144,7 +150,7 @@ var tallybook = tallybook || {};
           element.find('input[type=radio][value=true]+span').text(trOpts.t);
           element.find('input[type=radio][value=false]+span').text(trOpts.f);
         },
-        get : function (element) {
+        _doGet : function (element) {
           var valStr = element.find('input[type=radio]:checked').val();
           if(!!valStr){
             return ('true' == valStr.toLowerCase());
@@ -152,7 +158,7 @@ var tallybook = tallybook || {};
             return null;
           }
         },
-        set : function(element, val){
+        _doSet : function(element, val){
           var trueRadio = element.find('input[type=radio][value=true]');
           var falseRadio = element.find('input[type=radio][value=false]');
           if(val === undefined || val === null){
@@ -165,21 +171,21 @@ var tallybook = tallybook || {};
           }
         }}),
       html : new FieldHandler({
-        initializer:function(element, fieldInfo, formData){
+        _doInitialize:function(element, fieldInfo, formData){
           var $editor = $('.html-editor', element).summernote({
             height : 150,
             minHeight: 150,             // set minimum height of editor
             maxHeight: 300             // set maximum height of editor
           });
         },
-        get:function(element){
+        _doGet:function(element){
           return $('.html-editor', element).code();
         },
-        set:function(element, val){
+        _doSet:function(element, val){
           $('.html-editor', element).code(val);
         }}),
       date : new FieldHandler({
-        initializer:function(element, fieldInfo, formData){
+        _doInitialize:function(element, fieldInfo, formData){
           //http://trentrichardson.com/examples/timepicker/
           var fieldName = fieldInfo.name;
           var model = fieldInfo.model;
@@ -212,7 +218,7 @@ var tallybook = tallybook || {};
           }
           input.attr('data-date-method', method);
         },
-        get:function(element){
+        _doGet:function(element){
           var input = $('.date-input', element);
           if(!input.val()){
             return null;
@@ -238,7 +244,7 @@ var tallybook = tallybook || {};
           hiddenInput.remove();
           input.text(iv);
         },
-        set:function(element, val){
+        _doSet:function(element, val){
           var input = $('.date-input', element);
           if(!val){
             input.val('');
@@ -263,7 +269,7 @@ var tallybook = tallybook || {};
             return element.attr('data-external-fk-entity-field', val);
           }
         },
-        initializer:function(element, fieldInfo, formData){
+        _doInitialize:function(element, fieldInfo, formData){
           var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
           var fkvContainer = element.find('.foreign-key-value-container');
@@ -275,15 +281,22 @@ var tallybook = tallybook || {};
             this.externalEntityField(element,fieldInfo.entityFieldName);
           }
         },
-        get:function(element){
+        _doGet:function(element){
           var val = element.data('entity');
+          var realVal = null;
           if(this.external(element)){
             var idField = element.find('.foreign-key-value-container').attr('data-id-field');
-            return val[idField];
+            realVal = val[idField];
+          }else{
+            realVal = val;
           }
-          return val;
+          if(realVal == null)
+            return null;
+          var fieldInfo = this.getFieldInfo(element);
+          var obj = {"id" : realVal[fieldInfo.idFieldName], "display": realVal[fieldInfo.displayFieldName]};
+          return obj;
         },
-        set:function(element, val, entity){
+        _doSet:function(element, val, entity){
           var fentity = val;
           if(!$.isPlainObject(val)){
             if(this.external(element)){
@@ -309,6 +322,17 @@ var tallybook = tallybook || {};
           element.find('.drop-entity').toggle(hasVal);
           element.find('.external-link-container').toggle(hasVal).find('a')
           .attr('data-foreign-key-link', link).attr('href', link);
+        }}),
+      collection : new FieldHandler({
+        _doInitialize: function (element, fieldInfo, formData) {
+          var fieldName = fieldInfo.name;
+          var input = $('.content', element).attr('name', fieldNameInForm(fieldName));
+        },
+        _doGet: function (element) {
+          return element.find('.content').val();
+        },
+        _doSet: function (element, val) {
+          return element.find('.content').val(val);
         }})
     },
     getHandlerByFormFieldType: function (formFieldType) {
