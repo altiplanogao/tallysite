@@ -8,6 +8,8 @@ var tallybook = tallybook || {};
   var TabHolder = host.tabholder;
   var ElementValueAccess = host.elementValueAccess;
   var ModalStack = host.modal.stack;
+  var GridControl = host.entity.grid;
+  var ScrollGrid = host.entity.scrollGrid;
 
   var ENTITY_FORM_KEY = 'tallybook.entity.form';
 
@@ -23,7 +25,8 @@ var tallybook = tallybook || {};
   //  data-support-field-types : string, email, phone, boolean
   //}
   var EmptyFieldHandler = {
-    initializer : function (element, fieldInfo, formData) {
+    initializer : function (element, formInfo, fieldInfo, formData) {
+      element.data('form-info', formInfo);
       element.data('field-info', fieldInfo);
       return this._doInitialize(element, fieldInfo, formData);
     },
@@ -42,6 +45,7 @@ var tallybook = tallybook || {};
       return element.attr('data-field-type');
     },
     getFieldInfo:function(element){return element.data('field-info');},
+    getFormInfo:function(element){return element.data('form-info');},
     _doInitialize : function (element, fieldInfo, formData) {},
     _doGet : function (element) {return '';},
     _doSet : function(element, val){},
@@ -325,6 +329,12 @@ var tallybook = tallybook || {};
         }}),
       collection : new FieldHandler({
         _doInitialize: function (element, fieldInfo, formData) {
+          var formInfo = this.getFormInfo(element);
+          var entryName = fieldInfo.instanceType;
+          var entryInfo = formInfo.referencing[entryName];
+          var gridContainer = GridControl.makeRawHtmlGridElement();
+          var scrollGrid = ScrollGrid.getScrollGrid(gridContainer);
+          //scrollGrid.
           var fieldName = fieldInfo.name;
           var input = $('.content', element).attr('name', fieldNameInForm(fieldName));
         },
@@ -357,7 +367,7 @@ var tallybook = tallybook || {};
      * @param entity
      * @returns the html element
      */
-    createElementByFieldInfo: function (fieldInfo, entity, errors, formData) {
+    createElementByFieldInfo: function (formInfo, fieldInfo, entity, errors, formData) {
       var readonly = !fieldInfo.editable;
       var fieldType = fieldInfo.fieldType.toLowerCase();
       var fieldName = fieldInfo.name;
@@ -382,7 +392,7 @@ var tallybook = tallybook || {};
 
       var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
-        handler.initializer(element, fieldInfo, formData);
+        handler.initializer(element, formInfo, fieldInfo, formData);
         var propVal = host.entity.entityProperty(entity, fieldName);
         if(readonly){
           element.data('readonly.data', propVal);
@@ -437,13 +447,13 @@ var tallybook = tallybook || {};
         $ele.data('content', val);
       }
     },
-    createGroupContent : function(groupInfo, fields, entity, errors, formData){
+    createGroupContent : function(formInfo, groupInfo, fields, entity, errors, formData){
       var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupInfo.name});
       var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
       $group.append($groupTitle);
       var fieldEles = groupInfo.fields.map(function(fieldName){
         var field = fields[fieldName];
-        var fieldEle = FieldTemplates.createElementByFieldInfo(field, entity, errors, formData);
+        var fieldEle = FieldTemplates.createElementByFieldInfo(formInfo, field, entity, errors, formData);
         if(!field.formVisible){
           fieldEle.hide();
         }
@@ -452,11 +462,11 @@ var tallybook = tallybook || {};
       $group.append(fieldEles);
       return $group;
     },
-    createTabContent : function (tabInfo, fields, entity, errors, formData){
+    createTabContent : function (formInfo, tabInfo, fields, entity, errors, formData){
       var _this = this;
       var $div = $('<div>', {'class':'entity-tab', 'data-tab-name': tabInfo.name});
       var $groups = tabInfo.groups.map(function(group, index, array){
-        var $group = _this.createGroupContent(group, fields, entity, errors, formData);
+        var $group = _this.createGroupContent(formInfo, group, fields, entity, errors, formData);
         return $group;
       });
       $div.html($groups);
@@ -519,7 +529,7 @@ var tallybook = tallybook || {};
         var formInfo = this.entityData.formInfo(data);
         var tabHolder = new TabHolder(this.$tabholder);
         formInfo.tabs.forEach(function(tab, index, array){
-          var $div = _this.createTabContent(tab, formInfo.fields, entity, errors, data);
+          var $div = _this.createTabContent(formInfo, tab, formInfo.fields, entity, errors, data);
           tabHolder.addTab(tab.name, tab.friendlyName, $div);
         });
         tabHolder.activeByIndexOrName(0);

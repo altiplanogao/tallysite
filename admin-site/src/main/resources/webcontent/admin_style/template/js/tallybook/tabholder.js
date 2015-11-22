@@ -40,28 +40,28 @@ var tallybook = tallybook || {};
   };
 
   function TabHolder($ele, enableScroll){
-    this.$element = $ele;
+    this.$ele = $ele;
     this.$nav = null;
     this.$content = null;
     this.initContainer(enableScroll);
   };
   TabHolder.prototype={
     initContainer : function (enableScroll) {
-      this.$nav = this.$element.find('ul.nav.nav-tabs');
+      this.$nav = this.$ele.find('ul.nav.nav-tabs');
       if(this.$nav.length == 0){
         var $nav = $('<ul class="nav nav-tabs">');
-        this.$element.append($nav);
+        this.$ele.append($nav);
         this.$nav = $nav;
       }
-      this.$content = this.$element.find('div.tab-content');
+      this.$content = this.$ele.find('div.tab-content');
       if(this.$content.length == 0){
         var $content = $('<div class="tab-content">');
-        this.$element.append($content);
+        this.$ele.append($content);
         this.$content = $content;
       }
 
       if(enableScroll){
-        this.$element.customScrollbar();
+        this.$ele.customScrollbar();
       }
     },
     tabs : function(){

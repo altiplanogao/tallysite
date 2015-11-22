@@ -47,8 +47,7 @@ var tallybook = tallybook || {};
   var SelectedIndexChangedEvent = "selectedIndexChanged";
 
   var comp = (function(){
-    function ColumnCreator() {};
-    ColumnCreator.prototype = {
+    var ColumnCreator = {
       _makeColumnHeader: (function () {
         var template = $(GridSymbols.GRID_MAIN_TEMPLATE + ' .column-header-template').clone().removeClass('column-header-template');
         return function () {return template.clone();};
@@ -83,27 +82,16 @@ var tallybook = tallybook || {};
       }
     };
 
-    function RowCreator($tr) {
-      this.$tr = $tr;
-    };
-    RowCreator.prototype = {
-      element: function () {
-        return this.$tr;
-      },
+    var RowCreator = {
       _makeCellContainer: function (fieldname, fieldvalue) {
-        var obj = $("<td>");
-        obj.attr("data-fieldname", fieldname);
-        obj.attr("data-fieldvalue", fieldvalue);
-        return obj;
+        return $("<td>", {"data-fieldname": fieldname, "data-fieldvalue": fieldvalue});
       },
-      _makeCell: function ( field, entity, cellCreationContext) {
+      _makeCell: function (field, entity, cellCreationContext) {
         var fieldname = field.name;
         var fieldvalue = entityProperty(entity, fieldname);
-        var $cell = this._makeCellContainer(fieldname, fieldvalue);
         var content = CellTemplates.createCell(entity, field, cellCreationContext);
-        $cell.html(content);
-        $cell.toggle(field.gridVisible);
-
+        var $cell = this._makeCellContainer(fieldname, fieldvalue);
+        $cell.html(content).toggle(field.gridVisible);
         return $cell;
       },
       _makeCells: function (fields, entity, cellCreationContext) {
@@ -125,26 +113,24 @@ var tallybook = tallybook || {};
         });
         return $row;
       },
-      fillByEntity: function (gridinfo, entity, entityIndex, cellCreationContext) {
+      makeRow: function (gridinfo, entity, entityIndex, cellCreationContext) {
         var $row = this._makeRowContainer(gridinfo, entity, entityIndex, cellCreationContext);
         var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
-        $row.html($cells);
-        $row.data('entity', entity);
-        this.$tr = $row;
-        return this;
+        $row.html($cells).data('entity', entity);
+        return $row;
       }
     };
 
-    function ToolbarControl(grid){
-      this.grid = grid;
-      this.$element = this.grid.element().find(GridSymbols.GRID_TOOLBAR);
+    function ToolbarControl(gc){
+      this.gc = gc;//grid control
+      this.$ele = this.gc.element().find(GridSymbols.GRID_TOOLBAR);
     };
     ToolbarControl.prototype = {
       init : function(gridinfo, actions, linksObj){
         var $ele = this.element();
         var searchGrp = $ele.find('.search-group');
+        searchGrp.toggle(!!(gridinfo.primarySearchField));
         if(gridinfo.primarySearchField){
-          searchGrp.show();
           searchGrp.attr('data-search-column', gridinfo.primarySearchField);
           $ele.find('i.embed-delete').hide();
           var gridSearchField = gridinfo.primarySearchField;
@@ -155,14 +141,14 @@ var tallybook = tallybook || {};
               return true;
             }
           });
-            $ele.find('input.search-input').attr(
-              {'data-name' : gridSearchField,
-                placeholder : gridSearchFieldFriendly} ).val('').toggle(has);
-        }else{
-          searchGrp.hide();
+          $ele.find('input.search-input').attr({'data-name' : gridSearchField, placeholder : gridSearchFieldFriendly})
+            .val('').toggle(has);
         }
         var actionGrp = $ele.find('.action-group');
         (new ActionGroup(actionGrp)).setup(actions, linksObj);
+      },
+      element : function (){
+        return this.$ele;
       },
       getCsrf : function(){
         var $ele = this.element().find('form.post-agent input[name=_csrf]');
@@ -172,16 +158,12 @@ var tallybook = tallybook || {};
         var $ele = this.element();
         (new ActionGroup($ele.find('.action-group'))).switchElementActionUrl(dataUrl);
       },
-      element : function (){
-        return this.$element;
-      },
       bindEvents : function(){
         var $ele = this.element();
         $ele.on('keyup change focusin', 'input.search-input', this, ToolbarControl.eh.searchInputChangeHandler);
         $ele.on('click', 'i.embed-delete', this, ToolbarControl.eh.searchInputDelClickHandler);
         $ele.on('click', '.btn.search-btn', this, ToolbarControl.eh.invokeDoFilterHandler);
         $ele.on('keypress', '.search-input', this, ToolbarControl.eh.invokeKeyTriggerDoFilterHandler);
-
         $ele.on('click', '.action-control', this, ToolbarControl.eh.invokeActionHandler);
       },
       unbindEvents : function(){
@@ -190,7 +172,6 @@ var tallybook = tallybook || {};
         $ele.off('click', 'i.embed-delete', ToolbarControl.eh.searchInputDelClickHandler);
         $ele.off('click', '.btn.search-btn', ToolbarControl.eh.invokeDoFilterHandler);
         $ele.off('keypress', '.search-input', ToolbarControl.eh.invokeKeyTriggerDoFilterHandler);
-
         $ele.off('click', '.action-control', ToolbarControl.eh.invokeActionHandler);
       }
     };
@@ -198,7 +179,6 @@ var tallybook = tallybook || {};
       searchInputChangeHandler: function (e) {
         var $el = $(this),//NOTE: 'this' is the element triggers the event
           inputElement = $el.closest('.search-input-element');
-
         var $input = inputElement.find('input.search-input');
         if ($input) {
           var newVal = $input.val();
@@ -208,15 +188,14 @@ var tallybook = tallybook || {};
       searchInputDelClickHandler: function (e) {
         var $el = $(this),//NOTE: 'this' is the element triggers the event
           inputElement = $el.closest('.search-input-element');
-
         var $delIcon = inputElement.find('i.embed-delete').hide();
         var $input = inputElement.find('input.search-input').val('').focus();
       },
-      invokeKeyTriggerDoFilterHandler: function (event) {
-        var keycode = (event.keyCode ? event.keyCode : event.which);
+      invokeKeyTriggerDoFilterHandler: function (e) {
+        var keycode = (e.keyCode ? e.keyCode : e.which);
         if (keycode == '13') {
-          ToolbarControl.eh.invokeDoFilterHandler(event);
-          event.stopPropagation();
+          ToolbarControl.eh.invokeDoFilterHandler(e);
+          e.stopPropagation();
         }
       },
       invokeDoFilterHandler: function (e) {
@@ -227,10 +206,10 @@ var tallybook = tallybook || {};
         var parameter = (!!inputVal) ? ('' + searchColumn + '=' + inputVal) : '';
 
         var toolbar = e.data;
-        toolbar.grid.loadBySortFilterParam(parameter);
+        toolbar.gc.loadByCriteriaParam(parameter);
       },
       invokeActionHandler: function(e){
-        var grid = e.data.grid, $el = $(this), action=$el.data('action');
+        var gc = e.data.gc, $el = $(this), action=$el.data('action');
         switch(action){
           case 'create':
           case 'update':
@@ -243,7 +222,7 @@ var tallybook = tallybook || {};
               modal.setContentByLink(url);//set mod
               modal.setFormSubmitHandlers({
                 success : function(data, textStatus, jqXHR, opts){
-                    var entityForm = this;
+                  var entityForm = this;
                   if(typeof data == "object"){
                     var operation = data.operation;
                     if(operation == 'redirect'){
@@ -252,7 +231,7 @@ var tallybook = tallybook || {};
                         //window.location.replace(url);
                         opts.skipAjaxDefaultHandler = true;
                         modal.element().modal('hide');
-                        grid.reload();
+                        gc.reload();
                       }
                     }
                   }
@@ -273,10 +252,11 @@ var tallybook = tallybook || {};
                 var doDelModal = host.modal.makeModal();
                 ModalStack.showModal(doDelModal);
                 var _url = $el.data('action-url') + '/delete';
+                var gda = gc.da;
                 var postEntityData = {
-                  _csrf : grid.toolbar.getCsrf(),
-                  entityType : grid.data.entityType(),
-                  entityCeilingType : grid.data.entityCeilingType()
+                  _csrf : gc.toolbar.getCsrf(),
+                  entityType : gda.entityType(),
+                  entityCeilingType : gda.entityCeilingType()
                 };
                 doDelModal.setContentAsProcessing({
                   url : _url,
@@ -289,9 +269,9 @@ var tallybook = tallybook || {};
                     if(typeof data == "object"){
                       var operation = data.operation;
                       if(operation == 'redirect'){
-                        grid.reload();
+                        gc.reload();
                         opts.skipAjaxDefaultHandler = true;
-                        grid.selectRowByIndex(-1);
+                        gc.selectRowByIndex(-1);
                       }else{
                         var errors = (data.data)? data.data.errors : null;
                         if(errors) errors = errors.global;
@@ -301,7 +281,7 @@ var tallybook = tallybook || {};
                             header:host.messages.error,
                             message: errors
                         });
-                        grid.reload();
+                        gc.reload();
                       }
                     }
                   },
@@ -316,8 +296,8 @@ var tallybook = tallybook || {};
       }
     };
 
-    function HeaderControl(grid) {
-      this.$ele = grid.element().find(GridSymbols.GRID_HEADER);
+    function HeaderControl(gc) {
+      this.$ele = gc.element().find(GridSymbols.GRID_HEADER);
       this.$row = this.$ele.find(GridSymbols.GRID_HEADER__ROW);
     };
     HeaderControl.prototype = {
@@ -326,16 +306,16 @@ var tallybook = tallybook || {};
       },
       row:function(){return this.$row;},
       width: function () {
-        return this.$ele.width();
+        return this.element().width();
       },
       columnCount: function () {
-        return this.$row.find('th').length;
+        return this.row().find('th').length;
       },
       makeColumnsAndSet: function (gridinfo) {
         var visibles = [];
         var visibleTotal = 0;
         var $cols = gridinfo.fields.map(function (fieldInfo, index, array) {
-          var $col = new ColumnCreator().makeElement(fieldInfo, gridinfo);
+          var $col = ColumnCreator.makeElement(fieldInfo, gridinfo);
           var visi = (fieldInfo.gridVisible ? 1 : 0);
           visibles.push(visi);
           visibleTotal += visi;
@@ -353,14 +333,14 @@ var tallybook = tallybook || {};
       return $colsRow.find('.column-header.dropdown');
     };
 
-    function BodyControl(grid) {
-      this.grid = grid;
-      this.$body = grid.element().find(GridSymbols.GRID_BODY);
+    function BodyControl(gc) {
+      this.gc = gc;
+      this.$body = gc.element().find(GridSymbols.GRID_BODY);
       this.$table = this.$body.find('table');
       this.$theadRow = this.$table.find('thead tr');
       this.$tbody = this.$table.find('tbody');
       this.$emptyCell = this.$tbody.find('td.entity-grid-no-results');
-      var headerCtrl = grid.header;
+      var headerCtrl = gc.header;
       this.$emptyCell.attr('colspan', headerCtrl.columnCount());
       this.$emptyRow = this.$emptyCell.closest('tr');
     };
@@ -369,20 +349,20 @@ var tallybook = tallybook || {};
         return this.$body;
       },
       makeHeaderMirror: function () {
-        var header = this.grid.getHeader();
+        var header = this.gc.getHeader();
         this.$emptyCell.attr('colspan', header.columnCount());
         var $row = header.$row.clone();
         $row.find('th').empty();
 
         this.$theadRow.html($row.html());
       },
-      initEmptyRow: function (entities) {
+      emptyRowReset: function (entities) {
         this.$emptyRow.toggle(entities.totalCount == 0);
       },
-      clearTable: function () {
+      clearRows: function () {
         this.$tbody.empty().append(this.$emptyRow);
       },
-      makeRowsAndSet: function (gridinfo, entities) {
+      makeRowsAndAppend: function (gridinfo, entities) {
         BodyControl.makeRowsAndAppend(gridinfo, entities, this.$tbody);
       },
       getRowHeight: function () {
@@ -394,15 +374,13 @@ var tallybook = tallybook || {};
       var cellCreationContext = new CellTemplates.CellCreationContext(gridinfo.idField, entities.entityUrl, entities.baseUrl);
       var $rows = entities.records.map(function (entity, index, array) {
         var entityIndex = entities.startIndex + index;
-        var row = new RowCreator();
-        row.fillByEntity(gridinfo, entity, entityIndex, cellCreationContext);
-        return row.element();
+        return RowCreator.makeRow(gridinfo, entity, entityIndex, cellCreationContext);
       });
       $tbody.append($rows);
     };
 
-    function FooterControl(grid) {
-      this.$footer = grid.element().find(GridSymbols.GRID_FOOTER);
+    function FooterControl(gc) {
+      this.$footer = gc.element().find(GridSymbols.GRID_FOOTER);
     };
     FooterControl.prototype = {
       element: function () {
@@ -420,17 +398,17 @@ var tallybook = tallybook || {};
       }
     };
 
-    function SpinnerControl(grid) {
-      this.grid = grid;
-      this.$spinner = grid.element().find(GridSymbols.GRID_SPINNER);
+    function SpinnerControl(gc) {
+      this.gc = gc;
+      this.$spinner = gc.element().find(GridSymbols.GRID_SPINNER);
       this.$icon = this.$spinner.find(GridSymbols.GRID_SPINNER__ITEM);
     };
     SpinnerControl.prototype = {
       element: function () {
         return this.$spinner;
       },
-      setOffset : function (offsetFromBodyTop) {
-        var body = this.grid.body;
+      setOffset : function (offsetFromBodyTop) {//in pixel
+        var body = this.gc.body;
         var bodyHeight = body.element().height();
         var iconHeight = this.$icon.height();
 
@@ -468,33 +446,27 @@ var tallybook = tallybook || {};
   })();
 
   var handlers = (function(){
-    var FilterHandler = function(grid){
-      this.grid = grid;
+    var FilterHandler = function(gc){
+      this.gc = gc;
       this._installation = 0;
     };
     FilterHandler.prototype={
       bindEvents : function () {
-        var colsRow = this.grid.getHeader().row();
-        var grid = this.grid;
+        var gc = this.gc;
+        var colsRow = gc.getHeader().row();
 
         FilterHandlerManager.bindEventsOnFilterRow(colsRow);
         colsRow.on('click', '.filter-icon', FilterHandler.eh.popupHandler);
-        //colsRow.on('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
-        //colsRow.on('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
-        //colsRow.on('click', '.entity-filter .filter-reset-button', FilterHandler.eh.resetFilterHandler);
-        colsRow.on('keypress', '.entity-filter *', grid, FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
-        colsRow.on('click', '.entity-filter .filter-button', grid, FilterHandler.eh.invokeDoFilterHandler);
+        colsRow.on('keypress', '.entity-filter *', gc, FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
+        colsRow.on('click', '.entity-filter .filter-button', gc, FilterHandler.eh.invokeDoFilterHandler);
         this._installation++;
         console.log('FilterHandler.install. [' + this._installation + ']');
       },
       unbindEvents : function () {
-        var colsRow = this.grid.getHeader().row();
+        var colsRow = this.gc.getHeader().row();
 
         FilterHandlerManager.unbindEventsOnFilterRow(colsRow);
         colsRow.off('click', '.filter-icon',FilterHandler.eh.popupHandler);
-        //colsRow.off('keyup change focusin', '.entity-filter span.input-element input.filter-input', FilterHandler.eh.inputChangeHandler);
-        //colsRow.off('click', '.entity-filter span.input-element i.embed-delete', FilterHandler.eh.inputDelClickHandler);
-        //colsRow.off('click', '.entity-filter .filter-reset-button', FilterHandler.eh.resetFilterHandler);
         colsRow.off('keypress', '.entity-filter *', FilterHandler.eh.invokeKeyTriggerDoFilterHandler);
         colsRow.off('click', '.entity-filter .filter-button', FilterHandler.eh.invokeDoFilterHandler);
         this._installation--;
@@ -549,7 +521,6 @@ var tallybook = tallybook || {};
         FilterHandler.setHeaderValue(header, value ? value : '');
         FilterHandler.closeDropdowns();
 
-        var grid = e.data;
         GridControl.eh.fireReloadEvent(header, new LoadEventData(LoadEventData.source.UI));
       },
       bindOnDocReady : function($doc){
@@ -557,19 +528,19 @@ var tallybook = tallybook || {};
       }
     };
 
-    var SortHandler = function(grid){
-      this.grid = grid;
+    var SortHandler = function(gc){
+      this.gc = gc;
       this._installation = 0;
     };
     SortHandler.prototype = {
       bindEvents : function () {
-        var colsRow = this.grid.getHeader().row();
-        colsRow.on('click', '.sort-icon', this.grid, SortHandler.eh.sortIconHandler);
+        var colsRow = this.gc.getHeader().row();
+        colsRow.on('click', '.sort-icon', this.gc, SortHandler.eh.sortIconHandler);
         this._installation++;
         console.log('SortHandler.install. [' + this._installation + ']');
       },
       unbindEvents : function () {
-        var colsRow = this.grid.getHeader().row();
+        var colsRow = this.gc.getHeader().row();
         colsRow.off('click', '.sort-icon', SortHandler.eh.sortIconHandler);
         this._installation--;
         console.log('SortHandler.uninstall. [' + this._installation + ']');
@@ -642,26 +613,25 @@ var tallybook = tallybook || {};
         comp.Header.getAllCols(colsRow).not(header).map(function(i,item){
           orders.setOrder($(item), orders.DEFAULT);
         });
-        var grid = e.data;
         GridControl.eh.fireReloadEvent(header,new LoadEventData(LoadEventData.source.UI));
       }
     };
 
-    var ColumnResizer = function (grid){
-      this.grid = grid;
+    var ColumnResizer = function (gc){
+      this.gc = gc;
       this._installation = 0;
     };
     ColumnResizer.prototype={
       rebindEvents:function(){this.unbindEvents();this.bindEvents();},
       bindEvents: function () {
-        var $headerTableThead = this.grid.getHeader().element();
+        var $headerTableThead = this.gc.getHeader().element();
         $headerTableThead.on('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
 
         this._installation++;
         console.log('ColumnResizer.install. [' + this._installation + ']');
       },
       unbindEvents : function(){
-        var $headerTableThead = this.grid.getHeader().element();
+        var $headerTableThead = this.gc.getHeader().element();
         $headerTableThead.off('mousedown', 'th div.resizer', ColumnResizer.eh._mousedown);
 
         this._installation--;
@@ -841,7 +811,6 @@ var tallybook = tallybook || {};
         var val = $item.val();
         if(includeAll || val){
           if($item.data("multi-value")){
-            //var vals = val.split(',');
             var vals = JSON.parse(val);
             vals.forEach(function(singleVal, index, array){
               if($.isPlainObject(singleVal)){
@@ -860,22 +829,58 @@ var tallybook = tallybook || {};
     gatherCriteriaParameterAsObject : function(includeAll){
       var string = this.gatherCriteriaParameter(includeAll);
       return host.url.param.stringToData(string, includeAll);
+    },
+    splitParameterFromUrl : function(url){
+      var paramStr = host.url.getParameter(url);
+      return this.splitParameter(paramStr);
+    },
+    splitParameter : function(paramsStr){
+      var paramObj = host.url.param.stringToData(paramsStr);
+      var gda = this;
+      //Make sure column ui already built
+      var cParamKeys = gda.gatherAllCriteriaParameterKeys();
+
+      var cParamObj = {};
+      cParamKeys.forEach(function(ckey, index){
+        var pv = paramObj[ckey];
+        cParamObj[ckey] = pv;
+        if(pv !== undefined){
+          delete paramObj[ckey];
+        }
+      });
+
+      var resvParamObj={};
+      for(var rkeyName in ReservedParameter){
+        var rkey = ReservedParameter[rkeyName];
+        var pv = paramObj[rkey];
+        resvParamObj[rkey] = pv;
+        if(pv !== undefined){
+          if(PersistentUrlParams.indexOf(rkey) < 0){
+            delete paramObj[rkey];
+          }
+        }
+      }
+      return {
+        parameter : host.url.param.dataToString(paramObj),
+        cparameter : host.url.param.dataToString(cParamObj),
+        rparameter : host.url.param.dataToString(resvParamObj)
+      }
     }
   };
 
   var ENTITY_RELOAD_EVENT = 'entity-reload';
   function LoadEventData (val, withOffset){
-    this._trigger = LoadEventData.source.NONE;
-    this._withOffset = (!!withOffset) || false;
-    this.trigger(val);
+    this._source = LoadEventData.source.NONE;
+    this._withOffset = (!!withOffset) || false;//boolean value
+    this.source(val);
   };
   LoadEventData.prototype={
-    trigger : function(val){
-      if(val === undefined){return this._trigger;}
-      this._trigger = val;
+    source : function(src){
+      if(src === undefined){return this._source;}
+      this._source = src;
     },
-    triggerFrom : function(source){
-      return this._trigger == source;
+    checkSourceIs : function(src){
+      return this._source == src;
     },
     withOffset : function(val){
       if(val === undefined)
@@ -894,10 +899,6 @@ var tallybook = tallybook || {};
     if (!$container.is(GridSymbols.GRID_CONTAINER)) {
       throw new Error("$container does not seems tobe a valid gridcontrol.");
     } else {
-      //var existingGrid = $container.data(GridSymbols.GRID_CONTROL_KEY);
-      //if(existingGrid){
-      //  throw new Error("Element already initialized as GridControl.");
-      //}
       this.$container = $container;
     }
     console.log('GridControl construct');
@@ -907,7 +908,7 @@ var tallybook = tallybook || {};
     this.footer = new comp.Footer(this);
     this.body = new comp.Body(this);
     this.spinner = new comp.Spinner(this);
-    this.data = new GridDataAccess(this.$container);
+    this.da = new GridDataAccess(this.$container);
 
     this.filterHandler = new handlers.FilterHandler(this);
     this.sortHandler = new handlers.SortHandler(this);
@@ -929,7 +930,7 @@ var tallybook = tallybook || {};
       }
     },
     initialized: function (/*optional*/val) {
-      return this.data.initialized(val);
+      return this.da.initialized(val);
     },
     isMain : function () {
       return this.$container.data('grid-scope') == 'main';
@@ -996,35 +997,38 @@ var tallybook = tallybook || {};
     // ********************** *
     doLoadByEvent : function(e, loadEvent){
       //build parameters
-      var griddata = this.data;
-      griddata.entityType('');
-      var params = griddata.parameter();
-      if(loadEvent.triggerFrom(LoadEventData.source.UI)){
-        var cparams = griddata.gatherCriteriaParameter();
-        griddata.criteriaParameter(cparams?cparams:'');
-      }else if(loadEvent.triggerFrom(LoadEventData.source.URL)){
-        var pObj = this.splitParameter(params);
-        griddata.parameter(pObj.parameter);
+      var gda = this.da;
+      gda.entityType('');
+      var params = gda.parameter();
+      if(loadEvent.checkSourceIs(LoadEventData.source.UI)){
+        var cparams = gda.gatherCriteriaParameter();
+        gda.criteriaParameter(cparams?cparams:'');
+      }else if(loadEvent.checkSourceIs(LoadEventData.source.URL)){
+        var pObj = gda.splitParameter(params);
         params = pObj.parameter;
-        griddata.criteriaParameter(pObj.cparameter);
+        gda.parameter(pObj.parameter);
+        gda.criteriaParameter(pObj.cparameter);
         this.updateSortFilterUi(pObj.cparameter);
-      }else if(loadEvent.triggerFrom(LoadEventData.source.PARAMETER)){
-        var cparams = griddata.criteriaParameter();
+      }else if(loadEvent.checkSourceIs(LoadEventData.source.PARAMETER)){
+        var cparams = gda.criteriaParameter();
         this.updateSortFilterUi(cparams);
       }
-      var cparams = griddata.criteriaParameter();
+      var cparams = gda.criteriaParameter();
 
-      var baseUrl = host.url.connectUrl(window.location.origin, griddata.baseUrl());
+      var baseUrl = host.url.connectUrl(window.location.origin, gda.baseUrl());
       var urldata = host.url.param.connect(params, cparams);
 
-      this.doLoadUrl(baseUrl, urldata, loadEvent, true, false);
+      this._doLoadUrl(baseUrl, urldata, loadEvent, true, false);
     },
 
     // ********************** *
     // DATA FILL FUNCTIONS    *
     // ********************** *
+    //PART, REQUIRES
+    //1. toolbar: gridinfo, actions, action-links
+    //2. entitys: records, range
     fill: function (data, fillrows, fillcols) {
-      var griddata = this.data;
+      var gda = this.da;
       if (data === undefined) {
         data = this.dataContent();
       }
@@ -1049,18 +1053,18 @@ var tallybook = tallybook || {};
         if(this.isMain()){
           this.fillParameterByUrl(window.location.href)
         }
-        var cparams = griddata.criteriaParameter();
+        var cparams = gda.criteriaParameter();
         this.updateSortFilterUi(cparams);
       }
 
       if (fillrows) {
-        this.body.clearTable();
-        this.body.initEmptyRow(entities);
-        this.body.makeRowsAndSet(gridinfo, entities);
+        this.body.emptyRowReset(entities);
+        this.body.clearRows();
+        this.body.makeRowsAndAppend(gridinfo, entities);
         this.footer.setDataRange(range.lo, range.hi, entities.totalCount);
       }
 
-      griddata.recordRanges('set', range)
+      gda.recordRanges('set', range)
         .entityCeilingType(data.entityCeilingType)
         .entityType(data.entityType)
         .totalRecords(entities.totalCount)
@@ -1068,49 +1072,13 @@ var tallybook = tallybook || {};
         .entityUrl(data.entityUrl)
         .baseUrl(data.baseUrl);
     },
-    splitUrlParameter : function(url){
-      var paramStr = host.url.getParameter(url);
-      return this.splitParameter(paramStr);
-    },
-    splitParameter : function(paramsStr){
-      var paramObj = host.url.param.stringToData(paramsStr);
-      var griddata = this.data;
-      //Make sure column ui already built
-      var cParamKeys = griddata.gatherAllCriteriaParameterKeys();
-
-      var cParamObj = {};
-      cParamKeys.forEach(function(ckey, index){
-        var pv = paramObj[ckey];
-        cParamObj[ckey] = pv;
-        if(pv !== undefined){
-          delete paramObj[ckey];
-        }
-      });
-
-      var resvParamObj={};
-      for(var rkeyName in ReservedParameter){
-        var rkey = ReservedParameter[rkeyName];
-        var pv = paramObj[rkey];
-        resvParamObj[rkey] = pv;
-        if(pv !== undefined){
-          if(PersistentUrlParams.indexOf(rkey) < 0){
-            delete paramObj[rkey];
-          }
-        }
-      }
-      return {
-        parameter : host.url.param.dataToString(paramObj),
-        cparameter : host.url.param.dataToString(cParamObj),
-        rparameter : host.url.param.dataToString(resvParamObj)
-      }
-    },
     fillParameterByUrl:function(url){
-      var params = this.splitUrlParameter(url);
-      var griddata = this.data;
+      var gda = this.da;
+      var params = gda.splitParameterFromUrl(url);
 
-      griddata.baseUrl(host.url.getPath(url));
-      griddata.parameter(params.parameter);
-      griddata.criteriaParameter(params.cparameter);
+      gda.baseUrl(host.url.getPath(url));
+      gda.parameter(params.parameter);
+      gda.criteriaParameter(params.cparameter);
     },
     fillTbody: function (data, $tbody) {
       if($tbody === undefined){
@@ -1135,7 +1103,6 @@ var tallybook = tallybook || {};
       }
       return false;
     },
-
     releaseLock: function () {
       this.ENTITY_GRID_AJAX_LOCK = 0;
     },
@@ -1143,35 +1110,29 @@ var tallybook = tallybook || {};
     // ********************** *
     // LOAD FUNCTIONS         *
     // ********************** *
-    reload : function(){
-      var griddata = this.data;
-      griddata.pageSize('').totalRecords('');
-      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER));
-    },
-    reloadWithOffset : function(){
-      var griddata = this.data;
-      griddata.pageSize('').totalRecords('');
-      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER, true));
+    reload : function(){this.loadByParam();},
+    loadByParam : function(withOffset){
+      var gda = this.da;
+      gda.pageSize('').totalRecords('');
+      GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER, withOffset));
     },
     loadByUrl : function(url, parameter){
-      var griddata = this.data;
+      var gda = this.da;
 
       var inUrl = host.url.getBaseUrl(url);
       parameter = host.url.param.connect( host.url.getParameter(url),parameter);
 
-      griddata.baseUrl(inUrl ? inUrl : '');
-      griddata.parameter('').criteriaParameter('').pageSize('').totalRecords('');
-      griddata.parameter(parameter ? parameter : '');
+      gda.baseUrl(inUrl ? inUrl : '');
+      gda.parameter('').criteriaParameter('').pageSize('').totalRecords('');
+      gda.parameter(parameter ? parameter : '');
 
       GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.URL));
     },
-    loadBySortFilterParam : function (criteriaParameter) {
-      var griddata = this.data;
-
-      var url = griddata.baseUrl();
-      var param = griddata.parameter();
-
-      griddata.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
+    loadByCriteriaParam : function (criteriaParameter) {
+      var gda = this.da;
+      var url = gda.baseUrl();
+      var param = gda.parameter();
+      gda.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
 
       GridControl.eh.fireReloadEvent(this.header.element(), new LoadEventData(LoadEventData.source.PARAMETER));
     },
@@ -1179,7 +1140,7 @@ var tallybook = tallybook || {};
     // ********************** *
     // AJAX FUNCTIONS         *
     // ********************** *
-    doLoadUrl : function(url, urldata, loadEvent,  fillrows, fillcols){
+    _doLoadUrl : function(url, urldata, loadEvent, fillrows, fillcols){
       var _this = this;
       this.ajaxLoadData({
         url:url,
@@ -1191,25 +1152,23 @@ var tallybook = tallybook || {};
     },
     ajaxLoadData : function(options){
       //url(value or function), canskipcheck, ondata, ondataloaded
-      var grid = this;
+      var gc = this;
       var optionsclone = $.extend({}, options);
       var paramsObj = host.url.param.stringToData(options.data);
       optionsclone.dataObject = paramsObj;
       var _args = arguments;
 
-      while (!grid.acquireLock()) {
-        var _this = this;
+      while (!gc.acquireLock()) {
         //console.log("Couldn't acquire lock. Will try again in " + lockDebounce + "ms");
         $.doTimeout('acquirelock', lockDebounce, function () {
-//          _this.ajaxLoadData(urlbuilder, ondata, ondataloaded);
-          var callee = grid.ajaxLoadData;
-          callee.apply(grid, _args);
+          var callee = gc.ajaxLoadData;
+          callee.apply(gc, _args);
         });
         return false;
       }
       if(options.canskipcheck) {
         if (options.canskipcheck()) {
-          grid.releaseLock();
+          gc.releaseLock();
           return false;
         }
       }
@@ -1219,7 +1178,7 @@ var tallybook = tallybook || {};
         else{ url = options.url;}
       }
       if(url){
-        grid.getSpinner().show(true);
+        gc.getSpinner().show(true);
         optionsclone.url = url;
         host.debug.log(ENABLE_URL_DEBUG, 'url: ' + url + ((!optionsclone.data)? '':'?'+optionsclone.data));
 
@@ -1229,7 +1188,7 @@ var tallybook = tallybook || {};
               options.ondata(response);
             }
 
-            if(grid.isMain()){
+            if(gc.isMain()){
               var dataObject = optionsclone.dataObject;
               var paramsStr = host.url.param.dataToString(dataObject);
               var newurl = host.url.getUrlWithParameterString(paramsStr, null, url);
@@ -1243,19 +1202,18 @@ var tallybook = tallybook || {};
             }
           },
           complete:function(jqXHR, textStatus){
-            grid.releaseLock();
-            grid.getSpinner().show(false);
+            gc.releaseLock();
+            gc.getSpinner().show(false);
           }}
         );
       }else{
-        grid.releaseLock();
+        gc.releaseLock();
       }
     },
 
     // ********************** *
     // EVENTS FUNCTIONS       *
     // ********************** *
-
     unbindEvents : function(){
       if(!this._eventInstalled)
         return;
@@ -1275,13 +1233,6 @@ var tallybook = tallybook || {};
       var $ele = this.element();
       $ele.on(ENTITY_RELOAD_EVENT, this, GridControl.eh.reloadEventHandler);
       $ele.on('click', 'tr.data-row', this, GridControl.eh.rowClickHandler);
-//       $ele.on('mouseenter', 'td[data-fieldvalue]',this,function(e){
-//         var target = $(e.target);
-//         target.tooltip({html:true,title:target.html(),container:'body',delay: { "show": 1500, "hide": 100 }}).tooltip('show');
-//       });
-//       $ele.on('mouseleave', 'td[data-fieldvalue]',this,function(e){
-//         $(e.target).tooltip('hide').tooltip({disabled:true});
-//       });
 
       this.columnResizer.bindEvents();
       this.filterHandler.bindEvents();
@@ -1299,9 +1250,9 @@ var tallybook = tallybook || {};
     // ********************** *
     selectRowByIndex : function(index){
       var grid = this;
-      var dataaccess = grid.data;
+      var gda = grid.da;
       var $tbody = grid.body.$tbody;
-      var oldindex = dataaccess.selectedIndex();
+      var oldindex = gda.selectedIndex();
       var newindex = index;
       if (newindex == oldindex) {newindex = -1;}
 
@@ -1309,7 +1260,7 @@ var tallybook = tallybook || {};
       var $row = $tbody.find('tr[data-entity-index=' + newindex + '].data-row').addClass('selected');
 
       var selected = $row.is('.selected');
-      dataaccess.selectedIndex(newindex);
+      gda.selectedIndex(newindex);
       this.element().trigger(SelectedIndexChangedEvent, [oldindex, newindex, $row.data('entity')]);
       var dataUrl = ((!!(newindex >= 0))? $row.attr('data-url') : null);
 
@@ -1325,27 +1276,27 @@ var tallybook = tallybook || {};
     fireReloadEvent: function ($ele, reloadEvent) {
       var $container = GridControl.findContainerElement($ele);
       var header = $container.find(GridSymbols.GRID_HEADER);
-      var griddata = new GridDataAccess($container);
-      griddata.totalRecords('');
-      griddata.recordRanges('set', '0-0');
+      var gda = new GridDataAccess($container);
+      gda.totalRecords('');
+      gda.recordRanges('set', '0-0');
 
       header.trigger(ENTITY_RELOAD_EVENT, reloadEvent);
     },
     reloadEventHandler : function(e, reloadEvent){
       var $el = $(this);
-      var grid = e.data;
-      grid.doLoadByEvent(e, reloadEvent);
+      var gc = e.data;
+      gc.doLoadByEvent(e, reloadEvent);
     },
     rowClickHandler: function (e) {
       var $el = $(this),
         $row = $el.closest('tr.data-row'),
         grid = e.data;
-      var dataaccess = grid.data;
+      var gda = grid.da;
       var newindex = -1;
       if ($row.length == 0) {
         newindex = -1;
       }else{
-        var oldindex = dataaccess.selectedIndex();
+        var oldindex = gda.selectedIndex();
         var theRowIndex = $row.attr('data-entity-index');
         if (theRowIndex == oldindex) {newindex = -1;}
         else{

@@ -130,6 +130,7 @@ var tallybook = tallybook || {};
             var checkedVals = [];
             $options.filter(function(index, item){return item.checked;})
               .each(function(index, item){checkedVals.push($(item).attr('value'));});
+            if(checkedVals.length == 0) return '';
             return JSON.stringify(checkedVals);
           },
           set: function (entityFilter, val) {

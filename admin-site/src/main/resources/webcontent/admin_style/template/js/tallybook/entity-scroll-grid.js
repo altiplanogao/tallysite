@@ -62,7 +62,7 @@ var tallybook = tallybook || {};
     updateBodyHeight:{value: function () {
       var container = this.$container;
       var bodyWrapper = this.body.$body;
-      var totalContentHeight = Math.max(this.data.totalRecords() * this.getRowHeight(),bodyWrapper.find("tbody").height());
+      var totalContentHeight = Math.max(this.da.totalRecords() * this.getRowHeight(),bodyWrapper.find("tbody").height());
       var maxAllowed;
 
       if(bodyWrapper.height() == 0){ //not initialized
@@ -157,7 +157,7 @@ var tallybook = tallybook || {};
     updateRangeInfo:{value: function (normalpercent) {
       var topIndex = this.getTopVisibleIndex(normalpercent);
       var bottomIndex = this.getBottomVisibleIndex(normalpercent);
-      var totalCount = this.data.totalRecords();
+      var totalCount = this.da.totalRecords();
       this.getFooter().setDataRange(topIndex,bottomIndex,totalCount);
 
       host.debug.log(ENABLE_SCROLL_DEBUG, 'updateRangeInfo: [' + topIndex + ' - ' + bottomIndex +'] ' + topIndex + '  ' + ((normalpercent === undefined)?'':(''+normalpercent)));
@@ -175,7 +175,7 @@ var tallybook = tallybook || {};
       });
     }},
     fill :{value: function (data, fillrows, fillcols) {
-      GridControl.prototype.fill.apply(this,arguments);
+      GridControl.prototype.fill.apply(this, arguments);
       this.paging.paddingAdjustAfterFirstLoad();
 
       this.teardown();
@@ -216,13 +216,13 @@ var tallybook = tallybook || {};
   };
   ScrollGrid.findFromPage = function ($page) {
     var $ctrls = $page.find(GridControl.GridSymbols.GRID_CONTAINER);
-    var gcs = $ctrls.map(function (index, ctrl, array) {
-      var gc = ScrollGrid.getScrollGrid($(ctrl));return gc;
+    var sgcs = $ctrls.map(function (index, ctrl, array) {
+      var sgc = ScrollGrid.getScrollGrid($(ctrl));return gc;
     });
-    return gcs;
+    return sgcs;
   };
 
-  var Paging = function (grid) {this.grid = grid;};
+  var Paging = function (sgc) {this.sgc = sgc;};
   Paging.prototype = {
 
     // ************************* *
@@ -230,17 +230,17 @@ var tallybook = tallybook || {};
     // ************************* *
     loadRecords : function () {
       var $paging = this;
-      var grid = this.grid;
-      return grid.ajaxLoadData({
+      var sgc = this.sgc;
+      return sgc.ajaxLoadData({
           url: function (/*urlbuilder*/) {
-            var $tbody = grid.body.$tbody;
+            var $tbody = sgc.body.$tbody;
 
-            var fullRange = new Range(0, grid.data.totalRecords());
-            var topIndex = grid.getTopVisibleIndex();
-            var botIndex = grid.getBottomVisibleIndex();
+            var fullRange = new Range(0, sgc.da.totalRecords());
+            var topIndex = sgc.getTopVisibleIndex();
+            var botIndex = sgc.getBottomVisibleIndex();
             var dataWindowRange = fullRange.intersect(new Range(topIndex, botIndex));
-            var loadedRanges = grid.data.recordRanges();
-            var pageSize = grid.data.pageSize();
+            var loadedRanges = sgc.da.recordRanges();
+            var pageSize = sgc.da.pageSize();
 
             if(dataWindowRange == null){
               return null;
@@ -248,7 +248,7 @@ var tallybook = tallybook || {};
 
             var missingRanges = RangeArrayHelper.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
             if (missingRanges.length > 0) {
-              var baseUrl = grid.data.baseUrl();
+              var baseUrl = sgc.da.baseUrl();
               baseUrl = host.url.connectUrl(window.location.origin, baseUrl);
 
               var firstMissingRange = missingRanges[0];
@@ -257,37 +257,37 @@ var tallybook = tallybook || {};
               {
                 var $overview = $tbody.closest('div.overview');
                 var offset = 0 - $overview.position().top;
-                var spinnerOffset = (loadingWindowRange.lo + loadingWindowRange.hi) * grid.getRowHeight() / 2 - offset;
-                grid.getSpinner().setOffset(spinnerOffset);
+                var spinnerOffset = (loadingWindowRange.lo + loadingWindowRange.hi) * sgc.getRowHeight() / 2 - offset;
+                sgc.getSpinner().setOffset(spinnerOffset);
               }
 
-              var parameter = grid.data.parameter();
-              var cParameter = grid.data.criteriaParameter();
+              var parameter = sgc.da.parameter();
+              var cParameter = sgc.da.criteriaParameter();
               var allParam = host.url.param.connect(parameter, cParameter);
 
-              var url = grid.buildAjaxLoadUrl(baseUrl, allParam, firstMissingRange);
+              var url = sgc.buildAjaxLoadUrl(baseUrl, allParam, firstMissingRange);
               return url
             } else {
               return null;
             }
           },
           canskipcheck: function (/*canskipcheck*/) {
-            var $tbody = grid.body.$tbody;
-            var totalRecords = grid.data.totalRecords();
+            var $tbody = sgc.body.$tbody;
+            var totalRecords = sgc.da.totalRecords();
             if ((!$tbody.is(':visible')) || (totalRecords == 0)) {
               return true;
             }
             return false;
           },
           ondata: function (/*ondata*/ response) {
-            var $tbody = grid.body.$tbody;
+            var $tbody = sgc.body.$tbody;
             var data = response.data;
-            var $newTbody = grid.fillTbody(data, undefined);
+            var $newTbody = sgc.fillTbody(data, undefined);
             $paging.injectRecords($tbody, $newTbody, data.entities.range);
-            grid.data.totalRecords(data.entities.totalCount);
+            sgc.da.totalRecords(data.entities.totalCount);
           },
           ondataloaded: function (/*ondataloaded*/) {
-            grid.triggerLoad();
+            sgc.triggerLoad();
           }
         }
       );
@@ -297,8 +297,8 @@ var tallybook = tallybook || {};
     // DOM *
     // ************************* *
     injectRecords: function ($tbody, $newTbody, newRange) {
-      var _grid = this.grid;
-      var loadedRange = _grid.data.recordRanges();
+      var _sgc = this.sgc;
+      var loadedRange = _sgc.da.recordRanges();
       var result = RangeArrayHelper.findMissingRangesWithin(loadedRange, newRange.lo, newRange.hi);
       var tobefilled = (result && result.length) ? result[0] : null;
 
@@ -318,15 +318,15 @@ var tallybook = tallybook || {};
           $newTrs = $newTrs.slice(rangeHeadOffset, intersect.width() + rangeHeadOffset);
 
           if (preblank) {
-            $prepad = _grid.createPadding( preblank.lo, preblank.hi);
+            $prepad = _sgc.createPadding( preblank.lo, preblank.hi);
             $newTrs.splice(0, 0, $prepad[0]);
           }
           if (posblank) {
-            $pospad = _grid.createPadding( posblank.lo, posblank.hi);
+            $pospad = _sgc.createPadding( posblank.lo, posblank.hi);
             $newTrs.push($pospad[0]);
           }
           $e.replaceWith($newTrs);
-          _grid.data.recordRanges('add', intersect);
+          _sgc.da.recordRanges('add', intersect);
           filled++;
         }
       });
@@ -341,25 +341,25 @@ var tallybook = tallybook || {};
     // Initialize *
     // ************************* *
     paddingAdjustAfterFirstLoad: function () {
-      var grid = this.grid;
-      var $tbody = grid.body.$tbody;
+      var sgc = this.sgc;
+      var $tbody = sgc.body.$tbody;
 
-      var range = grid.data.recordRanges()[0];
+      var range = sgc.da.recordRanges()[0];
       var recordsAbove = range.lo;
-      var recordsBelow = grid.data.totalRecords() - range.hi;
+      var recordsBelow = sgc.da.totalRecords() - range.hi;
       if (recordsAbove) {
-        var $pad = grid.createPadding(0, recordsAbove);
+        var $pad = sgc.createPadding(0, recordsAbove);
         $tbody.find('tr:first').before($pad);
-        grid.scrollToIndex(range.lo);
+        sgc.scrollToIndex(range.lo);
       }
       if (recordsBelow) {
-        var $pad = grid.createPadding( range.hi, grid.data.totalRecords());
+        var $pad = sgc.createPadding( range.hi, sgc.da.totalRecords());
         $tbody.find('tr:last').after($pad);
       }
 
-      grid.scrollHolder.customScrollbar("resize", true);
-      if(range.lo != grid.getTopVisibleIndex()){
-        grid.scrollToIndex(range.lo);
+      sgc.scrollHolder.customScrollbar("resize", true);
+      if(range.lo != sgc.getTopVisibleIndex()){
+        sgc.scrollToIndex(range.lo);
       }
     }
   };
@@ -367,11 +367,11 @@ var tallybook = tallybook || {};
   ScrollGrid.initOnDocReady = function ( $doc) {
     ($(ENTITY_GRID_CONTAINER)).each(function (i, item) {
       var $container = $(item);
-      var grid = ScrollGrid.getScrollGrid($container);
-      grid.fill();
+      var sgc = ScrollGrid.getScrollGrid($container);
+      sgc.fill();
       $(window).resize(function () {
         $.doTimeout('resize', 250, function () {
-          grid.resize();
+          sgc.resize();
         });
       });
     });
@@ -381,18 +381,18 @@ var tallybook = tallybook || {};
     model:'select',
     //target:'xxxx',
     postSetUrlContent:function(content, _modal){
-      var sgrid = host.entity.scrollGrid.findFirstOnPage(content);
-      var sgridEle = sgrid.element();
-      sgridEle.off(ScrollGrid.event.filled, EntityGridModal.filledHandler);
-      sgridEle.on(ScrollGrid.event.filled, _modal, EntityGridModal.filledHandler);
-      _modal.scrollGrid = sgrid;
-      sgrid.inModal(_modal);
-      sgrid.fill();
+      var sgc = host.entity.scrollGrid.findFirstOnPage(content);
+      var sgcEle = sgc.element();
+      sgcEle.off(ScrollGrid.event.filled, EntityGridModal.filledHandler);
+      sgcEle.on(ScrollGrid.event.filled, _modal, EntityGridModal.filledHandler);
+      _modal.scrollGrid = sgc;
+      sgc.inModal(_modal);
+      sgc.fill();
       _modal.addOnHideCallback(function () {
-        sgridEle.off(ScrollGrid.event.filled, EntityGridModal.filledHandler);
+        sgcEle.off(ScrollGrid.event.filled, EntityGridModal.filledHandler);
         _modal.scrollGrid = null;
       });
-      sgrid.element().on('selectedIndexChanged', function(event, oldidx, newidx, entity){
+      sgc.element().on('selectedIndexChanged', function(event, oldidx, newidx, entity){
         _modal._selectedEntity = entity;
         if(entity){
           if(_modal.options.model == 'select'){
