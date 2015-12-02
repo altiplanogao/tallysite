@@ -18,7 +18,7 @@ var tallybook = tallybook || {};
   ActionGroup.prototype={
     element: function(){return this.$grpEle; },
     /**
-     * display the specified actions, and hide others; update the action-url
+     * display the specified actions, and hide others; update the action-uri
      * @param actions : array of action names
      * @param linksObj : dictionary with action name as key, url as its value
      */
@@ -29,21 +29,23 @@ var tallybook = tallybook || {};
         actionGrp.find('.action-control[data-action]').each(function(i,ctrl){
           var $ctrl = $(ctrl); var action = $ctrl.data('action');
           $ctrl.toggle(actions.indexOf(action) >= 0);
-          if(linksObj[action]){ $ctrl.attr('data-action-url', linksObj[action]);}
+          if(linksObj[action]){ $ctrl.attr('data-action-uri', linksObj[action]);}
         });
         actionGrp.show();
       }
     },
-    /**
-     * Update the action-url for entity-action buttons (ONLY for entity button)
-     * @param entityUrl : the new entity-url
-     */
-    switchElementActionUrl: function(entityUrl){
+    focusOnEntry: function (anchor) {
       var actionGrp = this.$grpEle;
+      actionGrp.data('anchor', anchor);
       actionGrp.find('.action-control.entity-action').each(function(i,ctrl){
         var $ctrl = $(ctrl);
-        $ctrl.attr('data-action-url', entityUrl).data('action-url', entityUrl);
-        ctrl.disabled = (!entityUrl);
+        var uri = $ctrl.data('action-uri');
+        if(uri == null || uri == '')return;
+        var template = new UriTemplate(uri);
+        var missvar = template.varNames.some(function(t,i,a){
+          if(anchor[t] === undefined) return true;
+        });
+        ctrl.disabled =missvar;
       });
     },
     /**
@@ -114,28 +116,42 @@ var tallybook = tallybook || {};
       this.$grpEle.toggle(val);
     }
   };
-  ActionGroup.replaceMainActionGroup = function(actionGroup){
-    if(actionGroup){
-      actionGroup.toggle(false);
-      var mainAgEle = actionGroup.element().clone();
-      var mainAg = new ActionGroup(mainAgEle);mainAg.toggle(true);
-      $('.entity-main-action-group').empty().append(mainAgEle);
-    }else{
-      $('.entity-main-action-group').empty();
-    }
-  }
-  ActionGroup.findChildActionGroup = function ($ele) {
-    var $grpEle = $('.action-group', $ele);
-    return new ActionGroup($grpEle);
+  ActionGroup.getUri = function ($ctrl) {
+    var uri = $ctrl.data('action-uri');
+    var ag = ActionGroup.findParentActionGroup($ctrl);
+    var anchor = ag.element().data('anchor');
+    var template = new UriTemplate(uri);
+    var missvar = template.varNames.some(function(t,i,a){
+      if(anchor[t] === undefined) return true;
+    });
+    if(missvar) return undefined;
+    return template.fill(anchor);
   };
+  ActionGroup.replaceMainActionGroup = function(origAg){
+    var mainAgc = $('.entity-main-action-group').empty();
+    if(origAg){
+      origAg.toggle(false);
+      var mainAgEle = origAg.element().clone();
+      var mainAg = new ActionGroup(mainAgEle); mainAg.toggle(true);
+      mainAgc.append(mainAgEle);
+    }
+    return mainAg;
+  }
+  ActionGroup.replaceModalFootActionGroup = function(origAg, _modal){
+    var $modalFoot = _modal.element().find('.modal-footer');
+    var agFoot = new ActionGroup(origAg.element().clone());
+    $modalFoot.empty().append(agFoot.element());
+    origAg.toggle(false);
+    return agFoot;
+  }
   ActionGroup.findParentActionGroup = function ($ele) {
     var $grpEle = $ele.closest('.action-group');
     if($grpEle.length == 1)
       return new ActionGroup($grpEle);
   };
 
-  function makeUrl(idField, entity, entityUrl) {
-    return entityUrl + '/' + entity[idField];
+  function makeUri(idField, entity, entityUri) {
+    return entityUri + '/' + entity[idField];
   }
 
   function entityProperty(entity, propertyPath){
@@ -153,7 +169,7 @@ var tallybook = tallybook || {};
 
   host.entity = $.extend({}, host.entity, {
     actionGroup : ActionGroup,
-    makeUrl : makeUrl,
+    makeUri : makeUri,
     entityProperty : entityProperty
   });
 })(jQuery, tallybook);

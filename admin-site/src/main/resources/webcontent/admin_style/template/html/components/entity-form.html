@@ -18,7 +18,9 @@
           th:action="@{${formAction}}">
       <div class="entity-context" style="display: none;"></div>
       <div class="tab-holder entity-box"></div>
-      <div th:replace="components/entity-actions"></div>
+      <div class="form-action-group-container"
+           th:include="components/entity-actions"
+           th:with="editSuccessRedirect=false"></div>
     </form>
   </div>
 </div>

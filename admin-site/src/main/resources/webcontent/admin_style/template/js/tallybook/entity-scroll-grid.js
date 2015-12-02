@@ -104,6 +104,7 @@ var tallybook = tallybook || {};
       }
     }},
     resize:{value: function () {
+      GridControl.prototype.resize.apply(this, arguments);
       this.updateBodyHeight();
       this.scrollHolder.customScrollbar("resize", true);
       this.alignHeaderAndBody();
@@ -174,7 +175,7 @@ var tallybook = tallybook || {};
         _this.paging.loadRecords();
       });
     }},
-    fill :{value: function (data, fillrows, fillcols) {
+    fill :{value: function (ops) {
       GridControl.prototype.fill.apply(this, arguments);
       this.paging.paddingAdjustAfterFirstLoad();
 
@@ -248,7 +249,7 @@ var tallybook = tallybook || {};
 
             var missingRanges = RangeArrayHelper.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
             if (missingRanges.length > 0) {
-              var baseUrl = sgc.da.baseUrl();
+              var baseUrl = sgc.da.entityQueryBaseUri();
               baseUrl = host.url.connectUrl(window.location.origin, baseUrl);
 
               var firstMissingRange = missingRanges[0];
@@ -368,8 +369,13 @@ var tallybook = tallybook || {};
     ($(ENTITY_GRID_CONTAINER)).each(function (i, item) {
       var $container = $(item);
       var sgc = ScrollGrid.getScrollGrid($container);
-      sgc.fill();
-      $(window).resize(function () {
+      var ops = {};if(sgc.isMain()){ops = {updateUri:true, uri:window.location.href}}
+      sgc.fill(ops);
+    });
+    $(window).resize(function () {
+      ($(ENTITY_GRID_CONTAINER)).each(function (i, item) {
+        var $container = $(item);
+        var sgc = ScrollGrid.getScrollGrid($container);
         $.doTimeout('resize', 250, function () {
           sgc.resize();
         });

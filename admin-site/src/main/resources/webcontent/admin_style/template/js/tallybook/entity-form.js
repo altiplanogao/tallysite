@@ -12,7 +12,6 @@ var tallybook = tallybook || {};
   var ScrollGrid = host.entity.scrollGrid;
 
   var ENTITY_FORM_KEY = 'tallybook.entity.form';
-
   var MAIN_TEMPLATE = '.template.form-template';
 
   var FormSymbols ={
@@ -20,20 +19,30 @@ var tallybook = tallybook || {};
     TAB_HOLDER : 'div.tab-holder'
   };
 
+  var EntityContext = function (info, entityUri) {
+    this.info = info;
+    this.uri = entityUri;
+  }
+  var BeanContext = function(bean, errors){
+    this.bean = bean;
+    this.errors = errors;
+  }
+
 //var formElementExample={
   //  data-form-field-type : string, integer-range, decimal range, foreign-key
   //  data-support-field-types : string, email, phone, boolean
   //}
   var EmptyFieldHandler = {
-    initializer : function (element, formInfo, fieldInfo, formData) {
-      element.data('form-info', formInfo);
-      element.data('field-info', fieldInfo);
-      return this._doInitialize(element, fieldInfo, formData);
+    initializer : function (element, entityCtx, fieldinfo) {
+      element.data('entity-context', entityCtx);
+      element.data('form-info', entityCtx.info);
+      element.data('field-info', fieldinfo);
+      return this._doInitialize(element, entityCtx, fieldinfo);
     },
     //return typed-value
     get : function (element) {return this._doGet(element);},
     //set ui by typed-value
-    set : function(element, val, entity){return this._doSet(element, val, entity);}
+    set : function(element, val, bean){return this._doSet(element, val, bean);}
   };
 
   function FieldHandler(handler){
@@ -46,7 +55,7 @@ var tallybook = tallybook || {};
     },
     getFieldInfo:function(element){return element.data('field-info');},
     getFormInfo:function(element){return element.data('form-info');},
-    _doInitialize : function (element, fieldInfo, formData) {},
+    _doInitialize : function (element, entityCtx, fieldinfo) {},
     _doGet : function (element) {return '';},
     _doSet : function(element, val){},
     limitDepth: function (obj, /*zero based*/currentDepth, depthLimit) {
@@ -92,7 +101,7 @@ var tallybook = tallybook || {};
     }
   };
 
-  var fieldNameInForm = function(fieldName){return 'entity[' + fieldName + ']';};
+  var fieldNameInForm = function(fieldName){return 'props[' + fieldName + ']';};
   /**
    build Map
    */
@@ -116,8 +125,8 @@ var tallybook = tallybook || {};
   var FieldTemplates = {
     handlers : { // keys are element-types
       string : new FieldHandler({
-        _doInitialize: function (element, fieldInfo, formData) {
-          var fieldName = fieldInfo.name;
+        _doInitialize: function (element, entityCtx, fieldinfo) {
+          var fieldName = fieldinfo.name;
           var input = $('.content', element).attr('name', fieldNameInForm(fieldName));
         },
         _doGet: function (element) {
@@ -127,10 +136,10 @@ var tallybook = tallybook || {};
           return element.find('.content').val(val);
         }}),
       enum : new FieldHandler({
-        _doInitialize : function(element, fieldInfo, formData){
-          var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldInfo.name));
-          var options = fieldInfo.options;
-          var friendlyNames = fieldInfo.optionsFriendly;
+        _doInitialize : function(element, entityCtx, fieldinfo){
+          var optionsContainer = $('select.options', element).attr('name', fieldNameInForm(fieldinfo.name));
+          var options = fieldinfo.options;
+          var friendlyNames = fieldinfo.optionsFriendly;
           var opElems = options.map(function(t){
             var $opE = $('<option>', {'value' : t} ).text(friendlyNames[t]);
             return $opE;
@@ -146,11 +155,11 @@ var tallybook = tallybook || {};
           return  optionsContainer.val(val);
         }}),
       boolean : new FieldHandler({
-        _doInitialize : function (element, fieldInfo, formData) {
-          var fieldName = fieldInfo.name;
+        _doInitialize : function (element, entityCtx, fieldinfo) {
+          var fieldName = fieldinfo.name;
           var input = $('.option input[type=radio]', element).attr('name', fieldNameInForm(fieldName));
 
-          var trOpts = fieldInfo.options;
+          var trOpts = fieldinfo.options;
           element.find('input[type=radio][value=true]+span').text(trOpts.t);
           element.find('input[type=radio][value=false]+span').text(trOpts.f);
         },
@@ -175,12 +184,12 @@ var tallybook = tallybook || {};
           }
         }}),
       html : new FieldHandler({
-        _doInitialize:function(element, fieldInfo, formData){
+        _doInitialize:function(element, entityCtx, fieldinfo){
           var $editor = $('.html-editor', element).summernote({
             height : 150,
             minHeight: 150,             // set minimum height of editor
             maxHeight: 300             // set maximum height of editor
-          });
+          }).attr('name', fieldNameInForm(fieldinfo.name));
         },
         _doGet:function(element){
           return $('.html-editor', element).code();
@@ -189,10 +198,10 @@ var tallybook = tallybook || {};
           $('.html-editor', element).code(val);
         }}),
       date : new FieldHandler({
-        _doInitialize:function(element, fieldInfo, formData){
+        _doInitialize:function(element, entityCtx, fieldinfo){
           //http://trentrichardson.com/examples/timepicker/
-          var fieldName = fieldInfo.name;
-          var model = fieldInfo.model;
+          var fieldName = fieldinfo.name;
+          var model = fieldinfo.model;
           var method = null;
           var input = $('.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
           var datapickerops = JSON.parse(host.messages.datepicker_localization);
@@ -273,16 +282,16 @@ var tallybook = tallybook || {};
             return element.attr('data-external-fk-entity-field', val);
           }
         },
-        _doInitialize:function(element, fieldInfo, formData){
-          var selectUrl = host.url.connectUrl(formData.entityUrl, fieldInfo.name, 'select');
+        _doInitialize:function(element, entityCtx, fieldinfo){
+          var selectUrl = host.url.connectUrl(entityCtx.uri, fieldinfo.name, 'select');
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
           var fkvContainer = element.find('.foreign-key-value-container');
-          fkvContainer.attr({'data-entity-type':fieldInfo.entityType,
-          'data-id-field':fieldInfo.idFieldName,
-          'data-display-field': fieldInfo.displayFieldName});
+          fkvContainer.attr({'data-entity-type':fieldinfo.entityType,
+          'data-id-field':fieldinfo.idFieldName,
+          'data-display-field': fieldinfo.displayFieldName});
           var ft = this.getFieldType(element);
           if(this.external(element)){
-            this.externalEntityField(element,fieldInfo.entityFieldName);
+            this.externalEntityField(element,fieldinfo.entityFieldName);
           }
         },
         _doGet:function(element){
@@ -296,30 +305,30 @@ var tallybook = tallybook || {};
           }
           if(realVal == null)
             return null;
-          var fieldInfo = this.getFieldInfo(element);
-          var obj = {"id" : realVal[fieldInfo.idFieldName], "display": realVal[fieldInfo.displayFieldName]};
+          var fieldinfo = this.getFieldInfo(element);
+          var obj = {"id" : realVal[fieldinfo.idFieldName], "display": realVal[fieldinfo.displayFieldName]};
           return obj;
         },
-        _doSet:function(element, val, entity){
-          var fentity = val;
+        _doSet:function(element, val, bean){
+          var fbean = val;
           if(!$.isPlainObject(val)){
             if(this.external(element)){
               var fef = this.externalEntityField(element);
-              if(entity != null)
-                fentity = entity[fef];
+              if(bean != null)
+                fbean = bean[fef];
             }
           }
-          var hasVal = !!fentity;
+          var hasVal = !!fbean;
           var varStr = "";
           var link="";
-          element.data('entity', fentity);
+          element.data('entity', fbean);
           if(hasVal){
             var fkvContainer = element.find('.foreign-key-value-container');
             var entityType = fkvContainer.attr('data-entity-type');
             var displayField = fkvContainer.attr('data-display-field');
             var idField = fkvContainer.attr('data-id-field');
-            varStr = fentity[displayField];
-            link='/' + host.url.connectUrl(entityType, '' + fentity[idField]);
+            varStr = fbean[displayField];
+            link='/' + host.url.connectUrl(entityType, '' + fbean[idField]);
           }
           element.find('.display-value-none-selected').toggle(!hasVal);
           element.find('.display-value').toggle(hasVal).text(varStr);
@@ -328,15 +337,23 @@ var tallybook = tallybook || {};
           .attr('data-foreign-key-link', link).attr('href', link);
         }}),
       collection : new FieldHandler({
-        _doInitialize: function (element, fieldInfo, formData) {
-          var formInfo = this.getFormInfo(element);
-          var entryName = fieldInfo.instanceType;
-          var entryInfo = formInfo.referencing[entryName];
+        _doInitialize: function (element, entityCtx, fieldinfo) {
+          var forminfo = this.getFormInfo(element);
+          var entryName = fieldinfo.instanceType;
+          var entryGridinfo = forminfo.referencing[entryName];
           var gridContainer = GridControl.makeRawHtmlGridElement();
+          element.find('.grid-slot').html(gridContainer);
           var scrollGrid = ScrollGrid.getScrollGrid(gridContainer);
-          //scrollGrid.
-          var fieldName = fieldInfo.name;
-          var input = $('.content', element).attr('name', fieldNameInForm(fieldName));
+
+          scrollGrid.fillParameterByUrl(host.url.connectUrl(entityCtx.uri, fieldinfo.name));
+          var gridsetting = {
+            entityType: fieldinfo.instanceType,
+            entityCeilingType: fieldinfo.instanceType,
+            actions: fieldinfo.actions,
+            linksObj: fieldinfo.links
+          };
+
+          scrollGrid.setupEntityUi(entryGridinfo, gridsetting);
         },
         _doGet: function (element) {
           return element.find('.content').val();
@@ -363,15 +380,16 @@ var tallybook = tallybook || {};
     })(),
     /**
      * Create an html element for a field
-     * @param fieldInfo
+     * @param fieldinfo
      * @param entity
      * @returns the html element
      */
-    createElementByFieldInfo: function (formInfo, fieldInfo, entity, errors, formData) {
-      var readonly = !fieldInfo.editable;
-      var fieldType = fieldInfo.fieldType.toLowerCase();
-      var fieldName = fieldInfo.name;
+    createElementByFieldInfo: function (entityCxt, beanCxt, fieldinfo, formData) {
+      var readonly = !fieldinfo.editable;
+      var fieldType = fieldinfo.fieldType.toLowerCase();
+      var fieldName = fieldinfo.name;
       var fieldErrors = null;
+      var bean = beanCxt.bean, errors=beanCxt.errors;
       if(errors && errors.fields){
         fieldErrors = errors.fields[fieldName];
       }
@@ -387,21 +405,21 @@ var tallybook = tallybook || {};
         });
         $fieldLabel.append(errorSpans);
       }
-      element.find('label.field-label').text(fieldInfo.friendlyName).toggleClass('required', !!fieldInfo.required);
+      element.find('label.field-label').text(fieldinfo.friendlyName).toggleClass('required', !!fieldinfo.required);
       var formFieldType = element.data('form-field-type');
 
       var handler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
       if(handler){
-        handler.initializer(element, formInfo, fieldInfo, formData);
-        var propVal = host.entity.entityProperty(entity, fieldName);
+        handler.initializer(element, entityCxt, fieldinfo);
+        var propVal = host.entity.entityProperty(bean, fieldName);
         if(readonly){
           element.data('readonly.data', propVal);
           if(handler.setreadonly){
-            handler.setreadonly(element, propVal, entity);
+            handler.setreadonly(element, propVal, bean);
             return element;
           }
         }
-        handler.set(element, propVal, entity);
+        handler.set(element, propVal, bean);
       }
       return element;
     }
@@ -412,7 +430,7 @@ var tallybook = tallybook || {};
   }
   EntityDataAccess.prototype={
     element : function(){return this.form;},
-    entityUrl: ElementValueAccess.defineGetSet('entity-url','/'),
+    entityUri: ElementValueAccess.defineGetSet('entity-uri','/'),
     entityRecordUrl: ElementValueAccess.defineGetSet('entity-record-url','/'),
     currentAction : ElementValueAccess.defineGetSet('current-action', null),
     currentFriendlyAction : ElementValueAccess.defineGetSet('current-friendy-action', null)
@@ -423,8 +441,11 @@ var tallybook = tallybook || {};
     this.$tabholder = $container.find(FormSymbols.TAB_HOLDER);
     this.$form = $container.find('form');
     this.$entityCxt = this.$form.find('.entity-context');
-    this.dataAccess = new EntityDataAccess($container);
+    this.da = new EntityDataAccess($container);
     this.data = null;
+    var $grpEle = $('.form-action-group-container .action-group', this.$container);
+    this.actionGroup = new ActionGroup($grpEle);
+
     this.submitHandlers = {};
     this._inModal = false;
   }
@@ -447,14 +468,15 @@ var tallybook = tallybook || {};
         $ele.data('content', val);
       }
     },
-    createGroupContent : function(formInfo, groupInfo, fields, entity, errors, formData){
-      var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupInfo.name});
-      var $groupTitle = $('<legend>').text(groupInfo.friendlyName);
+    createGroupContent : function(entityCxt, beanCxt, groupinfo, formData){
+      var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupinfo.name});
+      var $groupTitle = $('<legend>').text(groupinfo.friendlyName);
+      var fis = entityCxt.info.fields;
       $group.append($groupTitle);
-      var fieldEles = groupInfo.fields.map(function(fieldName){
-        var field = fields[fieldName];
-        var fieldEle = FieldTemplates.createElementByFieldInfo(formInfo, field, entity, errors, formData);
-        if(!field.formVisible){
+      var fieldEles = groupinfo.fields.map(function(fieldName){
+        var fieldinfo = fis[fieldName];
+        var fieldEle = FieldTemplates.createElementByFieldInfo(entityCxt, beanCxt, fieldinfo, formData);
+        if(!fieldinfo.formVisible){
           fieldEle.hide();
         }
         return fieldEle;
@@ -462,12 +484,11 @@ var tallybook = tallybook || {};
       $group.append(fieldEles);
       return $group;
     },
-    createTabContent : function (formInfo, tabInfo, fields, entity, errors, formData){
+    createTabContent : function (entityCxt, beanCxt, tabinfo, formData){
       var _this = this;
-      var $div = $('<div>', {'class':'entity-tab', 'data-tab-name': tabInfo.name});
-      var $groups = tabInfo.groups.map(function(group, index, array){
-        var $group = _this.createGroupContent(formInfo, group, fields, entity, errors, formData);
-        return $group;
+      var $div = $('<div>', {'class':'entity-tab', 'data-tab-name': tabinfo.name});
+      var $groups = tabinfo.groups.map(function(groupinfo, i){
+        return _this.createGroupContent(entityCxt, beanCxt, groupinfo, formData);
       });
       $div.html($groups);
       return $div;
@@ -508,69 +529,79 @@ var tallybook = tallybook || {};
       this.$tabholder.empty();
       this.$form.find('.entity-errors').remove();
     },
-    fill : function(rawData, force){
-      if(!!force)
+    fill : function(ops){
+      ops = $.extend({data:undefined,force:false}, ops);
+      if(!!(ops.force))
         this.reset();
       if(this.initialized())
         return;
       var _this = this;
-      if(rawData === undefined){
-        rawData = this.dataContent();
-      }else{
-        this.dataContent(rawData);
-      }
-      var data = this.entityData.processData(rawData);
+      var data = ops.data || this.dataContent();
+      this.dataContent(data);
+      data = this.entityData.processData(data);
       this.data = data;
       this._fillEntityContext(data);
-      this.dataAccess.entityUrl(data.entityUrl).entityRecordUrl(data.baseUrl);
+      this.da.entityUri(data.entityUri).entityRecordUrl(data.baseUrl);
+      var anchor = {};
       if(data.entity){
-        var entity = data.entity.data;
-        var errors = data.errors;
-        var formInfo = this.entityData.formInfo(data);
+        var forminfo = this.entityData.formInfo(data);
+        var entityCxt = new EntityContext(forminfo, data.entityUri);
+        var beanCxt = new BeanContext(data.entity.bean, data.errors);
+
+        var idField = forminfo.idField;
+        var idVal = beanCxt.bean[idField];
+        anchor[idField] = idVal;
         var tabHolder = new TabHolder(this.$tabholder);
-        formInfo.tabs.forEach(function(tab, index, array){
-          var $div = _this.createTabContent(formInfo, tab, formInfo.fields, entity, errors, data);
+        forminfo.tabs.forEach(function(tab, i){
+          var $div = _this.createTabContent(entityCxt, beanCxt, tab, data);
           tabHolder.addTab(tab.name, tab.friendlyName, $div);
         });
         tabHolder.activeByIndexOrName(0);
       }
-      this.setupActionGroup();
+      var rag = this.setupActionGroup();
+      rag.focusOnEntry(anchor);
+      $(window).resize();
       this.initialized(true);
       this.element().trigger(EntityForm.event.filled);
     },
     setupActionGroup : function () {
       var _this = this;
       var data = _this.data;
-      var insideAg = ActionGroup.findChildActionGroup(this.$container);
+      var insideAg = this.actionGroup;
+
       if(insideAg != null){
+        insideAg.setup(data.actions, data.linksObj);
         insideAg.switchAllActions(false);
-        insideAg.switchElementActionUrl(data.baseUrl);
         insideAg.switchAction(data.actions, true);
       }
 
+      var resultAg = insideAg;
       if(this.isMain()){
         if(!data.entity){
           insideAg.toggle(false);
-          insideAg = null;
         }
-        ActionGroup.replaceMainActionGroup(insideAg);
+        resultAg = ActionGroup.replaceMainActionGroup(insideAg);
       }else{
         var _modal = _this.inModal();
         if(_modal){
           if(data.entity){
-            var agFoot = new ActionGroup(insideAg.element().clone());
-            var $modalFoot = _modal.element().find('.modal-footer');
-            $modalFoot.empty().append(agFoot.element());
-            insideAg.toggle(false);
+            resultAg = ActionGroup.replaceModalFootActionGroup(insideAg, _modal);
           }
         }else{
           //do nothing, just display the inside action group
         }
       }
+      return resultAg;
     },
     entityData :{
       processData : function(rawData){
-        return rawData;
+        var data = $.extend({}, rawData);
+        var linksObj = {};
+        rawData.links.forEach(function(t,i){
+          linksObj[t.rel] = t.href;
+        });
+        data.linksObj = linksObj;
+        return data;
       },
       formInfo : function(data){
         return data.info.details['form'];
@@ -580,16 +611,16 @@ var tallybook = tallybook || {};
       var success = idata.success;
       var data = idata.data;
       if(success == false){
-        this.fill(data, true);
+        this.fill({data:data, force:true});
         return true;
       }
       return false;
     },
     action : function(friendly){
-      return friendly ? this.dataAccess.currentFriendlyAction() : this.dataAccess.currentAction();
+      return friendly ? this.da.currentFriendlyAction() : this.da.currentAction();
     },
     fullAction : function(friendly){
-      var act = friendly ? this.dataAccess.currentFriendlyAction() : this.dataAccess.currentAction();
+      var act = friendly ? this.da.currentFriendlyAction() : this.da.currentAction();
       if(this.data){
         act = act + ' ' + this.entityData.formInfo(this.data).friendlyName;
       }
@@ -610,7 +641,7 @@ var tallybook = tallybook || {};
         var formFieldType = $item.data('form-field-type');
         var fieldName = $item.data('field-name');
         var fieldHandler = FieldTemplates.getHandlerByFormFieldType(formFieldType);
-        var pk = 'entity['+fieldName+']';
+        var pk = 'props['+fieldName+']';
         var pv = fieldHandler.getAsString($item);
         paramsObj[pk] = pv;
       });
@@ -631,7 +662,7 @@ var tallybook = tallybook || {};
           delConfirmModal.hide();
           var doDelModal = host.modal.makeModal();
           ModalStack.showModal(doDelModal);
-          var _url = $el.data('action-url') + '/delete';
+          var _url = ActionGroup.getUri($el);
           doDelModal.setContentAsProcessing({
             url: _url,
             data: formdata,
@@ -729,7 +760,7 @@ var tallybook = tallybook || {};
             delConfirmModal.hide();
             var doDelModal = host.modal.makeModal();
             ModalStack.showModal(doDelModal);
-            var _url = $el.data('action-url') + '/delete';
+            var _url = ActionGroup.getUri($el);
             doDelModal.setContentAsProcessing({
               url: _url,
               data: formdata,

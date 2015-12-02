@@ -94,7 +94,7 @@
     right: 8px;
 }
 .entity-grid-container
-.toolbar .action-group-container{
+.toolbar .grid-action-group-container{
     display: inline-block;
     float: right;
     text-align: right;
@@ -210,7 +210,7 @@
 
 /*  Row  */
 .entity-grid-container tbody tr:nth-child(even){
-    background: hsl(0, 0%, 98%);
+    background: #F8F8F8;
 }
 .entity-grid-container tbody tr:nth-child(odd) {
     background: #FFF;
@@ -221,7 +221,7 @@
 }
 
 .entity-grid-container tbody tr.selected{
-    background-color: #D6D6D4;
+    background-color: #E9E9E9;
 }
 /*  Footer Wrapper  */
 .entity-grid-container

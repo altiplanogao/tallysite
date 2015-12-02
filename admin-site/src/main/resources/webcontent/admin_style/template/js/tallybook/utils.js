@@ -14,7 +14,9 @@ var tallybook = tallybook || {};
           return existing;
         }
       } else {/*set*/
-        $ele.attr(datakey, val);
+        if($.isPlainObject(val) || $.isArray(val)){
+          $ele.attr(datakey, JSON.stringify(val));
+        }else{$ele.attr(datakey, val);}
         $ele.data(key, val);
         return _this;
       }

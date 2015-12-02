@@ -82,7 +82,7 @@ var tallybook = tallybook || {};
      * @constructor
      */
     var EmptyFilterHandler = {
-      initializer : function (filter, fieldInfo){},
+      initializer : function (filter, fieldinfo){},
       //get: ui value -> string; set: string -> ui value
       get: function (entityFilter){return ""},
       set: function (entityFilter, val){}
@@ -96,9 +96,9 @@ var tallybook = tallybook || {};
     return {
       _handlers : { // keys are filter-types
         string: FilterHandler({
-          initializer : function (filter, fieldInfo) {
+          initializer : function (filter, fieldinfo) {
             var $input = $('input.filter-input', filter);
-            $input.attr({'data-name': fieldInfo.name, 'placeholder': fieldInfo.friendlyName});
+            $input.attr({'data-name': fieldinfo.name, 'placeholder': fieldinfo.friendlyName});
           },
           get: function (entityFilter) {
             return entityFilter.find('.filter-input').val();
@@ -108,17 +108,17 @@ var tallybook = tallybook || {};
             return entityFilter.find('.filter-input').val(val);
           }}),
         enumeration : FilterHandler({
-          initializer : function (filter, fieldInfo, gridInfo, valElem) {
+          initializer : function (filter, fieldinfo, gridinfo, valElem) {
               valElem.attr("data-multi-value", "true");
               valElem.data("multi-value", true);
 
             var $options = $('div.options', filter);
-            var optionsVals = fieldInfo.options;
-            var optionsNames = fieldInfo.optionsFriendly;
+            var optionsVals = fieldinfo.options;
+            var optionsNames = fieldinfo.optionsFriendly;
             optionsVals.forEach(function(opv){
 //<label class="option"><input type="checkbox" name="gender" value="male"><span>Male</span></label>
               var opName = optionsNames[opv];
-              var opipt = $('<input>', { 'type':"checkbox", 'name': fieldInfo.name, 'value': opv});
+              var opipt = $('<input>', { 'type':"checkbox", 'name': fieldinfo.name, 'value': opv});
               var opspan = $('<span>').text(opName);
               var op = $('<label>',{ 'class':"option"}).append(opipt).append(opspan);
               $options.append(op);
@@ -146,9 +146,9 @@ var tallybook = tallybook || {};
             })
           }}),
         boolean : FilterHandler({
-          initializer : function (filter, fieldInfo){
-            var trOpts = fieldInfo.options;
-            filter.find('input[type=radio]').attr({'name' : fieldInfo.name});
+          initializer : function (filter, fieldinfo){
+            var trOpts = fieldinfo.options;
+            filter.find('input[type=radio]').attr({'name' : fieldinfo.name});
             filter.find('input[type=radio][value=true]+span').text(trOpts.t);
             filter.find('input[type=radio][value=false]+span').text(trOpts.f);
           },
@@ -173,20 +173,20 @@ var tallybook = tallybook || {};
               falseRadio[0].checked=!val;
             }}}),
         foreignkey : FilterHandler({
-          initializer : function (filter, fieldInfo, gridinfo, valElem){
+          initializer : function (filter, fieldinfo, gridinfo, valElem){
             valElem.attr("data-multi-value", "true");
             valElem.data("multi-value", true);
 
-            var fieldFriendlyName = fieldInfo.friendlyName;
-            var selectUrl = host.url.connectUrl(gridinfo.entityUrl, fieldInfo.name, 'select');
+            var fieldFriendlyName = fieldinfo.friendlyName;
+            var selectUrl = host.url.connectUrl(gridinfo.entityUrl, fieldinfo.name, 'select');
             var lookup = filter.find('.lookup-entity');
-            lookup.attr({'data-field-name':fieldInfo.name,
-              'data-field-friendly-name':fieldInfo.friendlyName,
-              'data-display-field':fieldInfo.displayFieldName,
-              'data-id-field':fieldInfo.idFieldName,
+            lookup.attr({'data-field-name':fieldinfo.name,
+              'data-field-friendly-name':fieldinfo.friendlyName,
+              'data-display-field':fieldinfo.displayFieldName,
+              'data-id-field':fieldinfo.idFieldName,
               'data-select-url':selectUrl
             });
-            filter.attr('data-entity-type', fieldInfo.entityType);
+            filter.attr('data-entity-type', fieldinfo.entityType);
             lookup.find('.with').text(fieldFriendlyName);
           },
           //get: ui value -> string; set: string -> ui value
@@ -237,7 +237,7 @@ var tallybook = tallybook || {};
             }
           }}),
         dateRange : FilterHandler({
-          initializer : function (filter, fieldInfo){
+          initializer : function (filter, fieldinfo){
             var datapickerops = $.extend({changeMonth: true,changeYear:true},JSON.parse(host.messages.datepicker_localization));
             var fromTb = $('.from', filter);
             var toTb = $('.to', filter);
@@ -323,16 +323,16 @@ var tallybook = tallybook || {};
           return filterTmplt.clone();
         }
       })(),
-      createFilterByFieldInfo : function(fieldInfo, gridinfo, valElem){
-        var fieldType = fieldInfo.fieldType.toLowerCase();
+      createFilterByFieldInfo : function(fieldinfo, gridinfo, valElem){
+        var fieldType = fieldinfo.fieldType.toLowerCase();
         var filter = FilterHandlerManager._getFilterTemplate(fieldType);
         var filterType = filter.data('filter-type');
-        $('input.filter-property', filter).val(fieldInfo.name);
-        $('input.sort-property', filter).val('sort_' + fieldInfo.name);
+        $('input.filter-property', filter).val(fieldinfo.name);
+        $('input.sort-property', filter).val('sort_' + fieldinfo.name);
 
         var fHandler = this._handlers[filterType];
         if(fHandler){
-          fHandler.initializer && fHandler.initializer(filter, fieldInfo, gridinfo, valElem);
+          fHandler.initializer && fHandler.initializer(filter, fieldinfo, gridinfo, valElem);
         }
         return filter;
       },

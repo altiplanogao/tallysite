@@ -189,11 +189,6 @@ var tallybook = tallybook || {};
         getPath : function(url){
             return websanovaJsUrl('path', url);
         },
-        getBaseUrl:function(url) {
-            url = url || window.location.href;
-            var urlAndParams = url.split('?');
-            return urlAndParams[0];
-        },
         getParameter:function(url) {
             url = url || window.location.href;
             return websanovaJsUrl('?', url);

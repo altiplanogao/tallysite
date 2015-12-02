@@ -31,9 +31,7 @@
         data-align-offset=${alignOffset}?:'0'"
        data-recordranges=""
        data-totalrecords="0"
-       data-pagesize="0"
-       data-entity-url="/"
-       data-base-url="/">
+       data-pagesize="0">
     <div class="data-content"><p th:attr="data-content=${data}?:''"></p></div>
     <div class="toolbar row">
       <div class="search-group" style="display: none">
@@ -48,7 +46,7 @@
           </span>
         </div>
       </div>
-      <div class="action-group-container"
+      <div class="grid-action-group-container"
            th:include="components/entity-actions"
            th:with="editSuccessRedirect=false"></div>
       <form method="POST" class="post-agent" th:action="null"></form>
