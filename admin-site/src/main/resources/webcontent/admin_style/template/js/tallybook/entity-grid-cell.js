@@ -7,16 +7,11 @@ var tallybook = tallybook || {};
   var entityProperty = host.entity.entityProperty;
 
   var CellTemplates = {
-    CellCreationContext : function(idField, entityUri, baseUrl){
-      this.idField = idField;
-      this.entityUri = entityUri;
-      this.baseUrl = baseUrl;
-    },
     /**
      * Get Cell Maker by field Type
      * @params fieldType: the field type
      */
-    _cellTemplateByFieldType : (function(){
+    _cellMakerByFieldType : (function(){
       /**
        * @param celltype :
        * @param supportedFieldTypes
@@ -34,32 +29,32 @@ var tallybook = tallybook || {};
         this.cellmaker = cellmaker;
       };
       var cellentries = [
-        new CellTemplateEntry('default', 'default', function (entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('default', 'default', function (entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var fieldvalue = entityProperty(entity, fieldname);
           return fieldvalue;
         }),
-        new CellTemplateEntry('name', 'name', function(entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('name', 'name', function(entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var fieldvalue = entityProperty(entity, fieldname);
-          var url = host.entity.makeUri(cellCreationContext.idField, entity, cellCreationContext.entityUri);
+          var url = entityCtx.makeUri(entity);
           var $content = $('<a>', {'href': url}).text(fieldvalue);
           return $content;
         }),
-        new CellTemplateEntry('email', 'email', function(entity, fieldinfo, cellCreationContext){
+        new CellTemplateEntry('email', 'email', function(entityCtx, entity, fieldinfo ){
           var fieldname = fieldinfo.name;
           var fieldvalue = entityProperty(entity, fieldname);
           var $content = $('<a>', {'href': 'mailto:' + fieldvalue}).text(fieldvalue);
           return $content;
         }),
-        new CellTemplateEntry('enumeration', 'enumeration', function(entity, fieldinfo, cellCreationContext){
+        new CellTemplateEntry('enumeration', 'enumeration', function(entityCtx, entity, fieldinfo ){
           var options = fieldinfo.options;
           var optionNames = fieldinfo.optionsFriendly;
           var fieldname = fieldinfo.name;
           var fieldvalue = entityProperty(entity, fieldname);
           return optionNames[fieldvalue];
         }),
-        new CellTemplateEntry('boolean', 'boolean', function(entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('boolean', 'boolean', function(entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var options = fieldinfo.options;
           var fieldvalue = entityProperty(entity, fieldname);
@@ -67,7 +62,7 @@ var tallybook = tallybook || {};
             return '';
           return options[fieldvalue?'t':'f'];
         }),
-        new CellTemplateEntry('date', 'date', function(entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('date', 'date', function(entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var fieldvalue = entityProperty(entity, fieldname);
           if(!fieldvalue) return '';
@@ -86,7 +81,7 @@ var tallybook = tallybook || {};
           }
           return tStr.join(' ');
         }),
-        new CellTemplateEntry('phone', 'phone', function (entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('phone', 'phone', function (entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var fieldvalue = entityProperty(entity, fieldname); if(fieldvalue == null) fieldvalue = '';
           var segLen = 4;
@@ -107,7 +102,7 @@ var tallybook = tallybook || {};
           var $content = $('<a>', {'href' : 'tel:' + fieldvalue}).text(formatedPhone);
           return $content;
         }),
-        new CellTemplateEntry('foreign_key', 'foreign_key', function(entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('foreign_key', 'foreign_key', function(entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var displayFieldName = fieldinfo.displayFieldName;
           var idFieldName = fieldinfo.idFieldName;
@@ -124,7 +119,7 @@ var tallybook = tallybook || {};
           }
           return '';
         }),
-        new CellTemplateEntry('external_foreign_key', 'external_foreign_key', function(entity, fieldinfo, cellCreationContext) {
+        new CellTemplateEntry('external_foreign_key', 'external_foreign_key', function(entityCtx, entity, fieldinfo ) {
           var fieldname = fieldinfo.name;
           var entityFieldName = fieldinfo.entityFieldName;
           var entityFieldDisplayProperty = fieldinfo.displayFieldName;
@@ -154,15 +149,14 @@ var tallybook = tallybook || {};
         cellType2CellMaker[ce.celltype] = ce.cellmaker;
       });
       return function(fieldType){
-        var cellType = fieldType2CellType[fieldType];
-        cellType = (cellType ? cellType : 'default');
+        var cellType = fieldType2CellType[fieldType] || 'default';
         return cellType2CellMaker[cellType];
       }
     })(),
-    createCell : function(entity, fieldinfo, cellCreationContext){
+    createCell : function(entityCtx, entity, fieldinfo){
       var fieldType = fieldinfo.fieldType.toLowerCase();
-      var cellmaker = this._cellTemplateByFieldType(fieldType);
-      var cellcontent = cellmaker(entity, fieldinfo, cellCreationContext);
+      var cellmaker = this._cellMakerByFieldType(fieldType);
+      var cellcontent = cellmaker(entityCtx, entity, fieldinfo);
       return cellcontent;
     }
   }

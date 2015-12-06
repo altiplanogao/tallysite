@@ -3,17 +3,23 @@ var tallybook = tallybook || {};
 
 (function ($, host) {
   var ElementValueAccess = {
-    getAndSet : function(_this, key, defVal, val) {
+    getAndSet : function(_this, key, defVal, val, getcallback, setcallback) {
       var $ele = _this.element();
       var datakey = 'data-' + key;
       if (val === undefined) {/*get*/
         var existing = $ele.data(key);
+        if($.isFunction(getcallback)){
+          getcallback.apply(this,[]);
+        }
         if (existing === undefined) {
           return defVal;
         } else {
           return existing;
         }
       } else {/*set*/
+        if($.isFunction(setcallback)){
+          setcallback.apply(this,[]);
+        }
         if($.isPlainObject(val) || $.isArray(val)){
           $ele.attr(datakey, JSON.stringify(val));
         }else{$ele.attr(datakey, val);}
@@ -38,7 +44,7 @@ var tallybook = tallybook || {};
      * @param defVal
      * @returns {Function}
      */
-    defineGetSet : function( key, defVal){
+    defineGetSet : function( key, defVal, getcallback, setcallback){
       var fn = ElementValueAccess.getAndSet;
 
       return function(){

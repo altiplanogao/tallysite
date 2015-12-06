@@ -10,6 +10,9 @@ var tallybook = tallybook || {};
   var ModalStack = host.modal.stack;
   var GridControl = host.entity.grid;
   var ScrollGrid = host.entity.scrollGrid;
+  var BeanResponse = host.entity.beanResponse;
+  var EntityContext = host.entity.entityContext;
+  var BeanContext = host.entity.beanContext;
 
   var ENTITY_FORM_KEY = 'tallybook.entity.form';
   var MAIN_TEMPLATE = '.template.form-template';
@@ -18,15 +21,6 @@ var tallybook = tallybook || {};
     ENTITY_FORM : '.entity-form-container',
     TAB_HOLDER : 'div.tab-holder'
   };
-
-  var EntityContext = function (info, entityUri) {
-    this.info = info;
-    this.uri = entityUri;
-  }
-  var BeanContext = function(bean, errors){
-    this.bean = bean;
-    this.errors = errors;
-  }
 
 //var formElementExample={
   //  data-form-field-type : string, integer-range, decimal range, foreign-key
@@ -204,7 +198,7 @@ var tallybook = tallybook || {};
           var model = fieldinfo.model;
           var method = null;
           var input = $('.date-input', element).attr({'name': fieldNameInForm(fieldName),'data-time-model':model});
-          var datapickerops = JSON.parse(host.messages.datepicker_localization);
+          var datepickerops = JSON.parse(host.messages.datepicker_localization);
           var exOpts = {dateFormat: host.messages.datepicker_format_date};
           switch(model){
             case 'date':
@@ -220,7 +214,7 @@ var tallybook = tallybook || {};
               break;
           }
           if(method){
-            var mergedOpts = $.extend(exOpts, datapickerops);
+            var mergedOpts = $.extend(exOpts, datepickerops);
             if(element.data('readonly')){
               var hiddenInput = $('<input class="hidden-helper" style="">');
               hiddenInput[method](mergedOpts);
@@ -353,7 +347,7 @@ var tallybook = tallybook || {};
             linksObj: fieldinfo.links
           };
 
-          scrollGrid.setupEntityUi(entryGridinfo, gridsetting);
+          scrollGrid.setupEntityUi(new EntityContext(entryGridinfo), gridsetting);
         },
         _doGet: function (element) {
           return element.find('.content').val();
@@ -384,7 +378,7 @@ var tallybook = tallybook || {};
      * @param entity
      * @returns the html element
      */
-    createElementByFieldInfo: function (entityCxt, beanCxt, fieldinfo, formData) {
+    createElementByFieldInfo: function (entityCxt, beanCxt, fieldinfo) {
       var readonly = !fieldinfo.editable;
       var fieldType = fieldinfo.fieldType.toLowerCase();
       var fieldName = fieldinfo.name;
@@ -431,9 +425,9 @@ var tallybook = tallybook || {};
   EntityDataAccess.prototype={
     element : function(){return this.form;},
     entityUri: ElementValueAccess.defineGetSet('entity-uri','/'),
-    entityRecordUrl: ElementValueAccess.defineGetSet('entity-record-url','/'),
+    entityFriendlyName : ElementValueAccess.defineGetSet('entity-friendly-name', null),
     currentAction : ElementValueAccess.defineGetSet('current-action', null),
-    currentFriendlyAction : ElementValueAccess.defineGetSet('current-friendy-action', null)
+    currentFriendlyAction : ElementValueAccess.defineGetSet('current-friendly-action', null)
   }
 
   function EntityForm ($container){
@@ -442,7 +436,6 @@ var tallybook = tallybook || {};
     this.$form = $container.find('form');
     this.$entityCxt = this.$form.find('.entity-context');
     this.da = new EntityDataAccess($container);
-    this.data = null;
     var $grpEle = $('.form-action-group-container .action-group', this.$container);
     this.actionGroup = new ActionGroup($grpEle);
 
@@ -468,14 +461,14 @@ var tallybook = tallybook || {};
         $ele.data('content', val);
       }
     },
-    createGroupContent : function(entityCxt, beanCxt, groupinfo, formData){
+    createGroupContent : function(entityCxt, beanCxt, groupinfo){
       var $group = $('<fieldset>', {'class':'entity-group', 'data-group-name': groupinfo.name});
       var $groupTitle = $('<legend>').text(groupinfo.friendlyName);
       var fis = entityCxt.info.fields;
       $group.append($groupTitle);
       var fieldEles = groupinfo.fields.map(function(fieldName){
         var fieldinfo = fis[fieldName];
-        var fieldEle = FieldTemplates.createElementByFieldInfo(entityCxt, beanCxt, fieldinfo, formData);
+        var fieldEle = FieldTemplates.createElementByFieldInfo(entityCxt, beanCxt, fieldinfo);
         if(!fieldinfo.formVisible){
           fieldEle.hide();
         }
@@ -484,11 +477,11 @@ var tallybook = tallybook || {};
       $group.append(fieldEles);
       return $group;
     },
-    createTabContent : function (entityCxt, beanCxt, tabinfo, formData){
+    createTabContent : function (entityCxt, beanCxt, tabinfo){
       var _this = this;
       var $div = $('<div>', {'class':'entity-tab', 'data-tab-name': tabinfo.name});
       var $groups = tabinfo.groups.map(function(groupinfo, i){
-        return _this.createGroupContent(entityCxt, beanCxt, groupinfo, formData);
+        return _this.createGroupContent(entityCxt, beanCxt, groupinfo);
       });
       $div.html($groups);
       return $div;
@@ -506,11 +499,12 @@ var tallybook = tallybook || {};
       var errorCnt = $errors.children().length;
       $errors.toggle(errorCnt > 0);
     },
-    _fillEntityContext : function (data){
+    _fillEntityGeneralContext : function (entityCxt, beanCxt){
       this.appendGlobalError('', true);
-      if(data.errors && data.errors.global){
+      var errors = beanCxt.errors;
+      if(errors && errors.global){
         var _this = this;
-        var $globalErrors = data.errors.global.map(function(item, i){
+        var $globalErrors = errors.global.map(function(item, i){
           return _this.appendGlobalError(item);
         });
       }
@@ -518,8 +512,8 @@ var tallybook = tallybook || {};
       //<input type="hidden" id="ceilingEntityClassname" name="ceilingEntityClassname" value="org.broadleafcommerce.core.catalog.domain.ProductOption">
       var timezoneOffset = (new Date()).getTimezoneOffset();
       var $timezoneOffset = $('<input>', {type:'hidden', name:'timezoneOffset', value:timezoneOffset});
-      var $entityCeilingType = $('<input>', {type:'hidden', name:'entityCeilingType', value:data.entityCeilingType});
-      var $entityType = $('<input>', {type:'hidden', name:'entityType', value:data.entityType});
+      var $entityCeilingType = $('<input>', {type:'hidden', name:'entityCeilingType', value:entityCxt.entityCeilingType});
+      var $entityType = $('<input>', {type:'hidden', name:'entityType', value:entityCxt.entityType});
       
       this.$entityCxt.append($timezoneOffset).append($entityCeilingType).append($entityType);
     },
@@ -535,56 +529,54 @@ var tallybook = tallybook || {};
         this.reset();
       if(this.initialized())
         return;
-      var _this = this;
       var data = ops.data || this.dataContent();
       this.dataContent(data);
-      data = this.entityData.processData(data);
-      this.data = data;
-      this._fillEntityContext(data);
-      this.da.entityUri(data.entityUri).entityRecordUrl(data.baseUrl);
-      var anchor = {};
-      if(data.entity){
-        var forminfo = this.entityData.formInfo(data);
-        var entityCxt = new EntityContext(forminfo, data.entityUri);
-        var beanCxt = new BeanContext(data.entity.bean, data.errors);
+      var beanResponse = new BeanResponse(data);
 
-        var idField = forminfo.idField;
-        var idVal = beanCxt.bean[idField];
-        anchor[idField] = idVal;
-        var tabHolder = new TabHolder(this.$tabholder);
-        forminfo.tabs.forEach(function(tab, i){
-          var $div = _this.createTabContent(entityCxt, beanCxt, tab, data);
-          tabHolder.addTab(tab.name, tab.friendlyName, $div);
-        });
-        tabHolder.activeByIndexOrName(0);
-      }
-      var rag = this.setupActionGroup();
-      rag.focusOnEntry(anchor);
+      var entityCxt = beanResponse.makeEntityContext();
+      var beanCxt = beanResponse.entity();
+      this.fillContent(entityCxt, beanCxt);
       $(window).resize();
       this.initialized(true);
       this.element().trigger(EntityForm.event.filled);
     },
-    setupActionGroup : function () {
+    fillContent:function(entityCxt, beanCxt){
+      var anchor = beanCxt.anchor;
+      this._fillEntityGeneralContext(entityCxt, beanCxt);
+      this.da.entityUri(entityCxt.entityUri);
+      this.da.entityFriendlyName(entityCxt.info.friendlyName);
+
       var _this = this;
-      var data = _this.data;
+      var tabHolder = new TabHolder(this.$tabholder);
+      entityCxt.info.tabs.forEach(function(tab, i){
+        var $div = _this.createTabContent(entityCxt, beanCxt, tab);
+        tabHolder.addTab(tab.name, tab.friendlyName, $div);
+      });
+      tabHolder.activeByIndexOrName(0);
+
+      var rag = this.setupActionGroup(beanCxt);
+      rag.focusOnEntry(anchor);
+    },
+    setupActionGroup : function (beanCxt) {
       var insideAg = this.actionGroup;
+      var bean = beanCxt.bean;
 
       if(insideAg != null){
-        insideAg.setup(data.actions, data.linksObj);
+        insideAg.setup(beanCxt.actions, beanCxt.linksObj);
         insideAg.switchAllActions(false);
-        insideAg.switchAction(data.actions, true);
+        insideAg.switchAction(beanCxt.actions, true);
       }
 
       var resultAg = insideAg;
       if(this.isMain()){
-        if(!data.entity){
+        if(!bean){
           insideAg.toggle(false);
         }
         resultAg = ActionGroup.replaceMainActionGroup(insideAg);
       }else{
-        var _modal = _this.inModal();
+        var _modal = this.inModal();
         if(_modal){
-          if(data.entity){
+          if(bean){
             resultAg = ActionGroup.replaceModalFootActionGroup(insideAg, _modal);
           }
         }else{
@@ -592,20 +584,6 @@ var tallybook = tallybook || {};
         }
       }
       return resultAg;
-    },
-    entityData :{
-      processData : function(rawData){
-        var data = $.extend({}, rawData);
-        var linksObj = {};
-        rawData.links.forEach(function(t,i){
-          linksObj[t.rel] = t.href;
-        });
-        data.linksObj = linksObj;
-        return data;
-      },
-      formInfo : function(data){
-        return data.info.details['form'];
-      }
     },
     defaultSubmitHandler: function (idata) {
       var success = idata.success;
@@ -621,9 +599,7 @@ var tallybook = tallybook || {};
     },
     fullAction : function(friendly){
       var act = friendly ? this.da.currentFriendlyAction() : this.da.currentAction();
-      if(this.data){
-        act = act + ' ' + this.entityData.formInfo(this.data).friendlyName;
-      }
+      act = act + ' ' + this.da.entityFriendlyName();
       return act;
     },
     setSubmitHandler : function (handlers) {
@@ -818,12 +794,12 @@ var tallybook = tallybook || {};
     $('body').on('submit', FormSymbols.ENTITY_FORM + ' form', function(event){
       var $form = $(this);
       var entityForm = EntityForm.getEntityFormFromAny($form);
-      var data = entityForm.serialize();
+      var formdata = entityForm.serialize();
 
       host.ajax({
         url:this.action,
         type: 'POST',
-        data : data
+        data : formdata
       }, {
         success: function(data, textStatus, jqXHR, opts){
           var handler = entityForm.submitHandlers.success;

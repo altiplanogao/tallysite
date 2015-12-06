@@ -17,6 +17,8 @@ var tallybook = tallybook || {};
   var CellTemplates = host.entity.gridCellTemplates;
   var FilterHandlerManager = host.entity.filterHandlerManager;
   var entityProperty = host.entity.entityProperty;
+  var QueryResponse = host.entity.queryResponse;
+  var EntityContext = host.entity.entityContext;
 
   //const
   var lockDebounce = 200;
@@ -86,36 +88,36 @@ var tallybook = tallybook || {};
       _makeCellContainer: function (fieldname, fieldvalue) {
         return $("<td>", {"data-fieldname": fieldname, "data-fieldvalue": fieldvalue});
       },
-      _makeCell: function (field, entity, cellCreationContext) {
+      _makeCell: function (entityCtx, field, entity) {
         var fieldname = field.name;
         var fieldvalue = entityProperty(entity, fieldname);
-        var content = CellTemplates.createCell(entity, field, cellCreationContext);
+        var content = CellTemplates.createCell(entityCtx, entity, field);
         var $cell = this._makeCellContainer(fieldname, fieldvalue);
         $cell.html(content).toggle(field.gridVisible);
         return $cell;
       },
-      _makeCells: function (fields, entity, cellCreationContext) {
+      _makeCells: function (entityCtx, fields, entity) {
         var _this = this;
         var $cells = fields.map(function (field, index, array) {
-          var $cell = _this._makeCell(field, entity, cellCreationContext);
+          var $cell = _this._makeCell(entityCtx, field, entity);
           return $cell;
         });
         return $cells;
       },
-      _makeRowContainer: function (gridinfo, entity, entityIndex, cellCreationContext) {
-        var uri = host.entity.makeUri(cellCreationContext.idField, entity, cellCreationContext.entityUri);
+      _makeRowContainer: function (entityCtx, entity, entityIndex) {
+        var uri = entityCtx.makeUri(entity);
         var $row = $('<tr>', {
           'class' : "data-row",
-          'data-id': entityProperty(entity, gridinfo.idField),
-          'data-name': entityProperty(entity, gridinfo.nameField),
+          'data-id': entityProperty(entity, entityCtx.idField),
+          'data-name': entityProperty(entity, entityCtx.nameField),
           'data-entity-index' : entityIndex,
           'data-uri' : uri
         });
         return $row;
       },
-      makeRow: function (gridinfo, entity, entityIndex, cellCreationContext) {
-        var $row = this._makeRowContainer(gridinfo, entity, entityIndex, cellCreationContext);
-        var $cells = this._makeCells(gridinfo.fields, entity, cellCreationContext);
+      makeRow: function (entityCtx, entity, entityIndex) {
+        var $row = this._makeRowContainer(entityCtx, entity, entityIndex);
+        var $cells = this._makeCells(entityCtx, entityCtx.info.fields, entity);
         $row.html($cells).data('entity', entity);
         return $row;
       }
@@ -365,19 +367,18 @@ var tallybook = tallybook || {};
       clearRows: function () {
         this.$tbody.empty().append(this.$emptyRow);
       },
-      makeRowsAndAppend: function (gridinfo, entities) {
-        BodyControl.makeRowsAndAppend(gridinfo, entities, this.$tbody);
+      makeRowsAndAppend: function (entityCtx, entities) {
+        BodyControl.makeRowsAndAppend(entityCtx, entities, this.$tbody);
       },
       getRowHeight: function () {
         var $row = this.$tbody.find('tr:not(.blank-padding):not(.empty-mark):first');
         return $row.height();
       }
     };
-    BodyControl.makeRowsAndAppend = function (gridinfo, entities, $tbody) {
-      var cellCreationContext = new CellTemplates.CellCreationContext(gridinfo.idField, entities.entityUri, entities.baseUrl);
+    BodyControl.makeRowsAndAppend = function (entityCtx, entities, $tbody) {
       var $rows = entities.beans.map(function (entity, index, array) {
         var entityIndex = entities.startIndex + index;
-        return RowCreator.makeRow(gridinfo, entity, entityIndex, cellCreationContext);
+        return RowCreator.makeRow(entityCtx, entity, entityIndex);
       });
       $tbody.append($rows);
     };
@@ -737,43 +738,6 @@ var tallybook = tallybook || {};
     };
   })();
 
-  var EntityDataHandler = {
-    processGridData: function (data) {
-      var entities = data.entities;
-      var recordsLength = 0; if(entities.beans!= null){recordsLength = entities.beans.length;}
-      var range = {lo: entities.startIndex, hi: entities.startIndex + recordsLength};
-      entities.range = range;
-      entities.entityUri = data.entityUri;
-
-      var linksObj = {};
-      data.links.forEach(function(t,i){
-        linksObj[t.rel]=t.href;
-      });
-      data.linksObj = linksObj;
-
-      var entityinfos = data.info;
-      var gridinfo = this.processGridInfo(entityinfos);
-      gridinfo.entityUri = data.entityUri;
-
-      return data;
-    },
-    processGridInfo: function (entityinfos) {
-      var gridinfo = entityinfos.details['grid'];
-      gridinfo.fields.map(function (field, index, array) {
-        switch (field.fieldType) {
-          case 'ID':
-            gridinfo.idField = field.name;
-            break;
-          case 'NAME':
-            gridinfo.nameField = field.name;
-            break;
-          default:
-        }
-      });
-      return gridinfo;
-    }
-  };
-
   function GridDataAccess(anyEle) {
     this.$container = GridControl.findContainerElement(anyEle);
   };
@@ -1009,7 +973,7 @@ var tallybook = tallybook || {};
       var gda = this.da;
 //      gda.entityType('');
       var params = gda.parameter();
-      var fillOps = {fillrows:true, setupui:false};
+      var fillOps = {fillrecords:true, setupui:false};
       if(loadEvent.checkSourceIs(LoadEventData.source.UI)){
         var cparams = gda.gatherCriteriaParameter();
         gda.criteriaParameter(cparams?cparams:'');
@@ -1037,28 +1001,21 @@ var tallybook = tallybook || {};
     //1. toolbar: gridinfo, actions, action-links
     //2. entitys: records, range
     fill: function (ops) {
-      ops = $.extend({data:undefined, fillrows:true, setupui:true, updateUri:false, uri:''} ,ops);
+      ops = $.extend({data:undefined, fillrecords:true, setupui:true, updateUri:false, uri:''} ,ops);
       var data = ops.data || this.dataContent();
-      var fillrows = !!ops.fillrows;
+      var fillrecords = !!ops.fillrecords;
       var setupui = !!ops.setupui;
 
       var gda = this.da;
-      EntityDataHandler.processGridData(data);
-      var entityinfos = data.info;
-      var entities = data.entities;
-      var range = entities.range;
-      var gridinfo = entityinfos.details['grid'];
-      //var actions = data.actions;
-      //var linksObj = data.linksObj;
+      var queryResponse = new QueryResponse(data);
+      var entityCtx = queryResponse.makeEntityContext();
 
       if (setupui) {
         var gridsetting = {
-          entityType: data.entityType,
-          entityCeilingType: data.entityCeilingType,
-          actions: data.actions,
-          linksObj: data.linksObj
+          actions: queryResponse.actions(),
+          linksObj: queryResponse.linksObj()
         };
-        this.setupEntityUi(gridinfo, gridsetting);
+        this.setupEntityUi(entityCtx, gridsetting);
       }
       //entityQueryBaseUri()
       //.parameter()
@@ -1071,35 +1028,40 @@ var tallybook = tallybook || {};
         this.updateCriteriaUi(gda.criteriaParameter());
       }
 
-      if (fillrows) {
-        this.body.emptyRowReset(entities);
-        this.body.clearRows();
-        this.body.makeRowsAndAppend(gridinfo, entities);
-        this.footer.setDataRange(range.lo, range.hi, entities.totalCount);
+      if (fillrecords) {
+        this.fillContent(entityCtx, queryResponse.entities());
       }
+    },
+    fillContent : function(entityCtx, queryBeans){
+      this.body.emptyRowReset(queryBeans);
+      this.body.clearRows();
+      this.body.makeRowsAndAppend(entityCtx, queryBeans);
+      var range = queryBeans.range();
+      this.footer.setDataRange(range.lo, range.hi, queryBeans.totalCount);
 
-      gda//input/output
-        .pageSize(entities.pageSize)
+      this.da//input/output
+        .pageSize(queryBeans.pageSize)
         ////output(setting)
         //.entityCeilingType(data.entityCeilingType)
         //.entityType(data.entityType)
         //.actions(actions)
         //.actionUris(linksObj)
         //output(record)
-        .totalRecords(entities.totalCount)
+        .totalRecords(queryBeans.totalCount)
         //client data
         .recordRanges('set', range);
 //        .selectedIndex(-1)
     },
-    setupEntityUi : function(gridinfo, gridsetting){
+    setupEntityUi : function(entityCtx, gridsetting){
+      var gridinfo = entityCtx.info;
       this.toolbar.init(gridinfo, gridsetting.actions, gridsetting.linksObj);
       this.header.makeColumnsAndSet(gridinfo);
       this.body.makeHeaderMirror();
       var gda = this.da;
       gda
       //output(setting)
-      .entityCeilingType(gridsetting.entityCeilingType)
-      .entityType(gridsetting.entityType)
+      .entityCeilingType(entityCtx.entityCeilingType)
+      .entityType(entityCtx.entityType)
       .actions(gridsetting.actions || [])
       .actionUris(gridsetting.linksObj || {});
     },
@@ -1113,16 +1075,14 @@ var tallybook = tallybook || {};
       gda.parameter(params.parameter);
       gda.criteriaParameter(params.cparameter);
     },
-    fillTbody: function (data, $tbody) {
+    fillTbody: function (queryResponse, $tbody) {
       if($tbody === undefined){
         $tbody = $('<tbody>');
       }
-      EntityDataHandler.processGridData(data);
-      var entityinfos = data.info;
-      var entities = data.entities;
-      var range = entities.range;
-      var gridinfo = entityinfos.details['grid'];
-      comp.Body.makeRowsAndAppend(gridinfo, entities, $tbody);
+      var entityCtx = queryResponse.makeEntityContext();
+      var queryBeans = queryResponse.entities();
+
+      comp.Body.makeRowsAndAppend(entityCtx, queryBeans, $tbody);
       return $tbody;
     },
 

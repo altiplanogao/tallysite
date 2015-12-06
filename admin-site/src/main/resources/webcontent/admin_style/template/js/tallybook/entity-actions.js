@@ -23,6 +23,7 @@ var tallybook = tallybook || {};
      * @param linksObj : dictionary with action name as key, url as its value
      */
     setup : function(actions, linksObj){
+      linksObj = linksObj || {};
       var actionGrp = this.$grpEle;
       actionGrp.hide();
       if(actions){
@@ -150,26 +151,7 @@ var tallybook = tallybook || {};
       return new ActionGroup($grpEle);
   };
 
-  function makeUri(idField, entity, entityUri) {
-    return entityUri + '/' + entity[idField];
-  }
-
-  function entityProperty(entity, propertyPath){
-    var pieces = propertyPath.split('.');
-    var pro = entity;
-    pieces.some(function(t,i){
-      if(t){
-        pro = pro[t];
-        if(pro == null)
-        return true;
-        }
-    });
-    return pro;
-  }
-
   host.entity = $.extend({}, host.entity, {
-    actionGroup : ActionGroup,
-    makeUri : makeUri,
-    entityProperty : entityProperty
+    actionGroup : ActionGroup
   });
 })(jQuery, tallybook);

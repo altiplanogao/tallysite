@@ -4,6 +4,8 @@ var tallybook = tallybook || {};
 (function ($, window, host) {
   'use strict';
 
+  var QueryResponse = host.entity.queryResponse;
+
   var ENABLE_SCROLL_DEBUG= false;
 
   var ENTITY_GRID_CONTAINER = ".entity-grid-container";
@@ -282,10 +284,11 @@ var tallybook = tallybook || {};
           },
           ondata: function (/*ondata*/ response) {
             var $tbody = sgc.body.$tbody;
-            var data = response.data;
-            var $newTbody = sgc.fillTbody(data, undefined);
-            $paging.injectRecords($tbody, $newTbody, data.entities.range);
-            sgc.da.totalRecords(data.entities.totalCount);
+            var queryResponse = new QueryResponse(response.data);
+            var $newTbody = sgc.fillTbody(queryResponse, undefined);
+            var queryBeans = queryResponse.entities();
+            $paging.injectRecords($tbody, $newTbody, queryBeans.range());
+            sgc.da.totalRecords(queryBeans.totalCount);
           },
           ondataloaded: function (/*ondataloaded*/) {
             sgc.triggerLoad();
