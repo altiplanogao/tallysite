@@ -16,7 +16,8 @@ var tallybook = tallybook || {};
       this.nameField = infos.nameField;
       this.entityType = infos.entityType;
       this.entityCeilingType = infos.entityCeilingType;
-      this.resourceName = infos.resourceName;
+    }else{
+      this.entityType = info.entityType;
     }
   }
   EntityContext.prototype = {
@@ -33,16 +34,19 @@ var tallybook = tallybook || {};
     this.actions = ops.actions;
     this.linksObj = ops.linksObj;
     this.idField = ops.idField;
+    this.action = ops.action;
     if(this.bean && this.idField){
       this.anchor= {};
       this.anchor[this.idField] = this.bean[this.idField];
     }
+    this.handleCollection = (this.action == 'create') ? false : true;
   }
 
   var QueryBeansContext = function (entities) {
     this.entities = entities;
     this.totalCount = entities.totalCount;
     this.pageSize = entities.pageSize;
+    this.startIndex = entities.startIndex;
     this.beans = entities.beans;
   }
   QueryBeansContext.prototype = {
@@ -116,6 +120,7 @@ var tallybook = tallybook || {};
     this._entity = new BeanContext({
       bean:data.entity.bean,
       errors:data.errors,
+      action:data.action,
       actions:this.actions(),
       linksObj:this.linksObj(),
       idField:entityCtx.idField

@@ -191,9 +191,9 @@ var tallybook = tallybook || {};
       this.resize();
       this.element().trigger(ScrollGrid.event.filled);
     }},
-    buildAjaxLoadUrl :{value : function(baseUrl, parameter, range){
+    buildAjaxLoadUri :{value : function(queryUri, parameter, range){
       var start = range.lo; start = (start < 0)? null:start;
-      var url = host.url.getUrlWithParameterString(parameter,null,baseUrl);
+      var url = host.url.getUrlWithParameterString(parameter,null,queryUri);
       url = host.url.getUrlWithParameter(GridControl.ReservedParameter.StartIndex, start, null, url);
       url = host.url.getUrlWithParameter(GridControl.ReservedParameter.PageSize, range.width(), null, url);
       return url;
@@ -251,8 +251,8 @@ var tallybook = tallybook || {};
 
             var missingRanges = RangeArrayHelper.findMissingRangesWithin(loadedRanges, dataWindowRange.lo, dataWindowRange.hi);
             if (missingRanges.length > 0) {
-              var baseUrl = sgc.da.entityQueryBaseUri();
-              baseUrl = host.url.connectUrl(window.location.origin, baseUrl);
+              var queryUri = sgc.da.entityQueryUri();
+              queryUri = host.url.connectUrl(window.location.origin, queryUri);
 
               var firstMissingRange = missingRanges[0];
               firstMissingRange = firstMissingRange.subRange(pageSize, (firstMissingRange.lo == topIndex));
@@ -268,7 +268,7 @@ var tallybook = tallybook || {};
               var cParameter = sgc.da.criteriaParameter();
               var allParam = host.url.param.connect(parameter, cParameter);
 
-              var url = sgc.buildAjaxLoadUrl(baseUrl, allParam, firstMissingRange);
+              var url = sgc.buildAjaxLoadUri(queryUri, allParam, firstMissingRange);
               return url
             } else {
               return null;

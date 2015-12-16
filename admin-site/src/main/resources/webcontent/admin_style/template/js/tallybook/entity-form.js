@@ -48,6 +48,7 @@ var tallybook = tallybook || {};
       return element.attr('data-field-type');
     },
     getFieldInfo:function(element){return element.data('field-info');},
+    getEntityContext:function(element){return element.data('entity-context');},
     getFormInfo:function(element){return element.data('form-info');},
     _doInitialize : function (element, entityCtx, fieldinfo) {},
     _doGet : function (element) {return '';},
@@ -332,27 +333,38 @@ var tallybook = tallybook || {};
         }}),
       collection : new FieldHandler({
         _doInitialize: function (element, entityCtx, fieldinfo) {
-          var forminfo = this.getFormInfo(element);
-          var entryName = fieldinfo.instanceType;
-          var entryGridinfo = forminfo.referencing[entryName];
           var gridContainer = GridControl.makeRawHtmlGridElement();
           element.find('.grid-slot').html(gridContainer);
           var scrollGrid = ScrollGrid.getScrollGrid(gridContainer);
+          element.data('grid', scrollGrid);
+        },
+        _doGet: function (element) {
+          var scrollGrid = element.data('grid');
+          return element.find('.content').val();
+        },
+        _doSet: function (element, val, bean) {
+          var scrollGrid = element.data('grid');
+          var entityCxt = this.getEntityContext(element);
+          var fieldinfo = this.getFieldInfo(element);
+          var forminfo = this.getFormInfo(element);
+          var entryName = fieldinfo.instanceType;
+          var entryGridinfo = forminfo.referencing[entryName];
+          var beanUri = entityCxt.makeUri(bean);
+          var links = $.extend({}, fieldinfo.links);
+          for(var a in fieldinfo.links){
+            links[a] = host.url.connectUrl(beanUri, fieldinfo.name, fieldinfo.links[a]);
+          }
+          //fieldinfo.links
 
-          scrollGrid.fillParameterByUrl(host.url.connectUrl(entityCtx.uri, fieldinfo.name));
+          scrollGrid.fillParameterByUrl(host.url.connectUrl(beanUri, fieldinfo.name));
           var gridsetting = {
             entityType: fieldinfo.instanceType,
             entityCeilingType: fieldinfo.instanceType,
             actions: fieldinfo.actions,
-            linksObj: fieldinfo.links
+            linksObj: links
           };
 
           scrollGrid.setupEntityUi(new EntityContext(entryGridinfo), gridsetting);
-        },
-        _doGet: function (element) {
-          return element.find('.content').val();
-        },
-        _doSet: function (element, val) {
           return element.find('.content').val(val);
         }})
     },
@@ -468,6 +480,11 @@ var tallybook = tallybook || {};
       $group.append($groupTitle);
       var fieldEles = groupinfo.fields.map(function(fieldName){
         var fieldinfo = fis[fieldName];
+        var handle = true;
+        if(fieldinfo.collection){
+          handle = beanCxt.handleCollection;
+        }
+        if(!handle) return null;
         var fieldEle = FieldTemplates.createElementByFieldInfo(entityCxt, beanCxt, fieldinfo);
         if(!fieldinfo.formVisible){
           fieldEle.hide();

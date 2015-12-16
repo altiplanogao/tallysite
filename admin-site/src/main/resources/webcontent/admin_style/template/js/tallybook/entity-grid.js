@@ -745,7 +745,7 @@ var tallybook = tallybook || {};
     element:function(){return this.$container;},
 
     //input
-    entityQueryBaseUri: ElementValueAccess.defineGetSet('entity-query-base-uri','/'),
+    entityQueryUri: ElementValueAccess.defineGetSet('entity-query-uri','/'),
     parameter : ElementValueAccess.defineGetSet('parameter',''),
     criteriaParameter : ElementValueAccess.defineGetSet('criteria-parameter',''),
     //input/output
@@ -987,10 +987,10 @@ var tallybook = tallybook || {};
       }
       var cparams = gda.criteriaParameter();
 
-      var baseUrl = host.url.connectUrl(window.location.origin, gda.entityQueryBaseUri());
+      var queryUri = host.url.connectUrl(window.location.origin, gda.entityQueryUri());
       var urldata = host.url.param.connect(params, cparams);
 
-      this._doLoadUrl(baseUrl, urldata, loadEvent, fillOps);
+      this._doLoadUrl(queryUri, urldata, loadEvent, fillOps);
       this.selectRowByIndex(-1);
     },
 
@@ -1017,7 +1017,7 @@ var tallybook = tallybook || {};
         };
         this.setupEntityUi(entityCtx, gridsetting);
       }
-      //entityQueryBaseUri()
+      //entityQueryUri()
       //.parameter()
       //.criteriaParameter()
        if (ops.updateUri) {
@@ -1060,8 +1060,8 @@ var tallybook = tallybook || {};
       var gda = this.da;
       gda
       //output(setting)
-      .entityCeilingType(entityCtx.entityCeilingType)
-      .entityType(entityCtx.entityType)
+      .entityCeilingType(entityCtx.entityCeilingType || '')
+      .entityType(entityCtx.entityType || '')
       .actions(gridsetting.actions || [])
       .actionUris(gridsetting.linksObj || {});
     },
@@ -1071,7 +1071,7 @@ var tallybook = tallybook || {};
       var paramStr = host.url.getParameter(url);
       var params = gda.splitParameter(paramStr);
 
-      gda.entityQueryBaseUri(path);
+      gda.entityQueryUri(path);
       gda.parameter(params.parameter);
       gda.criteriaParameter(params.cparameter);
     },
@@ -1111,7 +1111,7 @@ var tallybook = tallybook || {};
     },
     loadByUrl : function(url, parameter){
       var gda = this.da;
-      gda.entityQueryBaseUri('')
+      gda.entityQueryUri('')
         .parameter('').criteriaParameter('').pageSize('').totalRecords('');
       var eventData = new LoadEventData(LoadEventData.source.URL);
       eventData.url = url;
@@ -1119,7 +1119,7 @@ var tallybook = tallybook || {};
     },
     loadByCriteriaParam : function (criteriaParameter) {
       var gda = this.da;
-      var url = gda.entityQueryBaseUri();
+      var url = gda.entityQueryUri();
       var param = gda.parameter();
       gda.criteriaParameter(criteriaParameter).pageSize('').totalRecords('');
 
