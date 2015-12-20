@@ -278,7 +278,7 @@ var tallybook = tallybook || {};
           }
         },
         _doInitialize:function(element, entityCtx, fieldinfo){
-          var selectUrl = host.url.connectUrl(entityCtx.uri, fieldinfo.name, 'select');
+          var selectUrl = fieldinfo.selectUri;
           element.find('button.to-one-lookup').attr('data-select-url', selectUrl);
           var fkvContainer = element.find('.foreign-key-value-container');
           fkvContainer.attr({'data-entity-type':fieldinfo.entityType,
@@ -315,15 +315,16 @@ var tallybook = tallybook || {};
           }
           var hasVal = !!fbean;
           var varStr = "";
+          var fieldinfo = this.getFieldInfo(element);
           var link="";
           element.data('entity', fbean);
           if(hasVal){
             var fkvContainer = element.find('.foreign-key-value-container');
-            var entityType = fkvContainer.attr('data-entity-type');
             var displayField = fkvContainer.attr('data-display-field');
             var idField = fkvContainer.attr('data-id-field');
+            var template = new UriTemplate(fieldinfo.recordUri);
+            link=template.fill(fbean);
             varStr = fbean[displayField];
-            link='/' + host.url.connectUrl(entityType, '' + fbean[idField]);
           }
           element.find('.display-value-none-selected').toggle(!hasVal);
           element.find('.display-value').toggle(hasVal).text(varStr);
@@ -358,8 +359,8 @@ var tallybook = tallybook || {};
 
           scrollGrid.fillParameterByUrl(host.url.connectUrl(beanUri, fieldinfo.name));
           var gridsetting = {
-            entityType: fieldinfo.instanceType,
-            entityCeilingType: fieldinfo.instanceType,
+            type: fieldinfo.instanceType,
+            ceilingType: fieldinfo.instanceType,
             actions: fieldinfo.actions,
             linksObj: links
           };
@@ -529,8 +530,8 @@ var tallybook = tallybook || {};
       //<input type="hidden" id="ceilingEntityClassname" name="ceilingEntityClassname" value="org.broadleafcommerce.core.catalog.domain.ProductOption">
       var timezoneOffset = (new Date()).getTimezoneOffset();
       var $timezoneOffset = $('<input>', {type:'hidden', name:'timezoneOffset', value:timezoneOffset});
-      var $entityCeilingType = $('<input>', {type:'hidden', name:'entityCeilingType', value:entityCxt.entityCeilingType});
-      var $entityType = $('<input>', {type:'hidden', name:'entityType', value:entityCxt.entityType});
+      var $entityCeilingType = $('<input>', {type:'hidden', name:'ceilingType', value:entityCxt.ceilingType});
+      var $entityType = $('<input>', {type:'hidden', name:'type', value:entityCxt.type});
       
       this.$entityCxt.append($timezoneOffset).append($entityCeilingType).append($entityType);
     },

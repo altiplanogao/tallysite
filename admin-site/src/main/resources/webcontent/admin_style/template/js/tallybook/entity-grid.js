@@ -260,8 +260,8 @@ var tallybook = tallybook || {};
                 var gda = gc.da;
                 var postEntityData = {
                   _csrf : gc.toolbar.getCsrf(),
-                  entityType : gda.entityType(),
-                  entityCeilingType : gda.entityCeilingType()
+                  type : gda.type(),
+                  ceilingType : gda.ceilingType()
                 };
                 doDelModal.setContentAsProcessing({
                   url : _url,
@@ -751,8 +751,8 @@ var tallybook = tallybook || {};
     //input/output
     pageSize : ElementValueAccess.defineGetSet('pagesize',''),
     //output(setting)
-    entityCeilingType :ElementValueAccess.defineGetSet('entity-ceiling-type',''),
-    entityType :ElementValueAccess.defineGetSet('entity-type',''),
+    ceilingType :ElementValueAccess.defineGetSet('ceiling-type',''),
+    type :ElementValueAccess.defineGetSet('type',''),
     actions: ElementValueAccess.defineGetSet('actions',null),
     actionUris: ElementValueAccess.defineGetSet('action-uris',null),
     entryAnchor: ElementValueAccess.defineGetSet('entry-anchor','id'),
@@ -1060,8 +1060,8 @@ var tallybook = tallybook || {};
       var gda = this.da;
       gda
       //output(setting)
-      .entityCeilingType(entityCtx.entityCeilingType || '')
-      .entityType(entityCtx.entityType || '')
+      .ceilingType(entityCtx.ceilingType || '')
+      .type(entityCtx.type || '')
       .actions(gridsetting.actions || [])
       .actionUris(gridsetting.linksObj || {});
     },

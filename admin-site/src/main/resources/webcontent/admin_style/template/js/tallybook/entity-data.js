@@ -14,10 +14,10 @@ var tallybook = tallybook || {};
       this.beanUri = infos.beanUri;
       this.idField = infos.idField;
       this.nameField = infos.nameField;
-      this.entityType = infos.entityType;
-      this.entityCeilingType = infos.entityCeilingType;
+      this.type = infos.type;
+      this.ceilingType = infos.ceilingType;
     }else{
-      this.entityType = info.entityType;
+      this.type = info.type;
     }
   }
   EntityContext.prototype = {

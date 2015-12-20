@@ -88,14 +88,20 @@ var tallybook = tallybook || {};
       set: function (entityFilter, val){}
     };
     function FilterHandler(handler) {
-      return $.extend({}, EmptyFilterHandler, handler);
+      $.extend(this, EmptyFilterHandler, handler);
     }
     FilterHandler.prototype={
+      preInitialize : function(filter, fieldinfo, gridinfo){
+        filter.data('grid-info', gridinfo);
+        filter.data('field-info', fieldinfo);
+      },
+      getGridInfo : function(filter){return filter.data('grid-info');},
+      getFieldInfo : function(filter){return filter.data('field-info');}
     }
 
     return {
       _handlers : { // keys are filter-types
-        string: FilterHandler({
+        string: new FilterHandler({
           initializer : function (filter, fieldinfo) {
             var $input = $('input.filter-input', filter);
             $input.attr({'data-name': fieldinfo.name, 'placeholder': fieldinfo.friendlyName});
@@ -107,7 +113,7 @@ var tallybook = tallybook || {};
             entityFilter.find('i.embed-delete').toggle(!!val);
             return entityFilter.find('.filter-input').val(val);
           }}),
-        enumeration : FilterHandler({
+        enumeration : new FilterHandler({
           initializer : function (filter, fieldinfo, gridinfo, valElem) {
               valElem.attr("data-multi-value", "true");
               valElem.data("multi-value", true);
@@ -145,7 +151,7 @@ var tallybook = tallybook || {};
               item.checked = !!(selectedVals.indexOf(val) >= 0);
             })
           }}),
-        boolean : FilterHandler({
+        boolean : new FilterHandler({
           initializer : function (filter, fieldinfo){
             var trOpts = fieldinfo.options;
             filter.find('input[type=radio]').attr({'name' : fieldinfo.name});
@@ -172,13 +178,13 @@ var tallybook = tallybook || {};
               trueRadio[0].checked=val;
               falseRadio[0].checked=!val;
             }}}),
-        foreignkey : FilterHandler({
+        foreignkey : new FilterHandler({
           initializer : function (filter, fieldinfo, gridinfo, valElem){
             valElem.attr("data-multi-value", "true");
             valElem.data("multi-value", true);
 
             var fieldFriendlyName = fieldinfo.friendlyName;
-            var selectUrl = host.url.connectUrl(gridinfo.entityUrl, fieldinfo.name, 'select');
+            var selectUrl = fieldinfo.selectUri;
             var lookup = filter.find('.lookup-entity');
             lookup.attr({'data-field-name':fieldinfo.name,
               'data-field-friendly-name':fieldinfo.friendlyName,
@@ -225,8 +231,11 @@ var tallybook = tallybook || {};
             var $chosens = $filter.find('.chosen-entities');
             var exist = $chosens.find('.chosen-entity[data-entity-id='+id+']').length > 0;
             if(!exist){
-              var entityType = $filter.attr('data-entity-type');
-              var url = host.url.connectUrl('/',entityType, id); 
+              var fieldinfo = this.getFieldInfo($filter);
+              var template = new UriTemplate(fieldinfo.recordUri);
+              var entity4Tmp = {}; entity4Tmp[fieldinfo.idFieldName]=id;
+              var url =template.fill(entity4Tmp);
+
               var newEle = $('<div class="chosen-entity" data-entity-id=""><i class="fa fa-times-circle drop-entity"></i><span class="entity-name"></span></div>');
               var a = $('<a class="entity-form-modal-view" href=""><i class="fa fa-external-link"></i></a>').attr('href', url);
               newEle.append(a);
@@ -236,7 +245,7 @@ var tallybook = tallybook || {};
               $chosens.append(newEle);
             }
           }}),
-        dateRange : FilterHandler({
+        dateRange : new FilterHandler({
           initializer : function (filter, fieldinfo){
             var datapickerops = $.extend({changeMonth: true,changeYear:true},JSON.parse(host.messages.datepicker_localization));
             var fromTb = $('.from', filter);
@@ -332,6 +341,7 @@ var tallybook = tallybook || {};
 
         var fHandler = this._handlers[filterType];
         if(fHandler){
+          fHandler.preInitialize && fHandler.preInitialize(filter, fieldinfo, gridinfo);
           fHandler.initializer && fHandler.initializer(filter, fieldinfo, gridinfo, valElem);
         }
         return filter;

@@ -106,13 +106,13 @@ var tallybook = tallybook || {};
           var fieldname = fieldinfo.name;
           var displayFieldName = fieldinfo.displayFieldName;
           var idFieldName = fieldinfo.idFieldName;
-          var entityType = fieldinfo.entityType;
 
           var fieldvalue = entityProperty(entity, fieldname);
           if(!!fieldvalue){
             var idVal = fieldvalue[idFieldName];
             var nameVal = fieldvalue[displayFieldName];
-            var url = host.url.connectUrl('/', entityType, idVal);
+            var template = new UriTemplate(fieldinfo.recordUri);
+            var url =template.fill(entity);
             var $span = $('<span>').text(nameVal);
             var $a = $('<a>', {class: "entity-form-modal-view", href : url}).append($('<i>', {class:"fa fa-external-link"}));
             return $span.append($a);
@@ -123,14 +123,14 @@ var tallybook = tallybook || {};
           var fieldname = fieldinfo.name;
           var entityFieldName = fieldinfo.entityFieldName;
           var entityFieldDisplayProperty = fieldinfo.displayFieldName;
-          var entityType = fieldinfo.entityType;
 
           var fieldvalue = entityProperty(entity, fieldname);
           if(!!fieldvalue){
             var refForeignEntity = entity[entityFieldName];
             var idVal = fieldvalue;
             var nameVal = refForeignEntity[entityFieldDisplayProperty];
-            var url = host.url.connectUrl('/', entityType, idVal);
+            var template = new UriTemplate(fieldinfo.recordUri);
+            var url =template.fill(entity);
             var $span = $('<span>').text(nameVal);
             var $a = $('<a>', {class: "entity-form-modal-view", href : url}).append($('<i>', {class:"fa fa-external-link"}));
             return $span.append($a);
