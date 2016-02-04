@@ -10,7 +10,6 @@ var tallybook = tallybook || {};
   var EntityContext = function (info, infos) {
     this.info = info;
     if ($.isPlainObject(infos)) {
-      this.uri = infos.entityUri;
       this.beanUri = infos.beanUri;
       this.idField = infos.idField;
       this.nameField = infos.nameField;
@@ -76,6 +75,7 @@ var tallybook = tallybook || {};
 
   var EntityResponse = function (data) {
     this.data = data;
+    this._entityContext = undefined;
   }
   EntityResponse.prototype = {
     infos : function () {
@@ -94,7 +94,13 @@ var tallybook = tallybook || {};
       });
       return linksObj;
     },
-    makeEntityContext : function(){
+    entityContext : function(){
+      if(this._entityContext === undefined){
+        this._entityContext = this._makeEntityContext();
+      }
+      return this._entityContext;
+    },
+    _makeEntityContext : function(){
       return new EntityContext(this.info(), this.infos());
     }
   }
@@ -116,7 +122,7 @@ var tallybook = tallybook || {};
 
   var BeanResponse = function(data){
     EntityResponse.apply(this, arguments);
-    var entityCtx = this.makeEntityContext();
+    var entityCtx = this.entityContext();
     this._entity = new BeanContext({
       bean:data.entity.bean,
       errors:data.errors,

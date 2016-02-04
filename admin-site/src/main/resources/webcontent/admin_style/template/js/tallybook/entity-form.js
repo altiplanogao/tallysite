@@ -437,7 +437,6 @@ var tallybook = tallybook || {};
   }
   EntityDataAccess.prototype={
     element : function(){return this.form;},
-    entityUri: ElementValueAccess.defineGetSet('entity-uri','/'),
     entityFriendlyName : ElementValueAccess.defineGetSet('entity-friendly-name', null),
     currentAction : ElementValueAccess.defineGetSet('current-action', null),
     currentFriendlyAction : ElementValueAccess.defineGetSet('current-friendly-action', null)
@@ -551,7 +550,7 @@ var tallybook = tallybook || {};
       this.dataContent(data);
       var beanResponse = new BeanResponse(data);
 
-      var entityCxt = beanResponse.makeEntityContext();
+      var entityCxt = beanResponse.entityContext();
       var beanCxt = beanResponse.entity();
       this.fillContent(entityCxt, beanCxt);
       $(window).resize();
@@ -561,7 +560,7 @@ var tallybook = tallybook || {};
     fillContent:function(entityCxt, beanCxt){
       var anchor = beanCxt.anchor;
       this._fillEntityGeneralContext(entityCxt, beanCxt);
-      this.da.entityUri(entityCxt.entityUri);
+//      this.da.entityUri(entityCxt.entityUri);
       this.da.entityFriendlyName(entityCxt.info.friendlyName);
 
       var _this = this;

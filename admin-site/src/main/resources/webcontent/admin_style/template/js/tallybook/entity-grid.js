@@ -1008,7 +1008,7 @@ var tallybook = tallybook || {};
 
       var gda = this.da;
       var queryResponse = new QueryResponse(data);
-      var entityCtx = queryResponse.makeEntityContext();
+      var entityCtx = queryResponse.entityContext();
 
       if (setupui) {
         var gridsetting = {
@@ -1079,7 +1079,7 @@ var tallybook = tallybook || {};
       if($tbody === undefined){
         $tbody = $('<tbody>');
       }
-      var entityCtx = queryResponse.makeEntityContext();
+      var entityCtx = queryResponse.entityContext();
       var queryBeans = queryResponse.entities();
 
       comp.Body.makeRowsAndAppend(entityCtx, queryBeans, $tbody);
