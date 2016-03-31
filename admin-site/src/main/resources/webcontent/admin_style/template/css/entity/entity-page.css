@@ -13,6 +13,7 @@ section#contentContainer {
 }
 
 div.message-dict,
+div.data-map,
 .entity-form-container > div.data-content,
 .entity-grid-container > div.data-content {
     display: none;

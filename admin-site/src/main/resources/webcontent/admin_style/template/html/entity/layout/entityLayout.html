@@ -2,6 +2,7 @@
 <html>
 <head th:replace="entity/mainframe :: entity_head"></head>
 <body class="off-canvas">
+    <div class="data-map"><p th:attr="data-data-map=${dataMap}?:''"></p></div>
 
     <div th:replace="entity/mainframe :: entity_header_bar"></div>
     <div class="container-fluid">

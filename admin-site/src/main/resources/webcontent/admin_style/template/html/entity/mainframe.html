@@ -108,28 +108,7 @@
 
 <div class="container-fluid">
   <section id="sideMenuContainer" th:fragment="entity_side_nav">
-    <nav class="nav" id="sideMenu">
-      <ul class="nav-menu accordion" data-accordion="" th:if="${menu} != null">
-        <li class="menu-group accordion-navigation" th:each="entryGroup : ${menu.topEntries}" th:inline="text"
-            th:classappend="${current.isMatchPath(entryGroup.key)}? 'active'">
-          <div class="menu-group-title">
-            <h5>
-              <i class="fa" th:classappend="${entryGroup.icon}"></i>
-              [[#{${entryGroup.name}}]]
-            </h5>
-          </div>
-          <div class="menu-group-content content">
-            <ul>
-              <li th:each="entry : ${entryGroup.entries}"
-                  th:classappend="${current.isMatchPath(entryGroup.key, entry.key)}? 'active'">
-                <a th:href="${entry.url}"  th:unless="${#strings.isEmpty(entry.url)}">
-                  [[#{${entry.name}}]]</a>
-              </li>
-            </ul>
-          </div>
-        </li>
-    </ul>
-  </nav>
+    <nav class="nav" id="sideMenu"></nav>
   </section>
 
   <section th:fragment="entity-template">
@@ -154,17 +133,9 @@
   </section>
   <div th:inline="text" th:fragment="entity_content_breadcrumbs"
        class="entity-content-breadcrumbs">
-    <div class="breadcrumb-section">
-      <ol class="breadcrumb">
-        <li th:each="entry : ${current.menuEntries}">
-          <a href="#" th:href="@{${entry.url}}" th:unless="${#strings.isEmpty(entry.url)}">[[#{${entry.name}}]]</a>
-          <span th:if="${#strings.isEmpty(entry.url)}">[[#{${entry.name}}]]</span>
-        </li>
-        <li th:if="${entityName}"><span th:text="${entityName}"/></li>
-      </ol>
+    <div class="breadcrumb-section" id="breadcrumbSection">
     </div>
     <div  class="actions-section entity-main-action-group">
-
     </div>
   </div>
   <div class="entity-content-main" th:fragment="entity_main">
@@ -237,6 +208,10 @@
           src="../../js/tallybook/entity-scroll-grid.js"></script>
   <script type="text/javascript" th:src="@{/js/tallybook/entity-form.js}"
           src="../../js/tallybook/entity-form.js"></script>
+
+  <script type="text/javascript" th:src="@{/lib/jquery/jquery-2.1.4.js}"
+          src="../../lib/jquery/jquery-2.1.4.min.js"></script>
+  <script th:attr="data-main=@{/js/admin/admin-main.js}" th:src="@{/lib/require.js}" src="../../lib/require.js"></script>
 
   <!-- content script -->
   <div th:replace="${'entity/views/' + viewType}:: scripts" />

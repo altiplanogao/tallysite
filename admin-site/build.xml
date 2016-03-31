@@ -47,7 +47,7 @@
             <jvmarg value="-Xbootclasspath/p:%temp%//rebelboot.jar" />
             <jvmarg value="-Drebel.root=${project.root}" />
             <jvmarg value="-Dlogs.dir=${logs.dir}" />
-            <jvmarg value="-Dusehsql=true" />
+            <!--<jvmarg value="-Dusehsql=true" />-->
             <jvmarg value="-noverify" />
             <jvmarg value="-agentpath:${jrebel.agent.path}" />
             <!--          <jvmarg value="-javaagent:${jrebel.path}" />  -->
@@ -93,7 +93,7 @@
     <!-- Project Reference Targets -->
     <!-- build the application and create the war artifact -->
     <target name="build-framework" >
-        <exec dir="../../framework" executable="cmd">
+        <exec dir="../../tallyframework" executable="cmd">
             <arg line="/c mvn install"/>
         </exec>
     </target>

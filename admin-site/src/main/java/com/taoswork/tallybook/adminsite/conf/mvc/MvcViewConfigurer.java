@@ -1,10 +1,10 @@
 package com.taoswork.tallybook.adminsite.conf.mvc;
 
 import com.taoswork.tallybook.admincore.TallyBookAdminCoreRoot;
+import com.taoswork.tallybook.adminmvc.view.JsonViewResolver;
 import com.taoswork.tallybook.general.extension.collections.MapBuilder;
 import com.taoswork.tallybook.general.extension.collections.SetBuilder;
 import com.taoswork.tallybook.general.solution.message.MessageUtility;
-import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookDataViewResolver;
 import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookDialect;
 import com.taoswork.tallybook.general.web.view.thymeleaf.TallyBookThymeleafViewResolver;
 import org.slf4j.Logger;
@@ -119,7 +119,7 @@ public class MvcViewConfigurer {
 
     @Bean
     public ViewResolver dataViewResolver(){
-        TallyBookDataViewResolver view = new TallyBookDataViewResolver();
+        JsonViewResolver view = new JsonViewResolver();
         view.setOrder(0);
         return view;
     }

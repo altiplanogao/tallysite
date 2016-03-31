@@ -27,40 +27,5 @@ IT IS NOT RECOMMENDED TO USE JETTY IN A PRODUCTION ENVIRONMENT.
         </Arg>
     </New>
 
-    <New id="adminDS" class="org.eclipse.jetty.plus.jndi.Resource">
-        <Arg>jdbc/tallyadminJndiDb</Arg>
-        <Arg>
-            <New class="org.apache.commons.dbcp2.BasicDataSource">
-                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
-                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallyadmin?useUnicode=true&amp;characterEncoding=utf8</Set>
-                <Set name="username">devsa</Set>
-                <Set name="password">devsapassword</Set>
-            </New>
-        </Arg>
-    </New>
-
-    <New id="businessDS" class="org.eclipse.jetty.plus.jndi.Resource">
-        <Arg>jdbc/tallybusinessJndiDb</Arg>
-        <Arg>
-            <New class="org.apache.commons.dbcp2.BasicDataSource">
-                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
-                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallybusiness?useUnicode=true&amp;characterEncoding=utf8</Set>
-                <Set name="username">devsa</Set>
-                <Set name="password">devsapassword</Set>
-            </New>
-        </Arg>
-    </New>
-
-    <New id="managementDS" class="org.eclipse.jetty.plus.jndi.Resource">
-        <Arg>jdbc/tallymanagementJndiDb</Arg>
-        <Arg>
-            <New class="org.apache.commons.dbcp2.BasicDataSource">
-                <Set name="driverClassName">com.mysql.jdbc.Driver</Set>
-                <Set name="url">jdbc:mysql://localhost:3306/tallybook_tallymanagement?useUnicode=true&amp;characterEncoding=utf8</Set>
-                <Set name="username">devsa</Set>
-                <Set name="password">devsapassword</Set>
-            </New>
-        </Arg>
-    </New>
 
 </Configure>

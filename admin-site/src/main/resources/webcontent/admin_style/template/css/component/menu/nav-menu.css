@@ -34,7 +34,9 @@ nav > ul.nav-menu > li.menu-group .menu-group-title > h5{
     font-size: 15px;
     margin: 0;
 }
-
+nav > ul.nav-menu > li.menu-group .menu-group-title span{
+    margin-left: 5px;
+}
 nav > ul.nav-menu > li.menu-group .menu-group-title::after{
     content: "";
     display: block;

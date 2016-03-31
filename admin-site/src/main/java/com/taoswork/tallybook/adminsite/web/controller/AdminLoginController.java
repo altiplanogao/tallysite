@@ -1,5 +1,6 @@
 package com.taoswork.tallybook.adminsite.web.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taoswork.tallybook.admincore.menu.AdminMenuService;
 import com.taoswork.tallybook.admincore.security.AdminSecurityService;
 import com.taoswork.tallybook.business.dataservice.tallyadmin.TallyAdminDataService;
@@ -46,7 +47,7 @@ public class AdminLoginController extends BaseController {
     @RequestMapping(value = {"/", "/loginSuccess"}, method = RequestMethod.GET)
     public String loginSuccess() {
         IMenu menu = adminNavigationService.buildMenu(adminSecurityService.getPersistentAdminEmployee());
-        IMenuEntry firstGroup = menu.getFirstLeafEntry();
+        IMenuEntry firstGroup = menu.theFirstLeafEntry();
         if (null != firstGroup) {
             return "redirect:" + firstGroup.getUrl();
         }
@@ -74,5 +75,8 @@ public class AdminLoginController extends BaseController {
     }
 
 
-
+    @Override
+    protected ObjectMapper getObjectMapper() {
+        return null;
+    }
 }
