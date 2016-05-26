@@ -133,10 +133,8 @@
   </section>
   <div th:inline="text" th:fragment="entity_content_breadcrumbs"
        class="entity-content-breadcrumbs">
-    <div class="breadcrumb-section" id="breadcrumbSection">
-    </div>
-    <div  class="actions-section entity-main-action-group">
-    </div>
+    <div class="breadcrumb-section" id="breadcrumbSection"></div>
+    <div class="actions-section entity-main-action-group"></div>
   </div>
   <div class="entity-content-main" th:fragment="entity_main">
     <div th:replace="${'entity/views/' + viewType}:: content" />

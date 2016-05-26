@@ -4,5 +4,9 @@
 
   <div class="entity-content-main" th:fragment="entity_main">
     <div th:replace="${'entity/views/' + viewType}:: content" />
+    <div id="viewSlot">
+      <p>Whatever</p>
+    </div>
+
   </div>
 </section>
